@@ -1,0 +1,12 @@
+{
+  "name": "CareLog",
+  "displayName": "CareLog",
+  "expo": {
+    "name": "CareLog",
+    "slug": "CareLog",
+    "version": "1.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  }
+}
