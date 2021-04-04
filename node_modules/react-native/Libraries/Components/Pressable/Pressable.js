@@ -131,6 +131,11 @@ type Props = $ReadOnly<{|
    * Used only for documentation or testing (e.g. snapshot testing).
    */
   testOnly_pressed?: ?boolean,
+
+  /**
+   * Duration to wait after press down before calling `onPressIn`.
+   */
+  unstable_pressDelay?: ?number,
 |}>;
 
 /**
@@ -153,6 +158,7 @@ function Pressable(props: Props, forwardedRef): React.Node {
     pressRetentionOffset,
     style,
     testOnly_pressed,
+    unstable_pressDelay,
     ...restProps
   } = props;
 
@@ -172,6 +178,7 @@ function Pressable(props: Props, forwardedRef): React.Node {
       pressRectOffset: pressRetentionOffset,
       android_disableSound,
       delayLongPress,
+      delayPressIn: unstable_pressDelay,
       onLongPress,
       onPress,
       onPressIn(event: PressEvent): void {
@@ -206,6 +213,7 @@ function Pressable(props: Props, forwardedRef): React.Node {
       onPressOut,
       pressRetentionOffset,
       setPressed,
+      unstable_pressDelay,
     ],
   );
   const eventHandlers = usePressability(config);

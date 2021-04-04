@@ -37,7 +37,6 @@ const AndroidHorizontalScrollViewViewConfig = {
     snapToInterval: true,
     snapToStart: true,
     snapToOffsets: true,
-    contentOffset: true,
   },
 };
 
