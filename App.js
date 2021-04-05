@@ -10,12 +10,16 @@ const Drawer = createDrawerNavigator();
 
 function App() {
   return (
-    <NavigationContainer>
-      <Drawer.Navigator initialRouteName="Home">
-        <Drawer.Screen name="Home" component={HomeScreen} />
-        <Drawer.Screen name="Second" component={SecondScreen} />
-      </Drawer.Navigator>
-    </NavigationContainer>
+      <NavigationContainer>
+        <Drawer.Navigator 
+          initialRouteName="Home"
+          screenOptions={{
+            headerShown: true
+        }}>
+          <Drawer.Screen name="Home" component={HomeScreen} />
+          <Drawer.Screen name="Second" component={SecondScreen} />
+        </Drawer.Navigator>
+      </NavigationContainer>
   );
 }
 
