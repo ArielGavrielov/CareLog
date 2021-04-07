@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import Realm from 'realm';
 import { Container, Header, Content, Form, Item, Input } from 'native-base';
 
 export default class LoginScreen extends Component {
