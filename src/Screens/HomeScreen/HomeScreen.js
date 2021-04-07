@@ -1,16 +1,15 @@
-import * as React from 'react';
-import { View, Text, Button } from 'react-native';
+import React, { Component } from 'react';
+import { Container, Content } from 'native-base';
+import { Text } from 'react-native-elements'
 
-const HomeScreen = ({navigation}) => {
+export default class HomeScreen extends Component {
+  render() {
     return (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <Text>Home Screen</Text>
-          <Button
-        title="Go to Details"
-        onPress={() => navigation.navigate('Second')}
-      />
-        </View>
+      <Container >
+        <Content>
+          <Text h1>Hello NAME</Text>
+        </Content>
+      </Container>
       );
+  }
 }
-
-export default HomeScreen;
