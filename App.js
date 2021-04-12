@@ -8,10 +8,12 @@ import SecondScreen from './src/Screens/SecondScreen/SecondScreen';
 import LoginScreen from './src/Screens/LoginScreen/LoginScreen';
 import { NativeBaseProvider } from 'native-base';
 import RegisterScreen from './src/Screens/RegisterScreen/RegisterScreen';
+import { Provider as AuthProvider } from './src/Context/AuthContext';
+
 
 const Drawer = createDrawerNavigator();
 
-function App() {
+const App = () => {
   return (
     <NativeBaseProvider>
       <NavigationContainer>
@@ -31,4 +33,10 @@ function App() {
   );
 }
 
-export default App;
+export default () => {
+  return (
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  );
+};
