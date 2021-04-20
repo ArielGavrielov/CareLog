@@ -1,17 +1,45 @@
-import React, { useState } from 'react';
-import { Button, Input } from 'react-native-elements'
-import { Center, Heading } from "native-base";
+import React from "react";
+import { Text, View, Input, Button, Alert } from "native-base";
+import { useForm, Controller } from "react-hook-form";
 
-const RegisterScreen = ({navigation}) => {
-    return (
-    <Center flex={1} marginBottom={250}>
-        <Heading color="emerald.900">Sign Up</Heading>
-        <Input label="Email"/>
-        <Input label="Password"/>
-        <Button title="Sign Up"/>
-        <Button title="Sign in" onPress={() => navigation.navigate('Login')} />
-      </Center>
-    );
-};
+export default function App() {
+  const { control, handleSubmit, formState: { errors } } = useForm();
+  const onSubmit = data => console.log(data);
 
-export default RegisterScreen;
+  return (
+    <View style={{flex:1, alignItems: "center", justifyContent: "center",}}>
+      <Controller
+        control={control}
+        render={({ field: { onChange, onBlur, value } }) => (
+          <Input
+            onBlur={onBlur}
+            onChangeText={value => onChange(value)}
+            value={value}
+          />
+        )}
+        name="firstName"
+        rules={{ required: true }}
+        defaultValue=""
+      />
+      {errors.firstName && <Text>This is required.</Text>}
+
+      <Controller
+        control={control}
+        render={({ field: { onChange, onBlur, value } }) => (
+          <Input
+            onBlur={onBlur}
+            onChangeText={value => onChange(value)}
+            value={value}
+          />
+        )}
+        name="lastName"
+        defaultValue=""
+        rules={{ required: true }}
+      />
+      {errors.lastName && <Text>This is required.</Text>}
+
+      <Button onPress={handleSubmit(onSubmit)}>Submit</Button>
+    </View>
+  );
+}
+

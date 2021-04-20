@@ -1,59 +1,76 @@
-import { StatusBar } from "expo-status-bar";
-import React, { useState, useContext } from "react";
+import React, { useContext } from "react";
 import {
   StyleSheet,
-  Text,
-  Image,
-  View,
-  TextInput,
-  TouchableOpacity
+  View
 } from "react-native";
+import { Input, Image, Text, Button } from 'react-native-elements';
+import { useForm, Controller } from "react-hook-form";
 import { Context as AuthContext } from '../../Context/AuthContext';
  
 const LoginScreen = ({navigation}) => {
   const { state, signin } = useContext(AuthContext)
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { control, handleSubmit, formState: { errors } } = useForm();
+  const onSubmit = data => signin(data);
 
   return (
     <View style={styles.container}>
       <Image style={styles.image} source={require("../../assets/logo-197X69.png")} />
- 
-      <StatusBar style="auto" />
-      <View style={styles.inputView}>
-        <TextInput
-          style={styles.TextInput}
-          placeholder="Email."
-          placeholderTextColor="#003f5c"
-          onChangeText={setEmail}
-          autoCorrect={false}
-          autoCapitalize='none'
+        <Controller
+          control={control}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <Input
+              //style={styles.TextInput}
+              leftIcon={{type: 'feather', name: 'mail'}}
+              onBlur={onBlur}
+              onChangeText={value => onChange(value)}
+              value={value}
+              placeholder="Email"
+              autoCorrect={false}
+              autoCapitalize='none'
+            />
+          )}
+          name="email"
+          rules={{ required: true }}
+          defaultValue=""
         />
-      </View>
- 
-      <View style={styles.inputView}>
-        <TextInput
-          style={styles.TextInput}
-          placeholder="Password."
-          placeholderTextColor="#003f5c"
-          secureTextEntry
-          onChangeText={setPassword}
-          autoCorrect={false}
-          autoCapitalize='none'
-        />
-      </View>
 
-      <TouchableOpacity 
-      style={ styles.loginBtn } 
-      onPress={ () => { signin({email, password}); console.log(email + " " + password) } }>
-        <Text>Sign in</Text>
-      </TouchableOpacity>
-      <TouchableOpacity>
-        <Text style={styles.forgot_button}>Forgot Password?</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-        <Text style={styles.forgot_button}>Sign up</Text>
-      </TouchableOpacity>
+        <Controller
+          control={control}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <Input
+              //style={styles.TextInput}
+              leftIcon={{type: 'feather', name: 'lock'}}
+              onBlur={onBlur}
+              onChangeText={value => onChange(value)}
+              value={value}
+              placeholder="Password"
+              autoCorrect={false}
+              autoCapitalize='none'
+              secureTextEntry
+            />
+          )}
+          name="password"
+          rules={{ required: true }}
+          defaultValue=""
+        />
+      {state.errorMessage ? <Text>{state.errorMessage}</Text> : null}
+
+      <Button 
+        buttonStyle={ styles.loginBtn } 
+        titleStyle= {{ color: "white" }}
+        title="Sign in"
+        type="solid"
+        onPress={handleSubmit(onSubmit)}
+      />
+      <Button
+        type="clear"
+        title="Forgot Password?"
+      />
+      <Button
+        type="clear"
+        title="Sign up"
+        onPress={() => navigation.navigate('Register')}
+      />
     </View>
   );
 }
@@ -68,6 +85,8 @@ const styles = StyleSheet.create({
  
   image: {
     marginBottom: 40,
+    width: 150,
+    height: 50
   },
  
   inputView: {

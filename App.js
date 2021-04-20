@@ -1,6 +1,7 @@
 // In App.js in a new project
 
 import React from 'react';
+import { StatusBar } from "expo-status-bar";
 import { NavigationContainer } from '@react-navigation/native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import HomeScreen from './src/Screens/HomeScreen/HomeScreen';
@@ -36,6 +37,7 @@ const App = () => {
 export default () => {
   return (
     <AuthProvider>
+      <StatusBar style="auto" />
       <App />
     </AuthProvider>
   );
