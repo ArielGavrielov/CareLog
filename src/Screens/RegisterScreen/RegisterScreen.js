@@ -1,45 +1,212 @@
-import React from "react";
-import { Text, View, Input, Button, Alert } from "native-base";
+import React, { useContext, useState } from "react";
+import {
+  StyleSheet,
+  View
+} from "react-native";
+import { Input, Image, Text, Button, Icon } from 'react-native-elements';
 import { useForm, Controller } from "react-hook-form";
+import { Context as AuthContext } from '../../Context/AuthContext';
+import DateTimePickerModal from "react-native-modal-datetime-picker";
 
-export default function App() {
+const RegisterScreen = ({navigation}) => {
+  const { state, signup } = useContext(AuthContext);
   const { control, handleSubmit, formState: { errors } } = useForm();
-  const onSubmit = data => console.log(data);
+  const onSubmit = (data) => {
+    if(data.password != data.confirmPassword) return console.log("Need to handle this.");
+    delete data.confirmPassword;
+    console.log(errors);
+    signup(data);
+  }
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
 
   return (
-    <View style={{flex:1, alignItems: "center", justifyContent: "center",}}>
-      <Controller
-        control={control}
-        render={({ field: { onChange, onBlur, value } }) => (
-          <Input
-            onBlur={onBlur}
-            onChangeText={value => onChange(value)}
-            value={value}
-          />
-        )}
-        name="firstName"
-        rules={{ required: true }}
-        defaultValue=""
-      />
-      {errors.firstName && <Text>This is required.</Text>}
+    <View style={styles.container}>
+      <Image style={styles.image} source={require("../../assets/logo-197X69.png")} />
+        <Controller
+          control={control}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <Input
+              leftIcon={{type: 'font-awesome-5', name: 'user-tie'}}
+              onBlur={onBlur}
+              onChangeText={value => onChange(value)}
+              value={value}
+              placeholder="First name"
+            />
+          )}
+          name="first_name"
+          rules={{ required: true }}
+          defaultValue=""
+        />
+        <Controller
+          control={control}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <Input
+              style={{width: 100}}
+              leftIcon={{type: 'feather', name: 'mail'}}
+              onBlur={onBlur}
+              onChangeText={value => onChange(value)}
+              value={value}
+              placeholder="Last name"
+            />
+          )}
+          name="last_name"
+          rules={{ required: true }}
+          defaultValue=""
+        />
+        <Controller
+          control={control}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <Input
+              leftIcon={{type: 'feather', name: 'mail'}}
+              onBlur={onBlur}
+              onChangeText={value => onChange(value)}
+              value={value}
+              placeholder="Email"
+            />
+          )}
+          name="email"
+          rules={{ required: true }}
+          defaultValue=""
+        />
+        <Controller
+          control={control}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <Input
+              leftIcon={{type: 'feather', name: 'mail'}}
+              onBlur={onBlur}
+              onChangeText={value => onChange(value)}
+              value={value}
+              placeholder="Phone number"
+            />
+          )}
+          name="phone"
+          rules={{ required: true }}
+          defaultValue=""
+        />
+        <Controller
+          control={control}
+          render={({ field: { onChange, value } }) => (
+            <View style={{width: 200}}>
+            <Input
+              leftIcon={<Icon type='feather' name='mail' onPress={setDatePickerVisibility(true)} />}
+              onPressIn={setDatePickerVisibility(true)}
+              onFocus={setDatePickerVisibility(true)}
+              value={value}
+              placeholder="Birth date"
+            />
+            <DateTimePickerModal
+              isVisible={isDatePickerVisible}
+              mode="date"
+              onConfirm={(date) => {
+                onChange(date);
+                setDatePickerVisibility(false);
+              }}
+              onCancel={() => setDatePickerVisibility(false)}
+            />
+            </View>
+          )}
+          name="birthdate"
+          rules={{ required: true }}
+          defaultValue=""
+        />
+        <Controller
+          control={control}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <Input
+              leftIcon={{type: 'feather', name: 'mail'}}
+              onBlur={onBlur}
+              onChangeText={value => onChange(value)}
+              value={value}
+              secureTextEntry
+              autoCorrect={false}
+              autoCapitalize='none'
+              placeholder="Password"
+            />
+          )}
+          name="password"
+          rules={{ required: true }}
+          defaultValue=""
+        />
+       <Controller
+          control={control}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <Input
+              leftIcon={{type: 'feather', name: 'mail'}}
+              onBlur={onBlur}
+              onChangeText={value => onChange(value)}
+              value={value}
+              secureTextEntry
+              autoCorrect={false}
+              autoCapitalize='none'
+              placeholder="Confirm password"
+            />
+          )}
+          name="confirmPassword"
+          rules={{ required: true }}
+          defaultValue=""
+        />
 
-      <Controller
-        control={control}
-        render={({ field: { onChange, onBlur, value } }) => (
-          <Input
-            onBlur={onBlur}
-            onChangeText={value => onChange(value)}
-            value={value}
-          />
-        )}
-        name="lastName"
-        defaultValue=""
-        rules={{ required: true }}
+      <Button 
+        buttonStyle={ styles.loginBtn } 
+        titleStyle= {{ color: "white" }}
+        title="Sign up"
+        type="solid"
+        onPress={handleSubmit(onSubmit)}
       />
-      {errors.lastName && <Text>This is required.</Text>}
-
-      <Button onPress={handleSubmit(onSubmit)}>Submit</Button>
+      <Button
+        type="clear"
+        title="Sign in"
+        onPress={() => navigation.navigate('Login')}
+      />
     </View>
   );
 }
 
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+ 
+  image: {
+    marginBottom: 40,
+    width: 150,
+    height: 50
+  },
+ 
+  inputView: {
+    backgroundColor: "#FFC0CB",
+    borderRadius: 30,
+    width: "70%",
+    height: 45,
+    marginBottom: 20,
+ 
+    alignItems: "center",
+  },
+ 
+  TextInput: {
+    height: 50,
+    flex: 1,
+    padding: 10,
+    marginLeft: 20,
+  },
+ 
+  forgot_button: {
+    height: 30,
+  },
+ 
+  loginBtn: {
+    width: "80%",
+    borderRadius: 25,
+    height: 50,
+    alignItems: "center",
+    justifyContent: "center",
+    margin: 40,
+    backgroundColor: "#FF1493",
+    color: '#fff'
+  },
+});
+
+export default RegisterScreen;
