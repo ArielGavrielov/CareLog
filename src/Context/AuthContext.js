@@ -13,15 +13,18 @@ const authReducer = (state, action) => {
     }
 }
 // signup post
-const signup = dispatch => async ({ email, password }) => {
+const signup = dispatch => async ({email, password, first_name, last_name, birthdate, phone}) => {
     try {
+        console.log({email, password, first_name, last_name, birthdate, phone});
         // get responsed
-        const response = await CareLogAPI.post('/signup', { email, password });
+        const response = await CareLogAPI.post('/signup', {email, password, first_name, last_name, birthdate, phone});
+        //console.log(response.data);
         // save token at AsyncStorage
         //await AsyncStorage.setItem('token', response.data.token);
     } catch(err) {
         // add error
         dispatch({ type: 'add_error', payload: err.data.error });
+        //console.log(err);
     }
 };
 
@@ -33,7 +36,7 @@ const signin = (dispatch) => async ({ email, password }, callback) => {
         // save token at AsyncStorage
         //await AsyncStorage.setItem('token', response.data.token);
         dispatch({ type: 'signin', payload: response.data.token });
-
+        console.log("token", response.data.token);
         if(callback) callback();
     } catch(err) {
         // add error
