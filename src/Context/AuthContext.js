@@ -18,13 +18,13 @@ const signup = dispatch => async ({email, password, first_name, last_name, birth
         console.log({email, password, first_name, last_name, birthdate, phone});
         // get responsed
         const response = await CareLogAPI.post('/signup', {email, password, first_name, last_name, birthdate, phone});
-        //console.log(response.data);
+        console.log(response.data);
         // save token at AsyncStorage
         //await AsyncStorage.setItem('token', response.data.token);
     } catch(err) {
         // add error
         dispatch({ type: 'add_error', payload: err.data.error });
-        //console.log(err);
+        console.log(err);
     }
 };
 

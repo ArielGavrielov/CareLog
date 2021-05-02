@@ -7,18 +7,32 @@ import { Input, Image, Text, Button, Icon } from 'react-native-elements';
 import { useForm, Controller } from "react-hook-form";
 import { Context as AuthContext } from '../../Context/AuthContext';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { TouchableWithoutFeedback } from "react-native-gesture-handler";
 
 const RegisterScreen = ({navigation}) => {
   const { state, signup } = useContext(AuthContext);
   const { control, handleSubmit, formState: { errors } } = useForm();
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const [birthdate, setBirthdate] = useState();
   const onSubmit = (data) => {
     if(data.password != data.confirmPassword) return console.log("Need to handle this.");
     delete data.confirmPassword;
+    //data.birthdate = new Date();
+    //data.birthdate.setDate(birthdate.getDate());
+    data.birthdate = dateToString(birthdate);
     console.log(errors);
     signup(data);
   }
-  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
 
+  const dateToString = (date) => {
+    var day,mon,year;
+    day = date.getDate();
+    mon = date.getMonth()+1;
+    year = date.getFullYear();
+    if(day < 10) day = '0'+day;
+    if(mon < 10) mon = '0'+mon;
+    return day+'/'+mon+'/'+year;
+  };
   return (
     <View style={styles.container}>
       <Image style={styles.image} source={require("../../assets/logo-197X69.png")} />
@@ -83,32 +97,26 @@ const RegisterScreen = ({navigation}) => {
           rules={{ required: true }}
           defaultValue=""
         />
-        <Controller
-          control={control}
-          render={({ field: { onChange, value } }) => (
-            <View style={{width: 200}}>
-            <Input
-              leftIcon={<Icon type='feather' name='mail' onPress={setDatePickerVisibility(true)} />}
-              onPressIn={setDatePickerVisibility(true)}
-              onFocus={setDatePickerVisibility(true)}
-              value={value}
-              placeholder="Birth date"
-            />
+            <TouchableWithoutFeedback activeOpacity={10}  style={{flexDirection:'row'}} onPress={() => setDatePickerVisibility(true)}>
+              <Input 
+              leftIcon={<Icon onPress={() => setDatePickerVisibility(true)} type='feather' name='calendar' ></Icon>}
+                disabled 
+                value={birthdate ? 'Birth date: ' + dateToString(birthdate) : 'Birth date' } 
+              />
+            </TouchableWithoutFeedback>
             <DateTimePickerModal
               isVisible={isDatePickerVisible}
+              maximumDate={new Date()}
+              minimumDate={new Date(new Date().setFullYear(new Date().getFullYear() - 120))}
               mode="date"
+              headerTextIOS="Enter birth date"
+              date={birthdate}
               onConfirm={(date) => {
-                onChange(date);
+                setBirthdate(date);
                 setDatePickerVisibility(false);
               }}
               onCancel={() => setDatePickerVisibility(false)}
             />
-            </View>
-          )}
-          name="birthdate"
-          rules={{ required: true }}
-          defaultValue=""
-        />
         <Controller
           control={control}
           render={({ field: { onChange, onBlur, value } }) => (
