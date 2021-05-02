@@ -8,9 +8,10 @@ import { useForm, Controller } from "react-hook-form";
 import { Context as AuthContext } from '../../Context/AuthContext';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { TouchableWithoutFeedback } from "react-native-gesture-handler";
+import { NavigationEvents } from 'react-navigation';
 
 const RegisterScreen = ({navigation}) => {
-  const { state, signup } = useContext(AuthContext);
+  const { state, signup, clearErrorMessage } = useContext(AuthContext);
   const { control, handleSubmit, formState: { errors } } = useForm();
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [birthdate, setBirthdate] = useState();
@@ -153,7 +154,8 @@ const RegisterScreen = ({navigation}) => {
           rules={{ required: true }}
           defaultValue=""
         />
-
+        
+        {state.errorMessage ? <Text>{state.errorMessage}</Text> : null}
       <Button 
         buttonStyle={ styles.loginBtn } 
         titleStyle= {{ color: "white" }}
