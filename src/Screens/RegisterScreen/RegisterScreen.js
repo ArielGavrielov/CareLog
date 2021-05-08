@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   StyleSheet,
   View
@@ -8,13 +8,27 @@ import { useForm, Controller } from "react-hook-form";
 import { Context as AuthContext } from '../../Context/AuthContext';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { TouchableWithoutFeedback } from "react-native-gesture-handler";
-import { NavigationEvents } from 'react-navigation';
+import { emailValidator } from '../../Components/Validator';
 
 const RegisterScreen = ({navigation}) => {
   const { state, signup, clearErrorMessage } = useContext(AuthContext);
-  const { control, handleSubmit, formState: { errors } } = useForm();
+  const { control, handleSubmit, formState: { errors } } = useForm({
+    mode: 'onSubmit',
+    reValidateMode: 'onChange',
+    defaultValues: {},
+    resolver: undefined,
+    context: AuthContext,
+    criteriaMode: "firstError",
+    shouldFocusError: true,
+    shouldUnregister: false,
+  });
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [birthdate, setBirthdate] = useState();
+  console.log(errors);
+  useEffect(() => {
+    clearErrorMessage();
+  }, []);
+
   const onSubmit = (data) => {
     if(data.password != data.confirmPassword) return console.log("Need to handle this.");
     delete data.confirmPassword;
@@ -80,7 +94,13 @@ const RegisterScreen = ({navigation}) => {
             />
           )}
           name="email"
-          rules={{ required: true }}
+          rules={{ 
+            required: "Email is required",
+            validate: (value) => {
+              if(!emailValidator(value))
+                return "Please enter valid email.";
+            }
+          }}
           defaultValue=""
         />
         <Controller

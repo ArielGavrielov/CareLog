@@ -36,20 +36,14 @@ const getToken = dispatch => async () => {
 const tryLocalSignin = dispatch => async () => {
     const token = await AsyncStorage.getItem('token');
     if(token) {
-        dispatch({ type: 'signin', payload: token});
-        navigate('Home');
-    }
-    else {
-        navigate('Login')
+        await dispatch({ type: 'signin', payload: token});
     }
 }
 // signup post
 const signup = dispatch => async ({email, password, first_name, last_name, birthdate, phone}) => {
     try {
-        console.log({email, password, first_name, last_name, birthdate, phone});
         // get responsed
         const response = await CareLogAPI.post('/signup', {email, password, first_name, last_name, birthdate, phone});
-        console.log(response.data);
         // save token at AsyncStorage
         await AsyncStorage.setItem('token', response.data.token);
         dispatch({ type: 'signup', payload: response.data.token });
@@ -57,7 +51,6 @@ const signup = dispatch => async ({email, password, first_name, last_name, birth
     } catch(err) {
         // add error
         dispatch({ type: 'add_error', payload: 'Something went wrong with signup.' });
-        console.log(err);
     }
 };
 
@@ -69,7 +62,6 @@ const signin = (dispatch) => async ({ email, password }) => {
         // save token at AsyncStorage
         await AsyncStorage.setItem('token', response.data.token);
         dispatch({ type: 'signin', payload: response.data.token });
-        console.log("token", response.data.token);
         navigate('Home');
     } catch(err) {
         // add error

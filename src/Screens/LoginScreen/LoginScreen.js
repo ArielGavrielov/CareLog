@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from "react";
+import React, { useContext } from "react";
 import {
   StyleSheet,
   View
@@ -8,16 +8,14 @@ import { useForm, Controller } from "react-hook-form";
 import { Context as AuthContext } from '../../Context/AuthContext';
  
 const LoginScreen = ({navigation}) => {
-  const { state, signin, tryLocalSignin } = useContext(AuthContext)
+  const { state, signin } = useContext(AuthContext)
   const { control, handleSubmit, formState: { errors } } = useForm();
   const onSubmit = data => signin(data);
-  
-  useEffect(() => {
-    tryLocalSignin();
-  }, [])
+  console.log("errors", errors);
   return (
     <View style={styles.container}>
       <Image style={styles.image} source={require("../../assets/logo-197X69.png")} />
+      <Text h2 style={ styles.headerText }>Welcome back</Text>
         <Controller
           control={control}
           render={({ field: { onChange, onBlur, value } }) => (
@@ -87,9 +85,12 @@ const styles = StyleSheet.create({
   },
  
   image: {
-    marginBottom: 40,
     width: 150,
     height: 50
+  },
+
+  headerText: {
+    marginBottom: 40
   },
  
   inputView: {

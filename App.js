@@ -10,20 +10,23 @@ import SecondScreen from './src/Screens/SecondScreen/SecondScreen';
 import LoginScreen from './src/Screens/LoginScreen/LoginScreen';
 import { NativeBaseProvider } from 'native-base';
 import { Icon } from 'react-native-elements';
-import RegisterScreen from './src/Screens/RegisterScreen/RegisterScreen';
+import SignupScreen from './src/Screens/RegisterScreen/SignupScreen';
 import { Provider as AuthProvider, Context as AuthContext } from './src/Context/AuthContext';
 import { setNavigator } from './src/navigationRef';
 import AccountScreen from './src/Screens/AccountScreen/AccountScreen';
+import AuthLoadingScreen from './src/Screens/AuthLoadingScreen';
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
 
 const App = () => {
   const { state } = useContext(AuthContext);
+  AuthLoadingScreen();
   console.log(state.token);
   return (
-    <NativeBaseProvider>
-      <NavigationContainer ref={(navigator) => setNavigator(navigator)}>
+      <NavigationContainer ref={(navigator) => () => {
+        setNavigator(navigator);
+      }}>
         {state.token ?
           <Drawer.Navigator
           initialRouteName="Home"
@@ -47,11 +50,10 @@ const App = () => {
         :
         <Stack.Navigator initialRouteName="Login">
           <Stack.Screen name="Login" options={{ headerShown:false }} component={LoginScreen} />
-          <Stack.Screen name="Register" options={{ headerShown:false }} component={RegisterScreen} />
+          <Stack.Screen name="Register" options={{ headerShown:false }} component={SignupScreen} />
         </Stack.Navigator>
         }
       </NavigationContainer>
-    </NativeBaseProvider>
   );
 }
 
@@ -59,7 +61,7 @@ export default () => {
   return (
     <AuthProvider>
       <StatusBar style="auto" />
-      <App/>
+      <App />
     </AuthProvider>
   );
 };
