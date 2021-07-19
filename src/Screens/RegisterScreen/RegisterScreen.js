@@ -24,7 +24,6 @@ const RegisterScreen = ({navigation}) => {
   });
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [birthdate, setBirthdate] = useState();
-  console.log(errors);
   useEffect(() => {
     clearErrorMessage();
   }, []);

@@ -1,14 +1,22 @@
 import React, { Component } from 'react';
-import { Container, Center } from 'native-base';
 import { Text } from 'react-native-elements'
+import { Avatar, Container } from "native-base";
 
 const HomeScreen = () => {
   return (
-    <Container>
-      <Center>
-        <Text h1>Hello NAME</Text>
-      </Center>
-    </Container>
+      <Container>
+          <Avatar
+          position= 'absolute' 
+          backgroundColor= "#FFC0CB"
+          size="xl"
+          source={{
+            uri: "../../assets/logo-197X69.png",
+          }}
+        >
+          <Text h3>Hello NAME</Text>
+        </Avatar>
+      </Container>
     );
 }
 export default HomeScreen;
+

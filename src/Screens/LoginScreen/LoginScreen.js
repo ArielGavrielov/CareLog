@@ -3,6 +3,7 @@ import {
   StyleSheet,
   View
 } from "react-native";
+import { Container } from "native-base";
 import { Input, Image, Text, Button } from 'react-native-elements';
 import { useForm, Controller } from "react-hook-form";
 import { Context as AuthContext } from '../../Context/AuthContext';
@@ -11,7 +12,7 @@ const LoginScreen = ({navigation}) => {
   const { state, signin } = useContext(AuthContext)
   const { control, handleSubmit, formState: { errors } } = useForm();
   const onSubmit = data => signin(data);
-  console.log("errors", errors);
+  
   return (
     <View style={styles.container}>
       <Image style={styles.image} source={require("../../assets/logo-197X69.png")} />

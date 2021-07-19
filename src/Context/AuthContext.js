@@ -16,7 +16,7 @@ const authReducer = (state, action) => {
         case 'clear_error_message':
             return {...state, errorMessage: ''};
         default: 
-            return state;
+            return {...state, isLoading: true, token: null}
     }
 }
 
@@ -27,16 +27,19 @@ const clearErrorMessage = dispatch => () => {
     });
 }
 
-// Get token
-const getToken = dispatch => async () => {
-    const token = await AsyncStorage.getItem('token');
-    return token;
-}
 // Automatic signin
 const tryLocalSignin = dispatch => async () => {
-    const token = await AsyncStorage.getItem('token');
-    if(token) {
-        await dispatch({ type: 'signin', payload: token});
+    try {
+        const token = await AsyncStorage.getItem('token');
+        if(token) {
+            await dispatch({ type: 'signin', payload: token, isLoading: false});
+            navigate('Home');
+        } else {
+            await dispatch({isLoading: false});
+            navigate('Login');
+        }
+    } catch(err) {
+        console.log("tryLocalSignin error:", err);
     }
 }
 // signup post
@@ -57,6 +60,7 @@ const signup = dispatch => async ({email, password, first_name, last_name, birth
 // signin post
 const signin = (dispatch) => async ({ email, password }) => {
     try {
+        console.log("login", email, password);
         // get responsed
         const response = await CareLogAPI.post('/signin', { email, password });
         // save token at AsyncStorage
@@ -77,6 +81,6 @@ const signout = dispatch => async () => {
 
 export const { Provider, Context } = createDataContext(
     authReducer,
-    { signin, signout, signup, clearErrorMessage, tryLocalSignin, getToken },
-    { token: null, errorMessage: '' }
+    { signin, signout, signup, clearErrorMessage, tryLocalSignin },
+    { token: null, errorMessage: '', isLoading: true }
 );

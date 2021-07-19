@@ -22,6 +22,7 @@ route.post('/signin', async (req, res) => {
     if(!email || !password) return res.status(422).send({ code: 422, error: 'Email/Password not filled.'});
 
     const user = await User.findOne({email});
+    console.log("user", user);
     if(!user) return res.status(422).send({ code: 422, error: 'Invalid email'});
     try {
         await user.comparePassword(password);

@@ -1,6 +1,5 @@
 import axios from 'axios';
 
 export default axios.create({
-    baseURL: 'https://carelog.gavrielov.dev/',
-
-})
+    baseURL: 'http://f57a21ec9780.ngrok.io'
+});

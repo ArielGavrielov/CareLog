@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { Platform } from 'react-native';
 import { Input } from 'react-native-elements';
 import { useController } from 'react-hook-form';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { TouchableWithoutFeedback , View } from 'react-native';
 
 export const InputControl = ({
     name, control, rules={}, render=null, keyboardType='default',
@@ -40,44 +42,52 @@ export const DateInputControl = ({name, control, rules={}, render=null, leftIcon
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
 
     const dateToString = (date) => {
-        console.log(date);
         var day,mon,year;
         day = date.getDate();
         mon = date.getMonth()+1;
         year = date.getFullYear();
         if(day < 10) day = '0'+day;
         if(mon < 10) mon = '0'+mon;
-        return day+'/'+mon+'/'+year;
+        return year+'-'+mon+'-'+day;
     };
     return render ? render : (
-        <>
-            <Input
-                disabled
-                style={style}
-                label={(rules.required ? '* ' : '') + name}
-                inputContainerStyle={error && {borderBottomColor:'red'}}
-                errorMessage={error && error.message}
-                leftIcon={leftIcon}
-                onBlur={onBlur}
-                onChangeText={value => onChange(value)}
-                value={value}
-                autoFocus={false}
-                onTouchEnd={() => setDatePickerVisibility(true)}
-            />
+        <View style={{flexDirection: 'row'}}>
+            <TouchableWithoutFeedback
+                onPress={() => setDatePickerVisibility(true)}
+            >
+                <View style={{flex: 1}}>
+                    <Input
+                    editable={false}
+                    style={style}
+                    label={(rules.required ? '* ' : '') + name}
+                    inputContainerStyle={error && {borderBottomColor:'red'}}
+                    errorMessage={error && error.message}
+                    leftIcon={leftIcon}
+                    onBlur={onBlur}
+                    onChangeText={value => onChange(value)}
+                    value={value}
+                    autoFocus={false}
+                    onTouchEnd={() => setDatePickerVisibility(true)}
+                    />
+                </View>
+            </TouchableWithoutFeedback>
             <DateTimePickerModal
+                locale="he_il"
+                display={Platform.OS === 'ios' && Platform.Version > 14 ? 'inline' : ''}
                 isVisible={isDatePickerVisible}
                 maximumDate={new Date()}
                 minimumDate={new Date(new Date().setFullYear(new Date().getFullYear() - 120))}
                 mode="date"
                 headerTextIOS="Enter birth date"
-                date={isNaN(new Date(value)) ? new Date() : new Date(value)}
+                date={isNaN(Date.parse(value)) ? new Date() : new Date(value)}
                 onConfirm={(date) => {
-                    console.log(date);
-                    onChange(dateToString(new Date(date)));
                     setDatePickerVisibility(false);
+                    console.log(date);
+                    Date.parse()
+                    onChange(dateToString(new Date(date)));
                 }}
                 onCancel={() => setDatePickerVisibility(false)}
             />
-        </>
+        </View>
     )
 }

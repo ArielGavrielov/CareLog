@@ -5,7 +5,7 @@ import { View } from 'react-native';
 
 export default AccountScreen = () => {
     const { state, signout } = useContext(AuthContext);
-    console.log(state);
+    console.log("ASD");
     return (
         <View>
             <Text h1>Account Screen</Text>

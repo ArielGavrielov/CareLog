@@ -100,8 +100,9 @@ const SignupScreen = () => {
             control={control}
             name="Birth date"
             rules={{
+                validate:(v) => {return !Number.isNaN(Date.parse(v)) ? true : 'Invalid date!';},
                 required: "You must specify a birth date",
-                pattern: patterns.birthdatePattern
+                //pattern: patterns.birthdatePattern,
             }}
         />
         <Controller
