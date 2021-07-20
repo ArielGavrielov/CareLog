@@ -18,7 +18,7 @@ export const InputControl = ({
         <Input
             containerStyle={containerStyle}
             style={style}
-            label={(rules.required ? '* ' : '') + name}
+            label={(rules.required ? '* ' : '') + name.charAt(0).toUpperCase() + name.slice(1)}
             keyboardType={keyboardType}
             inputContainerStyle={error && {borderBottomColor:'red'}}
             errorMessage={error && error.message}
@@ -59,7 +59,7 @@ export const DateInputControl = ({name, control, rules={}, render=null, leftIcon
                     <Input
                     editable={false}
                     style={style}
-                    label={(rules.required ? '* ' : '') + name}
+                    label={(rules.required ? '* ' : '') + name.charAt(0).toUpperCase() + name.slice(1)}
                     inputContainerStyle={error && {borderBottomColor:'red'}}
                     errorMessage={error && error.message}
                     leftIcon={leftIcon}

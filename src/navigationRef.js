@@ -1,14 +1,15 @@
+import * as React from 'react';
 import { CommonActions } from '@react-navigation/native';
 
-let navigator;
+export const isReadyRef = React.createRef();
+export const navigationRef = React.createRef();
 
-export const setNavigator = (nav) => navigator = nav;
-
-export const navigate = (name, params) => {
-    navigator.dispatch(
-        CommonActions.navigate({
-            name,
-            params
-        })
-    );
-};
+export function navigate(name, params) {
+    if (isReadyRef.current && navigationRef.current) {
+      // Perform navigation if the app has mounted
+      navigationRef.current.navigate(name, params);
+    } else {
+      // You can decide what to do if the app hasn't mounted
+      // You can ignore this, or add these actions to a queue you can call later
+    }
+  }

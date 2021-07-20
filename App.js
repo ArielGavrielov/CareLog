@@ -15,7 +15,8 @@ import SignupScreen from './src/Screens/SignupScreen';
 import Questionnaire from './src/Screens/Questionnaire';
 
 import { Provider as AuthProvider, Context as AuthContext } from './src/Context/AuthContext';
-import { setNavigator } from './src/navigationRef';
+import { navigationRef, isReadyRef } from './src/navigationRef';
+import SplashScreen from  "react-native-splash-screen";
 import { NativeBaseProvider } from "native-base";
 import AuthLoadingScreen from './src/Screens/AuthLoadingScreen';
 //import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -33,15 +34,22 @@ const logged = () => {
 }
 
 const App = () => {
-  //let token = await AsyncStorage.getItem("token");
-  //if()
+  React.useEffect(() => {
+    return () => {
+      SplashScreen.show();
+      isReadyRef.current = false
+    };
+  }, []);
+
   const { state, isLoading } = useContext(AuthContext);
-  //if(!state.token)
-  //  tryLocalSignin();
   console.log(isLoading);
   return (
       <NavigationContainer 
-      ref={ (navigator) => setNavigator(navigator) }>
+      ref={ navigationRef }
+      onReady={() => {
+        isReadyRef.current = true;
+      }}
+      >
         {state.token !== null ?
         <Drawer.Navigator
         initialRouteName="Home"
