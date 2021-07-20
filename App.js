@@ -5,14 +5,14 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createStackNavigator } from '@react-navigation/stack';
-import HomeScreen from './src/Screens/HomeScreen/HomeScreen';
-import SecondScreen from './src/Screens/SecondScreen/SecondScreen';
-import LoginScreen from './src/Screens/LoginScreen/LoginScreen';
-import AccountScreen from './src/Screens/AccountScreen/AccountScreen';
-import StatisticsScreen from './src/Screens/StatisticsScreen/StatisticsScreen';
+import HomeScreen from './src/Screens/HomeScreen';
+import SecondScreen from './src/Screens/SecondScreen';
+import LoginScreen from './src/Screens/LoginScreen';
+import AccountScreen from './src/Screens/AccountScreen';
+import StatisticsScreen from './src/Screens/StatisticsScreen';
 import { Icon } from 'react-native-elements';
-import SignupScreen from './src/Screens/RegisterScreen/SignupScreen';
-import Questionnaire from './src/Screens/Questionnaire/Questionnaire';
+import SignupScreen from './src/Screens/SignupScreen';
+import Questionnaire from './src/Screens/Questionnaire';
 
 import { Provider as AuthProvider, Context as AuthContext } from './src/Context/AuthContext';
 import { setNavigator } from './src/navigationRef';
@@ -79,8 +79,8 @@ export default () => {
   return (
     <NativeBaseProvider>
       <AuthProvider>
-          <StatusBar style="auto" />
-          <App />
+        <StatusBar style="auto" />
+        <App />
       </AuthProvider>
     </NativeBaseProvider>
   );

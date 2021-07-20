@@ -25,4 +25,4 @@ mongoose.connection.on('error', (err) => {
 app.get('/', requireAuth, (req, res) => {
     res.send(`Your email is ${req.user.email}`);
 });
-app.listen(3000, () => console.log('Listening to ' + 3000));
+app.listen(process.env.PORT || 3000, () => console.log('Listening to ' + process.env.PORT || 3000));
