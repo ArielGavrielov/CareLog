@@ -2,21 +2,25 @@ import createDataContext from './createDataContext';
 import CareLogAPI from '../api/carelog';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { navigate } from '../navigationRef';
+import * as SecureStore from 'expo-secure-store';
+import React from 'react';
 
 const authReducer = (state, action) => {
     switch(action.type) {
+        case 'restore_token':
+            return {...state, token: action.payload, isLoading: false}
         case 'add_error': // if not responsed code 200;
             return { ...state, errorMessage: action.payload };
         case 'signin':
-            return { errorMessage: '', token: action.payload };
+            return { ...state, errorMessage: '', token: action.payload, isSignout: false };
         case 'signup':
-            return { errorMessage: '', token: action.payload };
+            return { ...state, errorMessage: '', token: action.payload, isSignout: false };
         case 'signout':
-            return {errorMessage: '', token: null};
+            return { ...state, errorMessage: '', token: null, isSignout: true };
         case 'clear_error_message':
             return {...state, errorMessage: ''};
         default: 
-            return {...state, isLoading: true, token: null}
+            return { isLoading: true, token: null, isSignout: false, errorMessage: '' }
     }
 }
 
@@ -28,29 +32,35 @@ const clearErrorMessage = dispatch => () => {
 }
 
 // Automatic signin
-const tryLocalSignin = dispatch => async () => {
+const restoreToken = dispatch => async () => {
+    let token;
+    
     try {
-        const token = await AsyncStorage.getItem('token');
-        if(token) {
-            await dispatch({ type: 'signin', payload: token, isLoading: false});
-            navigate('Home');
-        } else {
-            await dispatch({isLoading: false});
-            navigate('Login');
-        }
-    } catch(err) {
-        console.log("tryLocalSignin error:", err);
+        token = await SecureStore.getItemAsync('token');
+    } catch(e){
+       console.log("cant to get token...");
     }
+    dispatch({type: 'restore_token', payload: token});
+    /*React.useEffect(async () => {
+        let token;
+    
+            try {
+                token = await SecureStore.getItemAsync('token');
+            } catch(e){
+                console.log("cant to get token...");
+            }
+            dispatch({type: 'restore_token', payload: token});
+    }, []);*/
 }
+
 // signup post
 const signup = dispatch => async ({email, password, first_name, last_name, birthdate, phone}) => {
     try {
         // get responsed
         const response = await CareLogAPI.post('/signup', {email, password, first_name, last_name, birthdate, phone});
         // save token at AsyncStorage
-        await AsyncStorage.setItem('token', response.data.token);
+        await SecureStore.setItemAsync('token', response.data.token);
         dispatch({ type: 'signup', payload: response.data.token });
-        navigate('Home');
     } catch(err) {
         // add error
         dispatch({ type: 'add_error', payload: 'Something went wrong with signup.' });
@@ -64,9 +74,8 @@ const signin = (dispatch) => async ({ email, password }) => {
         // get responsed
         const response = await CareLogAPI.post('/signin', { email, password });
         // save token at AsyncStorage
-        await AsyncStorage.setItem('token', response.data.token);
+        await SecureStore.setItemAsync('token', response.data.token);
         dispatch({ type: 'signin', payload: response.data.token });
-        navigate('Home');
     } catch(err) {
         // add error
         dispatch({ type: 'add_error', payload: 'Something went wrong with signin.' });
@@ -74,13 +83,13 @@ const signin = (dispatch) => async ({ email, password }) => {
 };
 
 const signout = dispatch => async () => {
-    await AsyncStorage.removeItem('token');
+    await SecureStore.deleteItemAsync('token');
     dispatch({type: 'signout'});
     navigate('Login');
 };
 
 export const { Provider, Context } = createDataContext(
     authReducer,
-    { signin, signout, signup, clearErrorMessage, tryLocalSignin },
-    { token: null, errorMessage: '', isLoading: true }
+    { signin, signout, signup, clearErrorMessage, restoreToken },
+    { token: null, errorMessage: '', isLoading: true, isSignout: false }
 );

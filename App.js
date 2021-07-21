@@ -13,36 +13,33 @@ import StatisticsScreen from './src/Screens/StatisticsScreen';
 import { Icon } from 'react-native-elements';
 import SignupScreen from './src/Screens/SignupScreen';
 import Questionnaire from './src/Screens/Questionnaire';
+import SplashScreen from './src/Screens/SplashScreen';
 
 import { Provider as AuthProvider, Context as AuthContext } from './src/Context/AuthContext';
 import { navigationRef, isReadyRef } from './src/navigationRef';
-import SplashScreen from  "react-native-splash-screen";
 import { NativeBaseProvider } from "native-base";
-import AuthLoadingScreen from './src/Screens/AuthLoadingScreen';
 //import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-const logged = () => {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen name=""></Stack.Screen>
-    </Stack.Navigator>
-  )
-}
-
 const App = () => {
+  const { state, restoreToken } = useContext(AuthContext);
+
   React.useEffect(() => {
+    restoreToken();
     return () => {
-      SplashScreen.show();
       isReadyRef.current = false
     };
   }, []);
 
-  const { state, isLoading } = useContext(AuthContext);
-  console.log(isLoading);
+  if(state.isLoading) {
+    return <SplashScreen />
+  }
+
+  console.log(state);
+
   return (
       <NavigationContainer 
       ref={ navigationRef }
@@ -73,10 +70,24 @@ const App = () => {
           <Drawer.Screen name="Questionnaire" options={{title: "Questionnaire"}} component={Questionnaire} />
         </Drawer.Navigator>
         :
-        <Stack.Navigator initialRouteName="AuthLoading">
-          <Stack.Screen name="AuthLoading" options={{ headerShown:false }} component={AuthLoadingScreen} />
-          <Stack.Screen name="Login" options={{ headerShown:false }} component={LoginScreen} />
-          <Stack.Screen name="Register" options={{ headerShown:false }} component={SignupScreen} />
+        <Stack.Navigator initialRouteName="Login">
+          <Stack.Screen 
+            name="Login" 
+            component={LoginScreen} 
+            options={{
+              headerShown: false,
+              animationTypeForReplace: state.isSignout ? 'pop' : 'push'
+            }}
+          />
+          <Stack.Screen
+            name="Register"
+            options={{ headerShown:false }}
+            component={SignupScreen}
+            options={{
+              headerShown: false,
+              animationTypeForReplace: 'push'
+            }}
+          />
         </Stack.Navigator>
         }
       </NavigationContainer>
@@ -85,11 +96,11 @@ const App = () => {
 
 export default () => {
   return (
-    <NativeBaseProvider>
-      <AuthProvider>
+    <AuthProvider>
+      <NativeBaseProvider>
         <StatusBar style="auto" />
         <App />
-      </AuthProvider>
-    </NativeBaseProvider>
+      </NativeBaseProvider>
+    </AuthProvider>
   );
 };

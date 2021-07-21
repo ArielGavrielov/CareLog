@@ -7,7 +7,7 @@ import { TouchableWithoutFeedback , View } from 'react-native';
 
 export const InputControl = ({
     name, control, rules={}, render=null, keyboardType='default',
-    leftIcon=null, secureTextEntry=false, autoCapitalize=false,
+    leftIcon=null, secureTextEntry=false, autoCapitalize='none',
     autoCorrect = false, style={}, containerStyle={}
 }) => {
     const {
