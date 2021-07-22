@@ -10,17 +10,19 @@ const authReducer = (state, action) => {
         case 'restore_token':
             return {...state, token: action.payload, isLoading: false}
         case 'add_error': // if not responsed code 200;
-            return { ...state, errorMessage: action.payload };
+            return { ...state, errorMessage: action.payload, message: '' };
         case 'signin':
             return { ...state, errorMessage: '', token: action.payload, isSignout: false };
         case 'signup':
             return { ...state, errorMessage: '', token: action.payload, isSignout: false };
         case 'signout':
             return { ...state, errorMessage: '', token: null, isSignout: true };
+        case 'reset_password':
+                return { ...state, errorMessage: '', message: action.payload};
         case 'clear_error_message':
             return {...state, errorMessage: ''};
         default: 
-            return { isLoading: true, token: null, isSignout: false, errorMessage: '' }
+            return { isLoading: true, token: null, isSignout: false, errorMessage: '', message:'' }
     }
 }
 
@@ -41,16 +43,6 @@ const restoreToken = dispatch => async () => {
        console.log("cant to get token...");
     }
     dispatch({type: 'restore_token', payload: token});
-    /*React.useEffect(async () => {
-        let token;
-    
-            try {
-                token = await SecureStore.getItemAsync('token');
-            } catch(e){
-                console.log("cant to get token...");
-            }
-            dispatch({type: 'restore_token', payload: token});
-    }, []);*/
 }
 
 // signup post
@@ -66,6 +58,19 @@ const signup = dispatch => async ({email, password, first_name, last_name, birth
         dispatch({ type: 'add_error', payload: 'Something went wrong with signup.' });
     }
 };
+
+// reset password post
+const getResetPasswordToken = dispatch => async ({email, birthdate}) => {
+    try {
+        console.log(email, birthdate);
+        // get responsed
+        const response = await CareLogAPI.post('/reset-password', {email, birthdate});
+        dispatch({ type: 'reset_password', payload: response.data.message });
+    } catch(err) {
+        // add error
+        dispatch({ type: 'add_error', payload: 'Something went wrong with reset password.' });
+    }
+}
 
 // signin post
 const signin = (dispatch) => async ({ email, password }) => {
@@ -90,6 +95,6 @@ const signout = dispatch => async () => {
 
 export const { Provider, Context } = createDataContext(
     authReducer,
-    { signin, signout, signup, clearErrorMessage, restoreToken },
-    { token: null, errorMessage: '', isLoading: true, isSignout: false }
+    { signin, signout, signup, clearErrorMessage, restoreToken, getResetPasswordToken },
+    { token: null, errorMessage: '', isLoading: true, isSignout: false, message:'' }
 );

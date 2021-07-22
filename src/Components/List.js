@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Card, ListItem, Button, Icon, CheckBox, Text } from 'react-native-elements';
+import { ScrollView } from 'react-native-gesture-handler';
 
 
 const List = ({title, items}) => {
@@ -9,25 +10,23 @@ const List = ({title, items}) => {
         <Card>
             <Card.Title>{title}</Card.Title>
             <Card.Divider color = '#FFC0CB'/>
+            <ScrollView nestedScrollEnabled = {true} style={{height: 100}}>
             {
                 items.map((item, i) => (
-                    <ListItem key={i} bottomDivider>
-                        <ListItem.Content>
-                            <ListItem.CheckBox 
-                                title={item.title}
-                                checked={item.checked}
-                                onPress={
-                                    () => {
-                                        item.checked = !item.checked;
-                                        setValues({...values, items})
-                                    }
-                                } 
-                            />
-                        </ListItem.Content>
-                        <ListItem.Chevron />
-                    </ListItem>
+                    <CheckBox 
+                        key={i}
+                        title={item.title}
+                        checked={item.checked}
+                        onPress={
+                            () => {
+                                item.checked = !item.checked;
+                                setValues({...values, items})
+                            }
+                        } 
+                    />
                 ))
             }
+            </ScrollView>
         </Card>
     );
 }

@@ -1,21 +1,19 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Image, Text, Button, SocialIcon, CheckBox } from 'react-native-elements';
-//import { CheckBox } from 'native-base';
+import { Image, Text, Button, SocialIcon } from 'react-native-elements';
 import { useForm, Controller } from 'react-hook-form';
+import BouncyCheckbox from "react-native-bouncy-checkbox";
+
 import * as patterns from '../Components/Patterns';
 import { InputControl, DateInputControl } from '../Components/InputControl';
+import { Stack } from 'native-base';
 
 const SignupScreen = () => {
-    const { control, handleSubmit, watch, formState: { errors } } = useForm();
+    const { control, handleSubmit, watch, trigger, formState } = useForm();
     const onSubmit = (data) => {
         console.log(data);
     }
-
-    const onNot = (data) => {
-        console.log(data);
-    }
-
+    console.log(formState);
     const [chosenDate, setDate] = useState(new Date());
     return (
     <View style={{flex:1,alignItems: "center",justifyContent: "center"}}>
@@ -25,6 +23,7 @@ const SignupScreen = () => {
             <InputControl
                 containerStyle={{flex:1}}
                 control={control}
+                trigger={trigger}
                 name="First Name"
                 rules={{
                     required: "You must specify a first name",
@@ -38,6 +37,7 @@ const SignupScreen = () => {
             <InputControl
                 containerStyle={{flex:1}}
                 control={control}
+                trigger={trigger}
                 name="Last Name"
                 rules={{
                     required: "You must specify a last name",
@@ -52,6 +52,8 @@ const SignupScreen = () => {
         <InputControl
             keyboardType='email-address'
             control={control}
+            trigger={trigger}
+            onEndEditing={() => console.log("TEST")}
             name="Email"
             leftIcon={{type: 'font-awesome-5', name: 'envelope'}}
             rules={{
@@ -63,6 +65,7 @@ const SignupScreen = () => {
             <InputControl
                 containerStyle={{flex:1}}
                 control={control}
+                trigger={trigger}
                 name="Password"
                 secureTextEntry
                 leftIcon={{type: 'font-awesome-5', name: 'key'}}
@@ -82,6 +85,7 @@ const SignupScreen = () => {
             <InputControl
                 containerStyle={{flex:1}}
                 control={control}
+                trigger={trigger}
                 name="Repeat password"
                 secureTextEntry
                 leftIcon={{type: 'font-awesome-5', name: 'redo-alt'}}
@@ -94,7 +98,9 @@ const SignupScreen = () => {
         <InputControl
             keyboardType='phone-pad'
             control={control}
+            trigger={trigger}
             name="Phone number"
+            trigger={trigger}
             leftIcon={{type: 'font-awesome-5', name: 'mobile-alt'}}
             rules={{
                 required: "You must specify a phone number",
@@ -104,6 +110,7 @@ const SignupScreen = () => {
         <DateInputControl
             leftIcon={{type: 'font-awesome-5', name: 'calendar-minus'}}
             control={control}
+            trigger={trigger}
             name="Birth date"
             rules={{
                 validate:(v) => {return !Number.isNaN(Date.parse(v)) ? true : 'Invalid date!';},
@@ -113,29 +120,38 @@ const SignupScreen = () => {
         />
         <Controller
             control={control}
-            name="test"
+            name="policy"
             render={({
                 field: { onChange, value=false },
                 fieldState: { error }
                 }) => (
                     <View style={{alignSelf:'flex-start', marginTop: 10, marginBottom: 10}}>
                         <View style={{flexDirection:'row'}}>
-                            <CheckBox
-                            color='pink'
-                                checked={value}
-                                onPress={() => onChange(!value)}
+                            <BouncyCheckbox
+                                text='I agree with privacy policy'
+                                fillColor='pink'
+                                isChecked={value}
+                                onPress={(isChecked) => {
+                                    onChange(isChecked);
+                                    trigger("policy");
+                                }}
                             />
-                            <Text style={{marginLeft:20}}>I agree with privacy policy</Text>
                         </View>
                         {error ? <Text style={{color:'red', fontSize:12, marginLeft:15}}>{error.message}</Text> : null}
                     </View>
                 )
             }
             rules={{
-                validate: value => value == false && 'You must accept terms and conditions'
+                validate: value => value == false ? 'You must accept terms and conditions' : true
             }}
         />
-        <Button title='Sign up' onPress={handleSubmit(onSubmit)} titleStyle={{color:"white"}} buttonStyle={{backgroundColor: "#FF1481"}} />
+        <Button 
+        buttonStyle={ styles.registerBtn } 
+        titleStyle= {{ color: "white" }}
+        title="Sign up"
+        type="solid"
+        onPress={handleSubmit(onSubmit, (errors) => console.log(errors))}
+      />
         <View style={{flexDirection: 'row', alignItems: 'center', margin:20}}>
             <View style={{flex: 1, height: 1, backgroundColor: 'pink'}} />
             <View>
@@ -170,6 +186,13 @@ const styles = StyleSheet.create({
     },
     headerText: {
         marginBottom: 40
+    },
+    registerBtn: {
+        width: "100%",
+        borderRadius: 25,
+        height: 50,
+        backgroundColor: "#FF1493",
+        color: '#fff'
     }
 });
 export default SignupScreen;

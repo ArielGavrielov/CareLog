@@ -3,8 +3,8 @@ import {Context as AuthContext} from '../Context/AuthContext';
 import { Text, Button, ListItem, Icon } from 'react-native-elements';
 import { View } from 'react-native';
 
-export default AccountScreen = () => {
-    const { state, signout } = useContext(AuthContext);
+const AccountScreen = () => {
+  const { state, signout } = useContext(AuthContext);
     const list = [
         {
           title: 'Personal details',
@@ -44,5 +44,7 @@ export default AccountScreen = () => {
         ))
     }
     </View>
-    )
+    );
 }
+
+export default AccountScreen;

@@ -1,41 +1,64 @@
 import React, { Component, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Text, Avatar, Divider, Card, ListItem, Button, Icon, CheckBox, Rating, AirbnbRating } from 'react-native-elements'
+import { Rating, Text, Avatar, Divider, Card, ListItem, Button, Icon, CheckBox } from 'react-native-elements';
+import { ScrollView } from 'react-native-gesture-handler';
 
 import List from '../Components/List';
+import ProgressBar from '../Components/ProgressBar'
+
+import EventCalendar from 'react-native-events-calendar'
+
+const events = [
+  { start: '2021-09-07 01:30:00', end: '2021-09-07 02:00:00', title: 'Dr. Mor Ben Shushan', summary: 'Nahariya' },
+  { start: '2021-09-07 02:30:00', end: '2021-09-07 03:00:00', title: 'Dr. Ariel Gavrielov', summary: 'Akko' },
+  { start: '2021-09-07 03:30:00', end: '2021-09-07 04:00:00', title: 'Dr. Shadi', summary: 'Kfar' }
+]
 
 const HomeScreen = () => {
   const items = [
     {
-      title: 'test1',
+      title: 'Take medicine',
       checked: false
     },
     {
-      title: 'test2',
+      title: 'Go for a examination',
+      checked: true
+    },
+    {
+      title: 'Go for a examination',
+      checked: true
+    },
+    {
+      title: 'Go for a examination',
+      checked: true
+    },
+    {
+      title: 'Go for a examination',
+      checked: true
+    },
+    {
+      title: 'Go for a examination',
       checked: true
     }
-  ]
-  const [checkBox, setCheckBox] = useState(true);
+  ];
+
   const [rating, setRating] = useState(5);
 
   return (
-    <View>
+    <ScrollView nestedScrollEnabled = {true}>
       <Card>
         <Card.Title>How do you feel?</Card.Title>
         <Card.Divider color = '#FFC0CB'/>
-        <AirbnbRating
+        <Rating
           reviews={['Terrible', 'Bad', 'Okay', 'Good', 'Great']}
-          type='star'
-          ratingCount={5}
+          type='heart'
           imageSize={40}
-          fractions="{0}"
           showRating
+          fractions={0}
           startingValue={rating}
           onFinishRating={(v) => setRating(v)}
         />
       </Card>
-        <Text h4>Daily Health Index</Text>
-        <Divider orientation="horizontal" color='#FFC0CB' width='5'/>
         <Card>
             <Card.Title>Upcomming Events</Card.Title>
             <Card.Divider color = '#FFC0CB'/>
@@ -47,23 +70,32 @@ const HomeScreen = () => {
               buttonStyle={styles.buttonS}
               title='SEE ALL EVENTS  BUTTON' />
         </Card>
-        <Card>
-            <Card.Title>To Do list</Card.Title>
-            <Card.Divider color = '#FFC0CB'/>
-              <CheckBox
-                  title='Click Here'
-                  checked={checkBox}
-                  onPress={() => setCheckBox(!checkBox)}
-                />
-            <CheckBox
-                  center
-                  title='Click Here'
-                  checked={checkBox}
-                  onPress={() => setCheckBox(!checkBox)}
-                />
-        </Card>
-        <List title='test' items={items}/>
-    </View>
+        <List title='To-Do List' items={items}/>
+        <ProgressBar
+          title='Daily progress'
+          data={[
+            {
+              title: 'Water',
+              colorScheme: 'blue',
+              value: 9,
+              min: 0,
+              max: 10
+            },
+            {
+              title: 'Steps',
+              colorScheme: 'green',
+              value: 1000,
+              min: 0,
+              max: 5000
+            }
+          ]}
+        />
+        <EventCalendar
+          events={events}
+          width={400}
+          initDate={'2021-09-07 08:00:00'}
+        />
+    </ScrollView>
          
     );
 }

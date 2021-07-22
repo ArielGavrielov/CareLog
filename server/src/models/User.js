@@ -38,7 +38,7 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         require: true,
-        validate: /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,32}$/
+        validate: /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,16}$/
     },
     phone: {
         type: String,
@@ -78,4 +78,4 @@ userSchema.methods.comparePassword = function comparePassword(candidatePassword)
     });
 }
 
-mongoose.model('User', userSchema);
+module.exports = mongoose.model('User', userSchema);

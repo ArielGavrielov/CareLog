@@ -18,6 +18,7 @@ import SplashScreen from './src/Screens/SplashScreen';
 import { Provider as AuthProvider, Context as AuthContext } from './src/Context/AuthContext';
 import { navigationRef, isReadyRef } from './src/navigationRef';
 import { NativeBaseProvider } from "native-base";
+import ForgotScreen from './src/Screens/ForgotScreen';
 //import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Drawer = createDrawerNavigator();
@@ -86,6 +87,15 @@ const App = () => {
             options={{
               headerShown: false,
               animationTypeForReplace: 'push'
+            }}
+          />
+          <Stack.Screen
+            name="Forgot"
+            options={{ headerShown:false }}
+            component={ForgotScreen}
+            options={{
+              headerShown: false,
+              animationTypeForReplace: 'pop'
             }}
           />
         </Stack.Navigator>

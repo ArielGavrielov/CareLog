@@ -1,19 +1,18 @@
 import React, { useState } from 'react';
-import { Platform } from 'react-native';
+import { Platform, TouchableWithoutFeedback , View } from 'react-native';
 import { Input } from 'react-native-elements';
 import { useController } from 'react-hook-form';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
-import { TouchableWithoutFeedback , View } from 'react-native';
 
 export const InputControl = ({
-    name, control, rules={}, render=null, keyboardType='default',
-    leftIcon=null, secureTextEntry=false, autoCapitalize='none',
-    autoCorrect = false, style={}, containerStyle={}
+    name, control, rules={}, trigger=() => console.log("there is no trigger."), render=null, keyboardType='default',
+    leftIcon=null, secureTextEntry=false, autoCapitalize='none', defaultValue='',
+    autoCorrect = false, style={}, containerStyle={}, onEndEditing=null
 }) => {
     const {
         field: { onChange, value, onBlur },
-        fieldState: { error }
-    } = useController({name, control, rules, defaultValue:''});
+        fieldState: { error, invalid, isTouched }
+    } = useController({name: name.replace(/\s/g, '').toLowerCase(), control, rules, defaultValue: defaultValue, shouldUnregister: false});
     return render ? render : (
         <Input
             containerStyle={containerStyle}
@@ -24,21 +23,31 @@ export const InputControl = ({
             errorMessage={error && error.message}
             leftIcon={leftIcon}
             onBlur={onBlur}
-            onChangeText={value => onChange(value)}
+            onChangeText={(text) => {
+                onChange(text);
+                if(isTouched || invalid) trigger(name);
+            }}
             value={value}
             secureTextEntry={secureTextEntry}
             autoCapitalize={autoCapitalize}
             autoCorrect={autoCorrect}
             autoFocus={false}
+            onEndEditing={() => {
+                trigger(name);
+                console.log(name);
+                if(typeof onEndEditing === 'function')
+                    onEndEditing();
+                console.log(value, error);
+            }}
         />
     )
 }
 
-export const DateInputControl = ({name, control, rules={}, render=null, leftIcon=null,style={}}) => {
+export const DateInputControl = ({name, control, rules={}, render=null, leftIcon=null,style={}, trigger=()=>console.log("there is no trigger.")}) => {
     const {
         field: { onChange, value, onBlur },
         fieldState: { error }
-    } = useController({name, control, rules, defaultValue:''});
+    } = useController({name: name.replace(/\s/g, '').toLowerCase(), control, rules, defaultValue:''});
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
 
     const dateToString = (date) => {
@@ -54,6 +63,7 @@ export const DateInputControl = ({name, control, rules={}, render=null, leftIcon
         <View style={{flexDirection: 'row'}}>
             <TouchableWithoutFeedback
                 onPress={() => setDatePickerVisibility(true)}
+                onBlur={onBlur}
             >
                 <View style={{flex: 1}}>
                     <Input
@@ -63,8 +73,10 @@ export const DateInputControl = ({name, control, rules={}, render=null, leftIcon
                     inputContainerStyle={error && {borderBottomColor:'red'}}
                     errorMessage={error && error.message}
                     leftIcon={leftIcon}
-                    onBlur={onBlur}
-                    onChangeText={value => onChange(value)}
+                    onChangeText={(text) => {
+                        onChange(text);
+                        trigger(name);
+                    }}
                     value={value}
                     autoFocus={false}
                     onTouchEnd={() => setDatePickerVisibility(true)}
@@ -85,6 +97,7 @@ export const DateInputControl = ({name, control, rules={}, render=null, leftIcon
                     console.log(date);
                     Date.parse()
                     onChange(dateToString(new Date(date)));
+                    trigger();
                 }}
                 onCancel={() => setDatePickerVisibility(false)}
             />

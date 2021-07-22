@@ -1,9 +1,13 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
-const User = mongoose.model('User');
+const nodemailer = require("nodemailer");
+const User = require('../models/User');
+const resetPassword = require('./resetPassword');
 
 const route = express.Router();
+
+route.use('/reset-password', resetPassword);
 
 route.post('/signup', async (req, res) => {
     const { email, id, fname, lname, symptoms, birthdate, username, password, phone, disease } = req.body;
