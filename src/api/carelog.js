@@ -9,23 +9,11 @@ export const CareLogAPI = axios.create({
 export const postIndices = async (type, value) => {
     try {
         const response = await CareLogAPI.post('/user/indices/' + type, value,
-        {headers: {
+        { headers: {
                 'Authorization': 'Bearer ' + await SecureStore.getItemAsync('token')
         }});
-        console.log(response.data);
+        return {error: false, message: response.data.message};
     } catch(err) {
-        console.log(err.message);
+        return {error: true, message: err.message};
     }
 };
-
-export const updateUserData = async () => {
-    try {
-        const response = await CareLogAPI.get('/user/', 
-        {headers: {
-            'Authorization': 'Bearer ' + await SecureStore.getItemAsync('token')
-        }})
-        console.log(response.data);
-    } catch(err) {
-        console.log(err.message);
-    }
-}

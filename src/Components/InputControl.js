@@ -25,7 +25,7 @@ export const InputControl = ({
             onBlur={onBlur}
             onChangeText={(text) => {
                 onChange(text);
-                if(isTouched || invalid) trigger(name);
+                /*if(isTouched || invalid)*/ trigger(name);
             }}
             value={value}
             secureTextEntry={secureTextEntry}

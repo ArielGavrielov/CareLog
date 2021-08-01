@@ -13,6 +13,7 @@ import { Icon, Header } from 'react-native-elements';
 import SignupScreen from './src/Screens/SignupScreen';
 import Questionnaire from './src/Screens/Questionnaire';
 import SplashScreen from './src/Screens/SplashScreen';
+import IndicesScreen from './src/Screens/IndicesScreen';
 
 import { Provider as AuthProvider, Context as AuthContext } from './src/Context/AuthContext';
 import { navigationRef, isReadyRef } from './src/navigationRef';
@@ -32,7 +33,7 @@ const App = () => {
       isReadyRef.current = false
     };
   }, []);
-  
+
   if(state.isLoading || !state.userDetails && !state.isSignout) {
     return <SplashScreen />
   }
@@ -48,11 +49,12 @@ const App = () => {
         <>
           <Header backgroundColor='white'
           leftComponent={{ icon: 'menu', color: '#000', iconStyle: { color: '#fff' } }}
-          centerComponent={{ text:"Hello " + state.userDetails.fname, style: { color: '#000' } }}
+          centerComponent={{ text:"Hello " + state.userDetails.firstname, style: { color: '#000' } }}
           rightComponent={{ icon: 'home', color: '#fff' }}
           />
         <Tab.Navigator
         initialRouteName="Home"
+        activeColor='pink'
         screenOptions={({route, navigation}) => ({
           headerTitle: 'TEST',
           headerRight: () => (
@@ -67,11 +69,81 @@ const App = () => {
           headerShown: true,
           headerTintColor: "pink"
       })}>
-          <Tab.Screen name="Home" options={{title: "Home"}} component={HomeScreen} />
-          <Tab.Screen name="Files" options={{title: "Files"}} component={SecondScreen} />
-          <Tab.Screen name="Profile" options={{title: "Profile"}} component={AccountScreen} />
-          <Tab.Screen name="Statistics" options={{title: "Statistics"}} component={StatisticsScreen} />
-          <Tab.Screen name="Questionnaire" options={{title: "Questionnaire"}} component={Questionnaire} />
+          <Tab.Screen
+            name="Home"
+            options={{
+              title: "Home",
+              tabBarIcon: ({ color, size }) => (
+                <Icon 
+                  name='home'
+                  type='feather'
+                  color={color}
+                  size={size}
+                />
+              )
+            }}
+            component={HomeScreen}
+          />
+          <Tab.Screen 
+            name="Files" 
+            options={{
+              title: "Files",
+              tabBarIcon: ({ color, size }) => (
+                <Icon 
+                  name='file'
+                  type='feather'
+                  color={color}
+                  size={size}
+                />
+              )
+            }} 
+            component={SecondScreen} 
+          />
+          <Tab.Screen 
+            name="Statistics" 
+            options={{
+              title: "Statistics",
+              tabBarIcon: ({color, size}) => (
+                <Icon 
+                    name='pie-chart'
+                    type='feather'
+                    color={color}
+                    size={size}
+                />
+              )
+            }} 
+            component={StatisticsScreen} 
+          />
+          <Tab.Screen 
+            name="Indices" 
+            options={{
+              title: "Indices",
+              tabBarIcon: ({color, size}) => (
+                <Icon 
+                    name='list'
+                    type='feather'
+                    color={color}
+                    size={size}
+                />
+              )
+            }} 
+            component={IndicesScreen} 
+          />
+          <Tab.Screen 
+            name="Profile" 
+            options={{
+              title: "Profile",
+              tabBarIcon: ({ color, size }) => (
+                <Icon 
+                  name='user'
+                  type='feather'
+                  color={color}
+                  size={size}
+                />
+              )
+            }} 
+            component={AccountScreen} 
+          />
         </Tab.Navigator>
         </>
         :
