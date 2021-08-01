@@ -14,7 +14,8 @@ const mongoUri = 'mongodb+srv://Carelog-db:im6C8vwvJUNzeA0J@cluster0.0sbxa.mongo
 mongoose.connect(mongoUri, {
     useNewUrlParser: true,
     useCreateIndex: true,
-    useUnifiedTopology: true
+    useUnifiedTopology: true,
+    useFindAndModify: true
 });
 mongoose.connection.on('connected', () => {
     console.log('connected to mongodb instance');
@@ -22,7 +23,5 @@ mongoose.connection.on('connected', () => {
 mongoose.connection.on('error', (err) => {
     console.error('mongodb error', err);
 });
-app.get('/', requireAuth, (req, res) => {
-    res.send(`Your email is ${req.user.email}`);
-});
+
 app.listen(process.env.PORT || 3000, () => console.log('Listening to ' + process.env.PORT || 3000));

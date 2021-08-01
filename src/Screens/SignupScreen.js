@@ -6,15 +6,15 @@ import BouncyCheckbox from "react-native-bouncy-checkbox";
 
 import * as patterns from '../Components/Patterns';
 import { InputControl, DateInputControl } from '../Components/InputControl';
-import { Stack } from 'native-base';
+import { Context as AuthContext } from '../Context/AuthContext';
 
 const SignupScreen = () => {
+    const { state, signup } = React.useContext(AuthContext);
     const { control, handleSubmit, watch, trigger, formState } = useForm();
     const onSubmit = (data) => {
-        console.log(data);
+        signup({...data, phone: data.phonenumber});
     }
-    console.log(formState);
-    const [chosenDate, setDate] = useState(new Date());
+
     return (
     <View style={{flex:1,alignItems: "center",justifyContent: "center"}}>
         <Image style={styles.image} source={require("../assets/logo-197X69.png")} />
@@ -91,7 +91,7 @@ const SignupScreen = () => {
                 leftIcon={{type: 'font-awesome-5', name: 'redo-alt'}}
                 rules={{
                     required: "You must repeat the password",
-                    validate: value => value === watch("Password") || "The passwords do not match"
+                    validate: value => value === watch("password") || "The passwords do not match"
                 }}
             />
         </View>
@@ -145,7 +145,7 @@ const SignupScreen = () => {
                 validate: value => value == false ? 'You must accept terms and conditions' : true
             }}
         />
-        <Button 
+        <Button
         buttonStyle={ styles.registerBtn } 
         titleStyle= {{ color: "white" }}
         title="Sign up"

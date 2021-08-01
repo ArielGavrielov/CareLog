@@ -1,31 +1,156 @@
-import React, { Component, useState } from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Rating, Text, Avatar, Divider, Card, ListItem, Button, Icon, CheckBox } from 'react-native-elements';
-import { ScrollView } from 'react-native-gesture-handler';
+import { Rating, Text, Avatar, Divider, Card, ListItem, Button, Icon } from 'react-native-elements';
+import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
+import { InputControl } from '../Components/InputControl';
+import { useForm } from "react-hook-form";
+import { postIndices } from '../api/carelog';
 
 import List from '../Components/List';
 import ProgressBar from '../Components/ProgressBar'
 
-import EventCalendar from 'react-native-events-calendar'
-
 const events = [
-  { start: '2021-09-07 01:30:00', end: '2021-09-07 02:00:00', title: 'Dr. Mor Ben Shushan', summary: 'Nahariya' },
-  { start: '2021-09-07 02:30:00', end: '2021-09-07 03:00:00', title: 'Dr. Ariel Gavrielov', summary: 'Akko' },
-  { start: '2021-09-07 03:30:00', end: '2021-09-07 04:00:00', title: 'Dr. Shadi', summary: 'Kfar' }
+  { start: '07-09-2021 13:30:00', end: '2021-09-07 02:00:00', title: 'Dr. Mor Ben Shushan', summary: 'Nahariya' },
+  { start: '07-09-2021 14:30:00', end: '2021-09-07 03:00:00', title: 'Dr. Ariel Gavrielov', summary: 'Akko' },
+  { start: '07-09-2021 15:30:00', end: '2021-09-07 04:00:00', title: 'Dr. Shadi', summary: 'Kfar' }
 ]
 
 const HomeScreen = () => {
+  //const {state, postIndices} = React.useContext(AuthContext);
+  const {control, handleSubmit} = useForm();
+  const [selected, setSelected] = useState(0);
+
+  const onSubmit = async (values) => {
+    Object.keys(values).forEach((el) => {
+      values[el] = parseInt(values[el]);
+    });
+    await postIndices(indices[selected].route, values);
+  }
+  const [indices, setIndices] = useState([
+    {
+      route: 'blood',
+      title: 'Blood pressure',
+      render: (
+        <View>
+          <InputControl
+            rules={{
+              min: {
+                value: 100,
+                message: 'Minimum value is 100.'
+              },
+              max: {
+                value: 200,
+                message: 'Maximum value is 200.'
+              },
+              required: "Systolic is required."
+            }}
+            control={control}
+            name='Systolic'
+            keyboardType='numeric'
+          />
+          <InputControl
+            rules={{
+              min: {
+                value: 70,
+                message: 'Minimum value is 70.'
+              },
+              max: {
+                value: 140,
+                message: 'Maximum value is 140.'
+              },
+              required: "Diastolic is required."
+            }}
+            control={control}
+            name='Diastolic'
+            keyboardType='numeric'
+          />
+        </View>
+      )
+    },
+    {
+      route: 'pulse',
+      title: 'Pulse',
+      render: (
+        <View>
+          <InputControl
+            rules={{
+              min: {
+                value: 50,
+                message: 'Minimum value is 50.'
+              },
+              max: {
+                value: 200,
+                message: 'Maximum value is 200.'
+              },
+              required: "Pulse is required."
+            }}
+            control={control}
+            name='Pulse'
+            keyboardType='numeric'
+          />
+        </View>
+      )
+    },
+    {
+      route: 'bodyheat',
+      title: 'Body heat',
+      render: (
+        <View>
+          <InputControl
+            rules={{
+              min: {
+                value: 31,
+                message: 'Minimum value is 31.'
+              },
+              max: {
+                value: 43,
+                message: 'Maximum value is 43.'
+              },
+              required: "Body Heat is required."
+            }}
+            control={control}
+            name='Body heat'
+            keyboardType='numeric'
+          />
+        </View>
+      )
+    },
+    {
+      route: 'oxygen',
+      title: 'Oxygen Saturation',
+      render: (
+        <View>
+          <InputControl
+            rules={{
+              min: {
+                value: 60,
+                message: 'Minimum value is 60.'
+              },
+              max: {
+                value: 100,
+                message: 'Maximum value is 100.'
+              },
+              required: "Oxygen Saturation is required."
+            }}
+            control={control}
+            name='Oxygen saturation'
+            keyboardType='numeric'
+          />
+        </View>
+      )
+    },
+  ]);
   const items = [
     {
       title: 'Take medicine',
-      checked: false
+      checked: false,
     },
     {
       title: 'Go for a examination',
       checked: true
     },
     {
-      title: 'Go for a examination',
+      title: 'Enter indices',
       checked: true
     },
     {
@@ -41,7 +166,7 @@ const HomeScreen = () => {
       checked: true
     }
   ];
-
+  
   const [rating, setRating] = useState(5);
 
   return (
@@ -59,12 +184,41 @@ const HomeScreen = () => {
           onFinishRating={(v) => setRating(v)}
         />
       </Card>
+      <Card>
+        <Card.Title>Indices</Card.Title>
+        <Card.Divider color = '#FFC0CB' />
+        <View style={{flex:1, flexDirection: 'row', justifyContent:'space-between', marginBottom: 10, borderBottomColor: 'black', borderBottomWidth: 1}}>
+          {
+            indices.map((item, i) => (
+              <TouchableOpacity
+                key={i}
+                style={styles.border}
+                onPress={() => {
+                  setSelected(i);
+                }}
+              >
+                <Text style={(i === selected ? {fontWeight: 'bold'} : null)}>{item.title}</Text>
+              </TouchableOpacity>
+
+            ))
+          }
+        </View>
+        {indices[selected].render}
+        <Button title='Save' onPress={handleSubmit(onSubmit)} />
+      </Card>
         <Card>
             <Card.Title>Upcomming Events</Card.Title>
-            <Card.Divider color = '#FFC0CB'/>
-            <Text style={styles.cardText}>
-              here we put the upcoming events of the patient
-            </Text>
+            <Card.Divider color='#FFC0CB'/>
+            {events.map((event, i) => (
+        <ListItem key={i} bottomDivider >
+            <ListItem.Content>
+            <ListItem.Title>{event.title}</ListItem.Title>
+            <ListItem.Subtitle>{event.summary}</ListItem.Subtitle>
+            <ListItem.Subtitle>{event.start}</ListItem.Subtitle>
+            </ListItem.Content>
+            <ListItem.Chevron />
+        </ListItem>
+            ))}
             <Button
               icon={<Icon name='code' color='#ffffff' />}
               buttonStyle={styles.buttonS}
@@ -90,11 +244,7 @@ const HomeScreen = () => {
             }
           ]}
         />
-        <EventCalendar
-          events={events}
-          width={400}
-          initDate={'2021-09-07 08:00:00'}
-        />
+       
     </ScrollView>
          
     );
@@ -106,6 +256,15 @@ const styles = StyleSheet.create({
   buttonS: {
     borderRadius: 5,
    backgroundColor: '#FFC0CB'
+  },
+  border: {
+    paddingRight: 5,
+    paddingLeft: 5,
+    borderEndWidth: 1,
+    borderEndColor: '#FFC0CB'
+  },
+  selected: {
+    fontWeight: "bold"
   }
 });
 export default HomeScreen;

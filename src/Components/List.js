@@ -5,7 +5,6 @@ import { ScrollView } from 'react-native-gesture-handler';
 
 const List = ({title, items}) => {
     const [values, setValues] = useState(items);
-    console.log(values);
     return (
         <Card>
             <Card.Title>{title}</Card.Title>

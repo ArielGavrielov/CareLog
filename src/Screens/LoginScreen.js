@@ -5,7 +5,7 @@ import {
 } from "react-native";
 
 import { Image, Text, Button } from 'react-native-elements';
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { Context as AuthContext } from '../Context/AuthContext';
 import { InputControl } from '../Components/InputControl';
 import * as patterns from '../Components/Patterns';
@@ -13,14 +13,26 @@ import * as patterns from '../Components/Patterns';
 const LoginScreen = ({navigation}) => {
   const { state, signin } = React.useContext(AuthContext);
   const { control, handleSubmit, trigger, formState, getValues } = useForm();
-
+  const isMounted = React.useRef(null);
   const [isLoading, setIsLoading] = React.useState(false);
 
   const onSubmit = async data => {
-    setIsLoading(true);
-    await signin(data);
-    setIsLoading(false);
+    try {
+      setIsLoading(true);
+      await signin(data);
+    } finally {
+      if(isMounted.current) {
+        setIsLoading(false);
+      }
+    }
   }
+
+  React.useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    }
+  }, []);
   
   return (
     <View style={styles.container}>

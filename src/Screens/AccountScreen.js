@@ -8,22 +8,22 @@ const AccountScreen = () => {
     const list = [
         {
           title: 'Personal details',
-          icon: 'av-timer',
+          icon: 'person',
           onPress: () => console.log("Personal details")
         },
         {
           title: 'Settings',
-          icon: 'flight-takeoff',
+          icon: 'settings',
           onPress: () => console.log("Settings")
         },
         {
           title: 'About us',
-          icon: 'flight-takeoff',
+          icon: 'info',
           onPress: () => console.log("About")
         },
         {
             title: 'Signout',
-            icon: 'flight-takeoff',
+            icon: 'logout',
             onPress: () => {
                 signout()
             }
@@ -35,7 +35,7 @@ const AccountScreen = () => {
      {
         list.map((item, i) => (
         <ListItem key={i} bottomDivider onPress={item.onPress}>
-            <Icon name={item.icon} />
+            <Icon name={item.icon} type='material' />
             <ListItem.Content>
             <ListItem.Title>{item.title}</ListItem.Title>
             </ListItem.Content>

@@ -1,5 +1,4 @@
 import React, { useContext } from 'react';
-import { ScrollView } from 'react-native';
 import { StatusBar } from "expo-status-bar";
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
@@ -10,7 +9,7 @@ import SecondScreen from './src/Screens/SecondScreen';
 import LoginScreen from './src/Screens/LoginScreen';
 import AccountScreen from './src/Screens/AccountScreen';
 import StatisticsScreen from './src/Screens/StatisticsScreen';
-import { Icon } from 'react-native-elements';
+import { Icon, Header } from 'react-native-elements';
 import SignupScreen from './src/Screens/SignupScreen';
 import Questionnaire from './src/Screens/Questionnaire';
 import SplashScreen from './src/Screens/SplashScreen';
@@ -19,7 +18,6 @@ import { Provider as AuthProvider, Context as AuthContext } from './src/Context/
 import { navigationRef, isReadyRef } from './src/navigationRef';
 import { NativeBaseProvider } from "native-base";
 import ForgotScreen from './src/Screens/ForgotScreen';
-//import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
@@ -34,12 +32,10 @@ const App = () => {
       isReadyRef.current = false
     };
   }, []);
-
-  if(state.isLoading) {
+  
+  if(state.isLoading || !state.userDetails && !state.isSignout) {
     return <SplashScreen />
   }
-
-  console.log(state);
 
   return (
       <NavigationContainer 
@@ -49,9 +45,16 @@ const App = () => {
       }}
       >
         {state.token !== null ?
-        <Drawer.Navigator
+        <>
+          <Header backgroundColor='white'
+          leftComponent={{ icon: 'menu', color: '#000', iconStyle: { color: '#fff' } }}
+          centerComponent={{ text:"Hello " + state.userDetails.fname, style: { color: '#000' } }}
+          rightComponent={{ icon: 'home', color: '#fff' }}
+          />
+        <Tab.Navigator
         initialRouteName="Home"
         screenOptions={({route, navigation}) => ({
+          headerTitle: 'TEST',
           headerRight: () => (
             <Icon 
               style={{marginRight: 15}}
@@ -64,12 +67,13 @@ const App = () => {
           headerShown: true,
           headerTintColor: "pink"
       })}>
-          <Drawer.Screen name="Home" options={{title: "Home"}} component={HomeScreen} />
-          <Drawer.Screen name="Files" options={{title: "Files"}} component={SecondScreen} />
-          <Drawer.Screen name="Profile" options={{title: "Profile"}} component={AccountScreen} />
-          <Drawer.Screen name="Statistics" options={{title: "Statistics"}} component={StatisticsScreen} />
-          <Drawer.Screen name="Questionnaire" options={{title: "Questionnaire"}} component={Questionnaire} />
-        </Drawer.Navigator>
+          <Tab.Screen name="Home" options={{title: "Home"}} component={HomeScreen} />
+          <Tab.Screen name="Files" options={{title: "Files"}} component={SecondScreen} />
+          <Tab.Screen name="Profile" options={{title: "Profile"}} component={AccountScreen} />
+          <Tab.Screen name="Statistics" options={{title: "Statistics"}} component={StatisticsScreen} />
+          <Tab.Screen name="Questionnaire" options={{title: "Questionnaire"}} component={Questionnaire} />
+        </Tab.Navigator>
+        </>
         :
         <Stack.Navigator initialRouteName="Login">
           <Stack.Screen 

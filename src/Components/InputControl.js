@@ -34,10 +34,8 @@ export const InputControl = ({
             autoFocus={false}
             onEndEditing={() => {
                 trigger(name);
-                console.log(name);
                 if(typeof onEndEditing === 'function')
                     onEndEditing();
-                console.log(value, error);
             }}
         />
     )
@@ -94,7 +92,6 @@ export const DateInputControl = ({name, control, rules={}, render=null, leftIcon
                 date={isNaN(Date.parse(value)) ? new Date() : new Date(value)}
                 onConfirm={(date) => {
                     setDatePickerVisibility(false);
-                    console.log(date);
                     Date.parse()
                     onChange(dateToString(new Date(date)));
                     trigger();

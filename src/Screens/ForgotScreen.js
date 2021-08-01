@@ -8,7 +8,7 @@ import { emailPattern, birthdatePattern } from '../Components/Patterns';
 
 const ForgotScreen = (props) => {
     const { control, trigger, handleSubmit, formState } = useForm();
-    const { state, getResetPasswordToken } = React.useContext(AuthContext);
+    const { state, resetPasswordRequest } = React.useContext(AuthContext);
     const [dataState, setDataState] = React.useState({
         isLoading: false,
         countdown: 0
@@ -16,17 +16,17 @@ const ForgotScreen = (props) => {
 
     const onSubmit = async (props) => {
         setDataState({...dataState, isLoading:true});
-        await getResetPasswordToken(props);
+        await resetPasswordRequest(props);
         setDataState({...dataState, isLoading:false, countdown: 30});
     }
 
     React.useEffect(() => {
+        console.log(state);
         if(props.route.params.email)
             trigger('email');
         if(dataState.countdown > 0)
             setTimeout(() => setDataState({countdown: dataState.countdown-1}), 1000);
     });
-    //trigger();
     return (
         <View style={styles.container}>
             <Image style={styles.image} source={require("../assets/logo-197X69.png")} />
@@ -58,7 +58,7 @@ const ForgotScreen = (props) => {
             {state.errorMessage ? 
                 <Text style={styles.errorMessage}>{state.errorMessage}</Text>
             : 
-            state.message ? <Text style={styles.message}>{state.message}</Text> : null}
+            state.payload.message ? <Text style={styles.message}>{state.payload.message}</Text> : null}
             <Button 
                 disabled={!formState.isDirty || !formState.isValid || dataState.isLoading || dataState.countdown > 0}
                 loading={dataState.isLoading}
