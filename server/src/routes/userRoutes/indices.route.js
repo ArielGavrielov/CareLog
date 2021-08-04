@@ -59,16 +59,15 @@ router.get('/:type', (req,res) => {
 });
 
 router.get('/statistic/:type', (req,res) => {
-    console.log(req.params.type);
     if(req.params.type === '' || !req.user.indices[req.params.type])
         return res.status(422).send({error: 'indice not found.'});
 
     switch(req.params.type) {
         case 'blood':
-            return res.send(
-                req.user.indices.blood.sort((o1, o2) => {
-                    return new Date(o1.time) - new Date(o2.time);
-                }).map((el) => el).reduce((acc, e) => {
+            req.user.indices.blood.sort((o1, o2) => {
+                return new Date(o2.time) - new Date(o1.time);
+            });
+            let data = req.user.indices.blood.map((el) => el).reduce((acc, e) => {
                 const date = new Date(e.time);
                 const year = date.getFullYear();
                 const week = getWeekStart(date);
@@ -80,20 +79,25 @@ router.get('/statistic/:type', (req,res) => {
                 acc[year][week][day].push({systolic: e.systolic, diastolic: e.diastolic});
                 
                 return acc;
-            }, {}));
-            /*return res.send({
-                datasets: [{
-                    data: req.user.indices.blood.map(({diastolic}) => diastolic)
-                }, {
-                    data: req.user.indices.blood.map(({systolic}) => systolic)
-                }],
-                time: req.user.indices.blood.map(({time}) => time)
-            });*/
-        default:
+            }, {});
+            
+            function sortObj(obj) {
+                return Object.keys(obj).sort().reverse().reduce(function (result, key) {
+                  result[key] = obj[key];
+                  return result;
+                }, {});
+              }
             return res.send(
-                req.user.indices[req.params.type].sort((o1, o2) => {
-                    return new Date(o1.time) - new Date(o2.time);
-                }).map((el) => el).reduce((acc, e) => {
+                sortObj(data)
+            );
+                
+
+        default:
+            req.user.indices[req.params.type].sort((o1, o2) => {
+                return new Date(o2.time) - new Date(o1.time);
+            });
+            return res.send(
+                req.user.indices[req.params.type].map((el) => el).reduce((acc, e) => {
                 const date = new Date(e.time);
                 const year = date.getFullYear();
                 const week = getWeekStart(date);
@@ -106,13 +110,6 @@ router.get('/statistic/:type', (req,res) => {
                 
                 return acc;
             }, {}));
-
-            /*return res.send({
-                datasets: [{
-                    data: req.user.indices[req.params.type].map((item) => item[req.params.type])
-                }],
-                time: req.user.indices[req.params.type].map(({time}) => time)
-            });*/
     }
 })
 

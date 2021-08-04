@@ -34,7 +34,7 @@ const App = () => {
     };
   }, []);
 
-  if(state.isLoading || !state.userDetails && !state.isSignout) {
+  if(state.isLoading || !state.userDetails.firstname && !state.isSignout) {
     return <SplashScreen />
   }
 
@@ -53,22 +53,7 @@ const App = () => {
           rightComponent={{ icon: 'home', color: '#fff' }}
           />
         <Tab.Navigator
-        initialRouteName="Home"
-        activeColor='pink'
-        screenOptions={({route, navigation}) => ({
-          headerTitle: 'TEST',
-          headerRight: () => (
-            <Icon 
-              style={{marginRight: 15}}
-              onPress={() => navigation.navigate('Profile')}
-              name='user'
-              type='feather'
-              color='pink'
-            />
-          ),
-          headerShown: true,
-          headerTintColor: "pink"
-      })}>
+        initialRouteName="Home">
           <Tab.Screen
             name="Home"
             options={{
