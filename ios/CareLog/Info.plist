@@ -63,5 +63,7 @@
     <true/>
     <key>CFBundleDisplayName</key>
     <string>CareLog</string>
+    <key>NSFaceIDUsageDescription</key>
+    <string>$(PRODUCT_NAME) Authentication with TouchId or FaceID</string>
   </dict>
 </plist>

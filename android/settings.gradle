@@ -1,4 +1,6 @@
 rootProject.name = 'CareLog'
+include ':@ovalmoney_react-native-fitness'
+project(':@ovalmoney_react-native-fitness').projectDir = new File(rootProject.projectDir, '../node_modules/@ovalmoney/react-native-fitness/android')
 
 apply from: '../node_modules/react-native-unimodules/gradle.groovy'
 includeUnimodulesProjects()

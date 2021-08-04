@@ -34,7 +34,7 @@ const App = () => {
     };
   }, []);
 
-  if(state.isLoading || !state.userDetails.firstname && !state.isSignout) {
+  if(state.isLoading || !state.userDetails && !state.isSignout) {
     return <SplashScreen />
   }
 

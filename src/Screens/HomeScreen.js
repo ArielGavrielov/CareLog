@@ -8,6 +8,7 @@ import { postIndices } from '../api/carelog';
 
 import List from '../Components/List';
 import ProgressBar from '../Components/ProgressBar'
+import { getSteps } from '../Components/getSteps';
 
 const events = [
   { start: '07-09-2021 13:30:00', end: '2021-09-07 02:00:00', title: 'Dr. Mor Ben Shushan', summary: 'Nahariya' },
@@ -20,6 +21,7 @@ const HomeScreen = () => {
   const {control, handleSubmit} = useForm();
   const [selected, setSelected] = useState(0);
 
+  console.log(getSteps());
   const onSubmit = async (values) => {
     Object.keys(values).forEach((el) => {
       values[el] = parseInt(values[el]);
