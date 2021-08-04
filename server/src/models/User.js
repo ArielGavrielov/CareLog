@@ -38,8 +38,8 @@ const userSchema = new mongoose.Schema({
     indices: {
         blood: [{
             time: {
-                type: Date,
-                default: new Date()
+                type: String,
+                default: new Date().toUTCString()
             },
             systolic: {
                 type: Number
@@ -50,8 +50,8 @@ const userSchema = new mongoose.Schema({
         }],
         pulse: [{
             time: {
-                type: Date,
-                default: new Date()
+                type: String,
+                default: new Date().toUTCString()
             },
             pulse: {
                 type: Number
@@ -59,8 +59,8 @@ const userSchema = new mongoose.Schema({
         }],
         bodyheat: [{
             time: {
-                type: Date,
-                default: new Date()
+                type: String,
+                default: new Date().toUTCString()
             },
             bodyheat: {
                 type: Number,
@@ -68,8 +68,8 @@ const userSchema = new mongoose.Schema({
         }],
         oxygen: [{
             time: {
-                type: Date,
-                default: new Date()
+                type: String,
+                default: new Date().toUTCString()
             },
             oxygen: {
                 type: Number,

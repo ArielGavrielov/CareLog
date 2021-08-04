@@ -1,20 +1,11 @@
 import React from 'react';
-import { ScrollView, View } from 'react-native';
-import { Card, Text, Icon, Button } from 'react-native-elements';
-import { useForm } from "react-hook-form";
-import { InputControl } from '../Components/InputControl';
+import { ScrollView } from 'react-native';
+import { Text, Icon } from 'react-native-elements';
 import { Indice } from '../Components/Indice';
 
 const IndicesScreen = () => {
-    const {control, handleSubmit} = useForm();
-    const onSubmit = async (values) => {
-        Object.keys(values).forEach((el) => {
-          values[el] = parseInt(values[el]);
-        });
-        await postIndices(indices[selected].route, values);
-      }
 
-    const [indices, setIndices] = React.useState([
+    const indices = [
     {
         route: 'blood',
         title: 'Blood pressure',
@@ -108,8 +99,7 @@ const IndicesScreen = () => {
                 }
             }
         ]
-    }
-]);
+    }];
 
     return (
         <ScrollView>

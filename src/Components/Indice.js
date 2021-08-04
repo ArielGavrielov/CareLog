@@ -21,7 +21,7 @@ export const Indice = (props) => {
             res.error ? 'Error' : 'Success',
             res.message,
             [
-                { text: "OK", onPress: () => console.log("OK Pressed") }
+                { text: "OK" }
             ]
         );
     }

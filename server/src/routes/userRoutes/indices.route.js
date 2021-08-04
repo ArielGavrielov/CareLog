@@ -1,14 +1,120 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../../models/User');
+const moment = require('moment');
+const _ = require('lodash');
 
+function getWeeksRange(date) {
+    const curr = new Date(date.time);
+    const first = curr.getDate() - curr.getDay();
+    const last = first + 6;
+    const format = { year: 'numeric', month: '2-digit', day: '2-digit' };
+    var firstday = new Date(curr.setDate(first)).toLocaleDateString("he-IL", format);
+    var lastday = new Date(curr.setDate(last)).toLocaleDateString("he-IL", format);
+    ;
+    return `${firstday.slice(0, 5).replaceAll('.', '/')}-${lastday.slice(0, 5).replaceAll('.', '/')}`
+  }
+  function twoDigits(number) {
+    const numString = "0" + number;
+    return numString.substring(numString.length - 2);
+  }
+  
+  function getWeekStart(currentdate) {
+    const date = new Date(currentdate);
+    date.setDate(date.getDate() - date.getDay());
+    const sow = twoDigits(date.getDate()) + "/" + twoDigits(date.getMonth() + 1);
+    date.setDate(date.getDate() + 6);
+    const eow = twoDigits(date.getDate()) + "/" + twoDigits(date.getMonth() + 1);
+    return sow + "-" + eow;
+  }
+  
+  function getDay(number) {
+    days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    return days[number];
+  }
+  
 router.get('/', (req,res) => {
+    
     res.send(req.user.indices);
 });
 
 router.get('/:type', (req,res) => {
-    res.send(req.user.indices[req.params.type]);
+    if(!req.params.type || !req.user.indices[req.params.type])
+        return res.status(422).send({error: 'indice not found.'});
+    
+    const result = req.user.indices[req.params.type].map((el) => el).reduce((acc, e) => {
+        const date = new Date(e.time);
+        const year = date.getFullYear();
+        const week = getWeekStart(date);
+        const day = getDay(date.getDay());
+      
+        if (!acc[year]) acc[year] = {};
+        if (!acc[year][week]) acc[year][week] = {};
+        if(!acc[year][week][day]) acc[year][week][day] = [];
+        acc[year][week][day].push(e[req.params.type]);
+        
+        return acc;
+    }, {});
+    res.send(result);
 });
+
+router.get('/statistic/:type', (req,res) => {
+    console.log(req.params.type);
+    if(req.params.type === '' || !req.user.indices[req.params.type])
+        return res.status(422).send({error: 'indice not found.'});
+
+    switch(req.params.type) {
+        case 'blood':
+            return res.send(
+                req.user.indices.blood.sort((o1, o2) => {
+                    return new Date(o1.time) - new Date(o2.time);
+                }).map((el) => el).reduce((acc, e) => {
+                const date = new Date(e.time);
+                const year = date.getFullYear();
+                const week = getWeekStart(date);
+                const day = getDay(date.getDay());
+              
+                if (!acc[year]) acc[year] = {};
+                if (!acc[year][week]) acc[year][week] = {};
+                if(!acc[year][week][day]) acc[year][week][day] = [];
+                acc[year][week][day].push({systolic: e.systolic, diastolic: e.diastolic});
+                
+                return acc;
+            }, {}));
+            /*return res.send({
+                datasets: [{
+                    data: req.user.indices.blood.map(({diastolic}) => diastolic)
+                }, {
+                    data: req.user.indices.blood.map(({systolic}) => systolic)
+                }],
+                time: req.user.indices.blood.map(({time}) => time)
+            });*/
+        default:
+            return res.send(
+                req.user.indices[req.params.type].sort((o1, o2) => {
+                    return new Date(o1.time) - new Date(o2.time);
+                }).map((el) => el).reduce((acc, e) => {
+                const date = new Date(e.time);
+                const year = date.getFullYear();
+                const week = getWeekStart(date);
+                const day = getDay(date.getDay());
+                
+                if (!acc[year]) acc[year] = {};
+                if (!acc[year][week]) acc[year][week] = {};
+                if(!acc[year][week][day]) acc[year][week][day] = [];
+                acc[year][week][day].push(e[req.params.type]);
+                
+                return acc;
+            }, {}));
+
+            /*return res.send({
+                datasets: [{
+                    data: req.user.indices[req.params.type].map((item) => item[req.params.type])
+                }],
+                time: req.user.indices[req.params.type].map(({time}) => time)
+            });*/
+    }
+})
 
 router.post('/:type', (req,res) => {
     switch(req.params.type) {

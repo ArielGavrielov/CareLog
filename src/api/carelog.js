@@ -17,3 +17,16 @@ export const postIndices = async (type, value) => {
         return {error: true, message: err.message};
     }
 };
+
+export const getIndice = async (type='') => {
+    try {
+        const response = await CareLogAPI.get('/user/indices/statistic/' + type,
+        { headers: {
+                'Authorization': 'Bearer ' + await SecureStore.getItemAsync('token')
+        }});
+        return response.data;
+    } catch(err) {
+        console.log(err)
+        return {error: true, message: err.message};
+    }
+}
