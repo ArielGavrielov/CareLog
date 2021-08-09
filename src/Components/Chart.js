@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-import { View, Dimensions, Animated } from 'react-native';
+import { View, Dimensions, Animated, TouchableOpacity, StyleSheet } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Text, Icon, Divider, Card } from 'react-native-elements';
 import { getIndice } from '../api/carelog';
-import SplashScreen from '../Screens/SplashScreen';
-import Swipeable from 'react-native-gesture-handler/Swipeable'
 import {
     LineChart,
     BarChart,
@@ -12,25 +10,34 @@ import {
     ProgressChart,
     ContributionGraph,
     StackedBarChart
-} from "react-native-chart-kit";
-import { TouchableOpacity } from 'react-native-gesture-handler';
+  } from 'react-native-chart-kit'
 
 export const Chart = (props) => {
     const [isLoading, setIsLoading] = React.useState(true);
     const [data, setData] = React.useState({});
     const dataValidation = React.useRef(false);
     const [indexes, setIndexes] = React.useState({year: {i: 0, arr: []}, week: {i: 0, arr: []}});
-    const [statistic, setStatistic] = React.useState([1,null,null,null,null,null,null]);
+    const [statistic, setStatistic] = React.useState({});
 
     const setDataOfWeek = async () => {
+        let Systolic = [];
+        let Diastolic = [];
         let arr = [];
+        let data2 = {};
+        console.log("HERE", data);
         if(!Array.isArray(indexes.year.arr) || !Array.isArray(indexes.week.arr) || Object.keys(data).length == 0) return;
+        console.log("HERE2");
         const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
         weekdays.forEach(day => {
             if(!Array.isArray(data[indexes.year.arr[indexes.year.i]][indexes.week.arr[indexes.week.i]][day]))
-                arr.push(null);
+            //    arr.push(null);
+                console.log("null");
             else {
+                if(!data2['labels']) data2['labels'] = [];
+                data2['labels'].push(day);
+
+                if(!data2['datasets']) data2['datasets'] = [];
+
                 const dayValues = data[indexes.year.arr[indexes.year.i]][indexes.week.arr[indexes.week.i]][day];
                 if(props.type != 'blood') {
                     let sum = 0;
@@ -38,22 +45,27 @@ export const Chart = (props) => {
                         sum += value;
                     });
                     arr.push(sum/dayValues.length);
+                    data2['datasets'] = [{data: arr}];
                 } else {
-                    console.log("here");
-                    //arr.push(1);
                     let sumSystolic = 0;
                     let sumDiastolic = 0;
                     dayValues.forEach(value => {
-                        console.log(value);
                         sumSystolic += value.systolic;
                         sumDiastolic += value.diastolic;
                     });
-                    arr.push(sumSystolic/dayValues.length, sumDiastolic/dayValues.length);
+                    Systolic.push(sumSystolic/dayValues.length);
+                    Diastolic.push(sumDiastolic/dayValues.length);
+                    data2['datasets'] = [
+                        {data: Systolic},
+                        {data: Diastolic}
+                    ]
+                    console.log(data2);
+                    //arr.push(...arr, {systolic: sumSystolic/dayValues.length, diastolic: sumDiastolic/dayValues.length});
                 }
             }
         });
-        setStatistic(arr);
-        console.log(statistic);
+        setStatistic(data2);
+        console.log("statistic", statistic);
     }
     
     const onIndexChange = ({ weekIndex=-1, yearIndex=-1 }) => {
@@ -85,16 +97,6 @@ export const Chart = (props) => {
         }
     };
 
-    const chartConfig = {
-        backgroundColor: "#fff",
-        backgroundGradientFrom: "#fff",
-        backgroundGradientTo: "#fff",
-        color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-        strokeWidth: 1, // optional, default 3
-        barPercentage: 1,
-        useShadowColorFromDataset: false // optional
-    };
-
     useFocusEffect(
         React.useCallback(() => {
             const subscribe = async () => {
@@ -103,7 +105,6 @@ export const Chart = (props) => {
                     dataValidation.current = true;
                     let d = await getIndice(props.type);
                     setData(d);
-                    console.log(d);
                     setIndexes({...indexes, year: {...indexes.year, arr: Object.keys(d).reverse()}});
                 }
             };
@@ -115,7 +116,9 @@ export const Chart = (props) => {
     );
 
     React.useEffect(() => {
+        setIsLoading(true);
         setDataOfWeek();
+        setIsLoading(false);
     }, [indexes]);
 
     React.useMemo(() => {
@@ -129,9 +132,28 @@ export const Chart = (props) => {
       if(isLoading || statistic.length == 0) return <Text style={{alignSelf: 'center'}}>Loading...</Text>
       else if(!Array.isArray(indexes.year.arr) || !data || data == {}) return <Text>No Data</Text>
 
+    const chartConfig = {
+        backgroundGradientFrom: '#Ffffff',
+        backgroundGradientTo: '#ffffff',
+        decimalPlaces: 0, // optional, defaults to 2dp
+        color: (opacity = 1) => `rgba(1, 122, 205, 1)`,
+        labelColor: (opacity = 1) => `rgba(0, 0, 0, 1)`,
+        style: {
+            borderRadius: 16,
+            fontFamily: 'Bogle-Regular'
+        },
+        propsForBackgroundLines: {
+            strokeWidth: 1,
+            stroke: '#efefef',
+            strokeDasharray: '0',
+          },
+          propsForLabels: {
+            fontFamily: 'Arial'
+          },
+        data: {statistic}
+    };
     return (
         <View>
-            <Card>
                 <View style={{flexDirection:'row', justifyContent: 'center'}}>
                     <View style={{flex: 1}}>
                         {
@@ -178,25 +200,22 @@ export const Chart = (props) => {
                         }
                     </View>
                 </View>
-                <Card.Divider color='#FFC0CB'/>
-                <BarChart
-                data={{
-                    labels: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-                    datasets: [
-                        {
-                            data: statistic
-                        }
-                    ]
-                }}
-                //width={Dimensions.get("window").width}
-                width={355}
-                height={220}
-                onDataPointClick={({value, dataset, getColor}) => {
-                    console.log(value, dataset, getColor);
-                }}
-                chartConfig={chartConfig}
-            />
-            </Card>
+                {console.log(statistic)}
+                <LineChart
+                    segments={3}
+                    withShadow={false}
+                    data={statistic}
+                    showBarTops={false}
+                    showValuesOnTopOfBars={true}
+                    width={Dimensions.get('window').width} // from react-native
+                    height={220}
+                    chartConfig={chartConfig}
+                    formatYLabel={(value) => value}
+                    style={{
+                        width: Dimensions.get('window').width,
+                        borderRadius: 16
+                    }}
+                />
         </View>
     );
 }

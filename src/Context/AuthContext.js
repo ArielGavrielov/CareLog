@@ -2,6 +2,7 @@ import createDataContext from './createDataContext';
 import { CareLogAPI } from '../api/carelog';
 import * as SecureStore from 'expo-secure-store';
 import * as LocalAuthentication from 'expo-local-authentication'
+import { Alert } from 'react-native';
 
 const authReducer = (state, action) => {
     switch(action.type) {
@@ -50,26 +51,33 @@ const clearErrorMessage = dispatch => () => {
 
 // Automatic signin
 const restoreToken = dispatch => async () => {
-    const handleBiometricAuth = async () => {  
-        const biometricAuth = await LocalAuthentication.authenticateAsync({
-              promptMessage: 'Login with Biometrics',
-              disableDeviceFallback: true,
-            });
-      }
-
     let token;
     try {
         token = await SecureStore.getItemAsync('token');
         const compatible = await LocalAuthentication.hasHardwareAsync();
         console.log(compatible);
-        console.log(await LocalAuthentication.authenticateAsync({
-            promptMessage: 'Login with Biometrics',
-            disableDeviceFallback: true,
-          }));
-        await updateUserData(dispatch)(token);
-        dispatch({type: 'restore_token', payload: token});
+        if(token && compatible) {
+            const biometricAuth = await LocalAuthentication.authenticateAsync({
+                promptMessage: 'Login with Biometrics',
+                disableDeviceFallback: true,
+                cancelLabel : 'Cancel'
+            });
+            console.log(biometricAuth);
+
+            // need to remove it.
+            await updateUserData(dispatch)(token);
+            dispatch({type: 'restore_token', payload: token});
+            /*if(biometricAuth.success) {
+                await updateUserData(dispatch)(token);
+                dispatch({type: 'restore_token', payload: token});
+            } else dispatch({type: 'restore_token', payload: null});*/
+        } else {
+            await updateUserData(dispatch)(token);
+            dispatch({type: 'restore_token', payload: token});
+        }
     } catch(e){
        console.log("cant to get token...");
+       dispatch({type: 'restore_token', payload: null});
     }
 }
 

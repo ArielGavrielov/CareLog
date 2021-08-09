@@ -39,7 +39,7 @@ const StatisticsScreen = ({navigation}) => {
     },
   };
 
-  const [selected, setSelected] = React.useState(indices.pulse);
+  const [selected, setSelected] = React.useState(indices.blood);
 
   return (
     <View>

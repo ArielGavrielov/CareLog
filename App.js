@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createStackNavigator } from '@react-navigation/stack';
+
 import HomeScreen from './src/Screens/HomeScreen';
 import SecondScreen from './src/Screens/SecondScreen';
 import LoginScreen from './src/Screens/LoginScreen';
@@ -37,7 +38,7 @@ const App = () => {
   if(state.isLoading || !state.userDetails && !state.isSignout) {
     return <SplashScreen />
   }
-
+  
   return (
       <NavigationContainer 
       ref={ navigationRef }

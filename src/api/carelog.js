@@ -3,7 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 
 export const CareLogAPI = axios.create({
     baseURL: 'https://carelog.herokuapp.com/api/',
-    timeout: 5000
+    timeout: 10000
 });
 
 export const postIndices = async (type, value) => {
