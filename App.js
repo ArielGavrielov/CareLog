@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
-import { StatusBar } from "expo-status-bar";
-import { NavigationContainer } from '@react-navigation/native';
+import { useColorScheme, StatusBar, SafeAreaView } from 'react-native';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -12,7 +12,6 @@ import AccountScreen from './src/Screens/AccountScreen';
 import StatisticsScreen from './src/Screens/StatisticsScreen';
 import { Icon, Header } from 'react-native-elements';
 import SignupScreen from './src/Screens/SignupScreen';
-import Questionnaire from './src/Screens/Questionnaire';
 import SplashScreen from './src/Screens/SplashScreen';
 import IndicesScreen from './src/Screens/IndicesScreen';
 
@@ -27,22 +26,49 @@ const Tab = createBottomTabNavigator();
 
 const App = () => {
   const { state, restoreToken } = useContext(AuthContext);
+  const [headerText, setHeaderText] = React.useState('');
+  const scheme = useColorScheme();
 
   React.useEffect(() => {
     restoreToken();
+
     return () => {
       isReadyRef.current = false
     };
   }, []);
 
+  React.useEffect(() => {
+    if(isReadyRef.current && state.userDetails)
+      setHeaderText(state.userDetails.firstname);
+  }, [isReadyRef]);
+
   if(state.isLoading || !state.userDetails && !state.isSignout) {
     return <SplashScreen />
   }
-  
+
   return (
       <NavigationContainer 
+      onStateChange={(s) => {
+        setHeaderText(s.routes[s.index].name == 'Home' ? "Hello " + state.userDetails.firstname : s.routes[s.index].name);
+      }}
+      theme={scheme === 'dark' ? {
+        ...DarkTheme,
+        colors: {
+          ...DarkTheme.colors,
+          primary: 'rgb(255,255,255)',
+          background:'#000'
+        },
+      } : {
+        ...DefaultTheme,
+        colors: {
+          ...DefaultTheme.colors,
+          primary: 'rgb(0,0,0)',
+          background:'#fff'
+        },
+      }}
       ref={ navigationRef }
       onReady={() => {
+        setHeaderText("Hello " + state.userDetails.firstname);
         isReadyRef.current = true;
       }}
       >
@@ -50,7 +76,7 @@ const App = () => {
         <>
           <Header backgroundColor='white'
           leftComponent={{ icon: 'menu', color: '#000', iconStyle: { color: '#fff' } }}
-          centerComponent={{ text:"Hello " + state.userDetails.firstname, style: { color: '#000' } }}
+          centerComponent={{ text: headerText, style: { color: '#000' } }}
           rightComponent={{ icon: 'home', color: '#fff' }}
           />
         <Tab.Navigator
@@ -71,7 +97,7 @@ const App = () => {
             component={HomeScreen}
           />
           <Tab.Screen 
-            name="Files" 
+            name="Files"
             options={{
               title: "Files",
               tabBarIcon: ({ color, size }) => (
@@ -133,6 +159,7 @@ const App = () => {
         </Tab.Navigator>
         </>
         :
+        <SafeAreaView>
         <Stack.Navigator initialRouteName="Login">
           <Stack.Screen 
             name="Login" 
@@ -161,6 +188,7 @@ const App = () => {
             }}
           />
         </Stack.Navigator>
+        </SafeAreaView>
         }
       </NavigationContainer>
   );
@@ -170,8 +198,7 @@ export default () => {
   return (
     <AuthProvider>
       <NativeBaseProvider>
-        <StatusBar style="auto" />
-        <App />
+          <App />
       </NativeBaseProvider>
     </AuthProvider>
   );

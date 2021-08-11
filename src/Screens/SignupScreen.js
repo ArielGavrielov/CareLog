@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet, Keyboard } from 'react-native';
 import { Image, Text, Button, SocialIcon } from 'react-native-elements';
 import { useForm, Controller } from 'react-hook-form';
 import BouncyCheckbox from "react-native-bouncy-checkbox";
@@ -16,9 +16,12 @@ const SignupScreen = () => {
     }
 
     return (
-    <View style={{flex:1,alignItems: "center",justifyContent: "center"}}>
-        <Image style={styles.image} source={require("../assets/logo-197X69.png")} />
-        <Text h3 style={styles.headerText}>Create account</Text>
+    <View >
+        <View style={{alignItems: "center",justifyContent: "center"}}>
+            <Image style={styles.image} source={require("../assets/logo-197X69.png")} />
+            <Text h3 style={styles.headerText}>Create account</Text>
+        </View>
+        <ScrollView contentContainerStyle={{alignItems: "center",justifyContent: "center"}}>
         <View style={{flexDirection: "row"}}>
             <InputControl
                 containerStyle={{flex:1}}
@@ -53,7 +56,6 @@ const SignupScreen = () => {
             keyboardType='email-address'
             control={control}
             trigger={trigger}
-            onEndEditing={() => console.log("TEST")}
             name="Email"
             leftIcon={{type: 'font-awesome-5', name: 'envelope'}}
             rules={{
@@ -130,6 +132,15 @@ const SignupScreen = () => {
                             <BouncyCheckbox
                                 text='I agree with privacy policy'
                                 fillColor='pink'
+                                style={{
+                                    marginStart: 7
+                                }}
+                                iconStyle={{
+                                    borderColor: 'pink'
+                                }}
+                                textStyle={{
+                                    textDecorationLine: "none"
+                                }}
                                 isChecked={value}
                                 onPress={(isChecked) => {
                                     onChange(isChecked);
@@ -146,12 +157,13 @@ const SignupScreen = () => {
             }}
         />
         <Button
-        buttonStyle={ styles.registerBtn } 
-        titleStyle= {{ color: "white" }}
-        title="Sign up"
-        type="solid"
-        onPress={handleSubmit(onSubmit, (errors) => console.log(errors))}
-      />
+            buttonStyle={ styles.registerBtn } 
+            titleStyle= {{ color: "white", padding: 10 }}
+            title="Sign up"
+            type="solid"
+            onPress={handleSubmit(onSubmit, (errors) => console.log(errors))}
+        />
+        </ScrollView>
         <View style={{flexDirection: 'row', alignItems: 'center', margin:20}}>
             <View style={{flex: 1, height: 1, backgroundColor: 'pink'}} />
             <View>
@@ -160,7 +172,7 @@ const SignupScreen = () => {
             <View style={{flex: 1, height: 1, backgroundColor: 'pink'}} />
         </View>
 
-        <View style={{flexDirection:'row'}}>
+        <View style={{flexDirection:'row', alignItems: "center", justifyContent: "center"}}>
             <SocialIcon
                 title='Facebook'
                 type='facebook'
@@ -188,10 +200,9 @@ const styles = StyleSheet.create({
         marginBottom: 40
     },
     registerBtn: {
-        width: "100%",
         borderRadius: 25,
         height: 50,
-        backgroundColor: "#FF1493",
+        backgroundColor: "pink",
         color: '#fff'
     }
 });

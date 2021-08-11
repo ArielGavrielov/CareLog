@@ -2,6 +2,7 @@ import React from 'react';
 import { Text, Divider } from 'react-native-elements'
 import { View, Dimensions, TouchableOpacity } from 'react-native';
 import { Chart } from '../Components/Chart';
+import { getIndice } from '../api/carelog';
 
 const StatisticsScreen = ({navigation}) => {
   const indices = {
@@ -40,10 +41,33 @@ const StatisticsScreen = ({navigation}) => {
   };
 
   const [selected, setSelected] = React.useState(indices.blood);
+  const [data, setData] = React.useState({});
+  const [Loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const changeData = async () => {
+      setLoading(true);
+      if(selected) {
+        setData(await getIndice(selected.route));
+        //setLoading(false);
+      }
+    }
+    changeData();
+  }, [selected]);
+
+  React.useMemo(() => {
+    //const s = () => {
+      //if(Object.keys(data).length !== 0) {
+        setLoading(false);
+      //}
+      console.log(data);
+    //}
+    //s();
+  }, [data]);
 
   return (
     <View>
-        <Text h1>Statistics Screen</Text>
+        <Text h3 style={{alignSelf: 'center'}}>Indices</Text>
         <View style={{flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
           {
             Object.keys(indices).map((key, i) => (
@@ -66,10 +90,13 @@ const StatisticsScreen = ({navigation}) => {
           }
         </View>
         <Divider color='#FFC0CB' style={{marginBottom: 10}}/>
+        {Loading || data && Object.keys(data).length === 0 && data.constructor === Object ? <Text style={{alignSelf: 'center'}}>Loading...</Text> :
         <Chart
-                type={selected.route}
-                navigation={navigation}
-              />
+          type={selected.route}
+          data={data}
+          navigation={navigation}
+        />
+        }
     </View>
     );
 }

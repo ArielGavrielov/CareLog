@@ -20,6 +20,10 @@ const ForgotScreen = (props) => {
         setDataState({...dataState, isLoading:false, countdown: 30});
     }
 
+    const checkCode = async (props) => {
+        console.log(props);
+    }
+
     React.useEffect(() => {
         console.log(state);
         if(props.route.params.email)
@@ -64,10 +68,33 @@ const ForgotScreen = (props) => {
                 loading={dataState.isLoading}
                 buttonStyle={ styles.Btn } 
                 titleStyle= {{ color: "white" }}
-                title={dataState.countdown > 0 ? "Reset Password (" + dataState.countdown + ")" : "Reset Password"}
+                title={dataState.countdown > 0 ? "Send token (" + dataState.countdown + ")" : "Send token"}
                 type="solid"
-                onPress={handleSubmit(onSubmit, (errors) => console.log(errors))}
+                onPress={handleSubmit(onSubmit)}
             />
+            { state.payload.id ?
+            <>
+                <InputControl
+                    keyboardType='numeric'
+                    control={control}
+                    trigger={trigger}
+                    name="token"
+                    leftIcon={{type: 'font-awesome-5', name: 'envelope'}}
+                    rules={{
+                        required: "You must specify a Token",
+                        length: 5
+                    }}
+                />
+                <Button 
+                    loading={dataState.isLoading}
+                    buttonStyle={ styles.Btn } 
+                    titleStyle= {{ color: "white" }}
+                    title="Reset Password"
+                    type="solid"
+                    onPress={handleSubmit(checkCode)}
+                />
+            </>
+            : null }
         </View>
     );
 }

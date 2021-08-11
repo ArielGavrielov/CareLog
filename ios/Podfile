@@ -22,6 +22,7 @@ target 'CareLog' do
   #  post_install do |installer|
   #    flipper_post_install(installer)
   #  end
-  pod 'react-native-fitness', :path => '../node_modules/@ovalmoney/react-native-fitness'
+
+  pod 'react-native-safe-area-context', :path => '../node_modules/react-native-safe-area-context'
 
 end
