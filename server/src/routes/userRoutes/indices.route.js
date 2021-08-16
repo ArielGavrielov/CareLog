@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../../models/User');
-const moment = require('moment');
-const _ = require('lodash');
 
 function getWeeksRange(date) {
     const curr = new Date(date.time);

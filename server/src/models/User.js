@@ -1,5 +1,11 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const moment = require('moment')
+
+const arrayLimit = (props) => {
+    console.log(props);
+    return props.length < 3;
+}
 
 const userSchema = new mongoose.Schema({
     email: {
@@ -21,7 +27,6 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
         validate: [(value) => {
-            console.log(new Date(value));
             return !Number.isNaN(Date.parse(value));
         }, 'is invalid.']
     },
@@ -75,12 +80,35 @@ const userSchema = new mongoose.Schema({
                 type: Number,
             }
         }]
-    }
+    },
+    medicines: [ mongoose.Schema({
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'medicines'
+        },
+        quantity: {
+            type: Number,
+            required: true
+        },
+        taken: [{
+            date: {
+                type: String,
+            },
+            takenCnt: {
+                type: Number,
+                default: 0
+            },
+            time: [{
+                type: String,
+                validate: [arrayLimit, '{PATH} exceeds the limit of 3']
+            }],
+        }]
+    }, { _id : false })]
 });
 
 userSchema.pre('save', function(next) {
-    console.log(this);
     const user = this;
+    console.log("IS???");
     if(!user.isModified('password')) return next();
 
     bcrypt.genSalt(10, (err, salt) => {

@@ -16,9 +16,10 @@ import SplashScreen from './src/Screens/SplashScreen';
 import IndicesScreen from './src/Screens/IndicesScreen';
 
 import { Provider as AuthProvider, Context as AuthContext } from './src/Context/AuthContext';
-import { navigationRef, isReadyRef } from './src/navigationRef';
+import { navigationRef, isReadyRef, navigate } from './src/navigationRef';
 import { NativeBaseProvider } from "native-base";
 import ForgotScreen from './src/Screens/ForgotScreen';
+import MedicinesScreen from './src/Screens/MedicinesScreen';
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
@@ -46,40 +47,9 @@ const App = () => {
     return <SplashScreen />
   }
 
-  return (
-      <NavigationContainer 
-      onStateChange={(s) => {
-        setHeaderText(s.routes[s.index].name == 'Home' ? "Hello " + state.userDetails.firstname : s.routes[s.index].name);
-      }}
-      theme={scheme === 'dark' ? {
-        ...DarkTheme,
-        colors: {
-          ...DarkTheme.colors,
-          primary: 'rgb(255,255,255)',
-          background:'#000'
-        },
-      } : {
-        ...DefaultTheme,
-        colors: {
-          ...DefaultTheme.colors,
-          primary: 'rgb(0,0,0)',
-          background:'#fff'
-        },
-      }}
-      ref={ navigationRef }
-      onReady={() => {
-        setHeaderText("Hello " + state.userDetails.firstname);
-        isReadyRef.current = true;
-      }}
-      >
-        {state.token !== null ?
-        <>
-          <Header backgroundColor='white'
-          leftComponent={{ icon: 'menu', color: '#000', iconStyle: { color: '#fff' } }}
-          centerComponent={{ text: headerText, style: { color: '#000' } }}
-          rightComponent={{ icon: 'home', color: '#fff' }}
-          />
-        <Tab.Navigator
+  const tabNav = () => {
+    return (
+      <Tab.Navigator
         initialRouteName="Home">
           <Tab.Screen
             name="Home"
@@ -142,21 +112,71 @@ const App = () => {
             component={IndicesScreen} 
           />
           <Tab.Screen 
-            name="Profile" 
+            name="Medicines" 
             options={{
-              title: "Profile",
+              title: "Medicines",
               tabBarIcon: ({ color, size }) => (
                 <Icon 
-                  name='user'
-                  type='feather'
+                  name='capsules'
+                  type='font-awesome-5'
                   color={color}
                   size={size}
                 />
               )
             }} 
-            component={AccountScreen} 
+            component={MedicinesScreen} 
           />
         </Tab.Navigator>
+    );
+  };
+
+  return (
+      <NavigationContainer 
+      onStateChange={(s) => {
+        let screenState = s.routes[s.index].state;
+        if(screenState) {
+          let screenIndex = screenState.index;
+          let screenName = screenState.routeNames[screenIndex];
+          setHeaderText(screenName == 'Home' ? "Hello " + state.userDetails.firstname : screenName);
+        } else
+          setHeaderText(s.routeNames[s.index]);
+      }}
+      theme={scheme === 'dark' ? {
+        ...DarkTheme,
+        colors: {
+          ...DarkTheme.colors,
+          primary: 'rgb(255,255,255)',
+          background:'#000'
+        },
+      } : {
+        ...DefaultTheme,
+        colors: {
+          ...DefaultTheme.colors,
+          primary: 'rgb(0,0,0)',
+          background:'#fff'
+        },
+      }}
+      ref={ navigationRef }
+      onReady={() => {
+        setHeaderText("Hello " + state.userDetails.firstname);
+        isReadyRef.current = true;
+      }}
+      >
+        {state.token !== null ?
+        <>
+          <Header backgroundColor='white'
+          leftComponent={{ icon: 'menu', color: '#000', iconStyle: { color: '#fff' } }}
+          centerComponent={{ text: headerText, style: { color: '#000' } }}
+          rightComponent={<Icon 
+            name='user'
+            type='feather'
+            onPress={() => {if(isReadyRef.current) navigate('Profile');}}
+          />}
+          />
+          <Stack.Navigator screenOptions={{headerShown: false}}>
+            <Stack.Screen name="Home" component={tabNav} />
+            <Stack.Screen name="Profile" component={AccountScreen} />
+          </Stack.Navigator>
         </>
         :
         <SafeAreaView>

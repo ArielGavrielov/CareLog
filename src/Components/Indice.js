@@ -27,6 +27,26 @@ export const Indice = (props) => {
     }
 
     return (
+        props.withoutCard ? 
+        <>
+            {props.inputs.map((input, i) => (
+                <InputControl 
+                    key={i}
+                    trigger={trigger}
+                    rules={input.rules}
+                    keyboardType='numeric'
+                    name={input.name}
+                    control={control}
+                />
+            ))}
+            <Button
+                title='Save'
+                disabled={!formState.isValid || isLoading}
+                loading={isLoading}
+                onPress={handleSubmit(onSubmit)}
+            />
+        </>
+         :
         <Card>
             <Card.Title>{props.title}</Card.Title>
             <Card.Divider color='#FFC0CB' />

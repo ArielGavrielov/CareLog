@@ -102,7 +102,6 @@ const SignupScreen = () => {
             control={control}
             trigger={trigger}
             name="Phone number"
-            trigger={trigger}
             leftIcon={{type: 'font-awesome-5', name: 'mobile-alt'}}
             rules={{
                 required: "You must specify a phone number",

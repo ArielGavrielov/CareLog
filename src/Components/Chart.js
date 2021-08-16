@@ -12,7 +12,7 @@ import {
     StackedBarChart
   } from 'react-native-chart-kit'
 
-export const Chart = (props) => {
+export const IndiceChart = (props) => {
     const [isLoading, setIsLoading] = React.useState(true);
     //const [data, setData] = React.useState({});
     const dataValidation = React.useRef(false);
@@ -229,6 +229,15 @@ export const Chart = (props) => {
                     chartConfig={chartConfig}
                 />
                 }
+        </View>
+    );
+}
+
+export const StepsChart = () => {
+
+    return (
+        <View>
+
         </View>
     );
 }

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Platform, TouchableWithoutFeedback , View } from 'react-native';
-import { Input } from 'react-native-elements';
+import { Platform, TouchableWithoutFeedback , View, FlatList } from 'react-native';
+import { Input, Text } from 'react-native-elements';
 import { useController } from 'react-hook-form';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
+import ItemBox  from './ItemBox';
+import { Button, Icon } from 'react-native-elements';
 
 export const InputControl = ({
     name, control, rules={}, trigger=() => console.log("there is no trigger."), render=null, keyboardType='default',
@@ -97,6 +99,76 @@ export const DateInputControl = ({name, control, rules={}, render=null, leftIcon
                     trigger();
                 }}
                 onCancel={() => setDatePickerVisibility(false)}
+            />
+        </View>
+    )
+}
+
+export const TimesInputControl = ({name, control, rules={}, render=null, leftIcon=null,style={}, trigger=()=>null}) => {
+    const {
+        field: { onChange, value=[], onBlur },
+        fieldState: { error }
+    } = useController({name: name.replace(/\s/g, '').toLowerCase(), control, rules, defaultValue:''});
+    const [isTimePickerVisible, setTimePickerVisibility] = useState(false);
+    const [ID, setID] = React.useState(0);
+    const flatListRef = React.useRef();
+
+    const timeToString = (time) => {
+        let hour = time.getHours();
+        let min = time.getMinutes();
+        if(hour < 10) hour = '0'+hour;
+        if(min < 10) min = '0'+min;
+        return hour+':'+min;
+    };
+
+    return render ? render : (
+        <View style={{alignItems: 'center', justifyContent: 'center'}}>
+            <Text h4>{rules.required ? '*' : ''} {name}</Text>
+            <Button
+                icon={{type: 'feather', name: 'plus', color: 'white'}}
+                onPress={() => setTimePickerVisibility(true)}
+                onBlur={onBlur}
+            />
+            <View style={{maxHeight: 150, margin: 5}}>
+                <FlatList
+                ref={flatListRef}
+                    data={value}
+                    renderItem={({item, index}) => {
+                    return <ItemBox data={item} handleDelete={() => {
+                            const arr = [...value];
+                            arr.splice(index, 1);
+                            onChange(arr);
+                        }} />;
+                    }}
+                    ItemSeparatorComponent={() => {
+                        return <View style={{height: 1, backgroundColor: 'black'}}></View>;
+                    }}
+                />
+            </View>
+            <DateTimePickerModal
+                locale="en_il"
+                isVisible={isTimePickerVisible}
+                mode="time"
+                date={isNaN(Date.parse(value)) ? new Date() : new Date(value)}
+                onConfirm={(date) => {
+                    setTimePickerVisibility(false);
+                    let dateString = timeToString(date);
+                    console.log(value);
+                    let pos = value ? value.map((obj) => obj.value).indexOf(dateString) : -2;
+                    if(pos < 0) {
+                        const item = {value: timeToString(date), id: ID};
+                        const arr = [...value, item];
+                        if(pos === -1)
+                            arr.sort((a,b) => a.value > b.value ? 1 : a.value < b.value ? -1 : 0);
+                        onChange(arr);
+                        setID(ID+1);
+                        flatListRef.current.scrollToOffset({ animated: true, offset: 0 });
+                    }
+                    else
+                        flatListRef.current.scrollToOffset({ animated: true, offset: pos });
+                    trigger();
+                }}
+                onCancel={() => setTimePickerVisibility(false)}
             />
         </View>
     )

@@ -103,7 +103,6 @@ const IndicesScreen = () => {
 
     return (
         <ScrollView>
-            <Text h1>Indices</Text>
             {
                 indices.map((item, i) => (
                     <Indice

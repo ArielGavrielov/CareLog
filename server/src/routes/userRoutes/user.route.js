@@ -6,8 +6,10 @@ const jwt = require('jsonwebtoken');
 const User = require('../../models/User');
 const requireAuth = require('../../middlewares/requireAuth');
 const indices = require('./indices.route');
+const medicines = require('./medicines.route');
 
 router.use('/indices', requireAuth, indices);
+router.use('/medicines', requireAuth, medicines);
 
 router.get('/', requireAuth, (req, res) => {
     User.findOne({_id: req.user._id}, (err, data) => {

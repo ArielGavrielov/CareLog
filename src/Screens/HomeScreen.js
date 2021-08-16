@@ -5,10 +5,11 @@ import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
 import { InputControl } from '../Components/InputControl';
 import { useForm } from "react-hook-form";
 import { postIndices } from '../api/carelog';
+import { Indice } from '../Components/Indice';
 
 import List from '../Components/List';
 import ProgressBar from '../Components/ProgressBar'
-import { getSteps } from '../Components/getSteps';
+import { getStepsBetween } from '../Components/getSteps';
 
 const events = [
   { start: '07-09-2021 13:30:00', end: '2021-09-07 02:00:00', title: 'Dr. Mor Ben Shushan', summary: 'Nahariya' },
@@ -17,131 +18,105 @@ const events = [
 ]
 
 const HomeScreen = () => {
-  //const {state, postIndices} = React.useContext(AuthContext);
-  const {control, handleSubmit} = useForm();
   const [selected, setSelected] = useState(0);
 
-  console.log(getSteps());
-  const onSubmit = async (values) => {
-    Object.keys(values).forEach((el) => {
-      values[el] = parseInt(values[el]);
-    });
-    await postIndices(indices[selected].route, values);
-  }
-  const [indices, setIndices] = useState([
+  console.log("steps", getStepsBetween(new Date().setHours(0), new Date()));
+
+  const indices = [
     {
-      route: 'blood',
-      title: 'Blood pressure',
-      render: (
-        <View>
-          <InputControl
-            rules={{
-              min: {
-                value: 100,
-                message: 'Minimum value is 100.'
-              },
-              max: {
-                value: 200,
-                message: 'Maximum value is 200.'
-              },
-              required: "Systolic is required."
-            }}
-            control={control}
-            name='Systolic'
-            keyboardType='numeric'
-          />
-          <InputControl
-            rules={{
-              min: {
-                value: 70,
-                message: 'Minimum value is 70.'
-              },
-              max: {
-                value: 140,
-                message: 'Maximum value is 140.'
-              },
-              required: "Diastolic is required."
-            }}
-            control={control}
-            name='Diastolic'
-            keyboardType='numeric'
-          />
-        </View>
-      )
+        route: 'blood',
+        title: 'Blood pressure',
+        inputs: [
+            {
+                name: 'Systolic',
+                rules: {
+                    min: {
+                    value: 100,
+                    message: 'Minimum value is 100.'
+                    },
+                    max: {
+                    value: 200,
+                    message: 'Maximum value is 200.'
+                    },
+                    required: "Systolic is required."
+                },
+            },
+            {
+                name: 'Diastolic',
+                rules: {
+                    min: {
+                    value: 70,
+                    message: 'Minimum value is 70.'
+                    },
+                    max: {
+                    value: 140,
+                    message: 'Maximum value is 140.'
+                    },
+                    required: "Diastolic is required."
+                }
+            }
+        ]
     },
     {
-      route: 'pulse',
-      title: 'Pulse',
-      render: (
-        <View>
-          <InputControl
-            rules={{
-              min: {
-                value: 50,
-                message: 'Minimum value is 50.'
-              },
-              max: {
-                value: 200,
-                message: 'Maximum value is 200.'
-              },
-              required: "Pulse is required."
-            }}
-            control={control}
-            name='Pulse'
-            keyboardType='numeric'
-          />
-        </View>
-      )
+        route: 'pulse',
+        title: 'Pulse',
+        inputs: [
+            {
+                name: 'Pulse',
+                rules: {
+                    min: {
+                    value: 50,
+                    message: 'Minimum value is 50.'
+                    },
+                    max: {
+                    value: 200,
+                    message: 'Maximum value is 200.'
+                    },
+                    required: "Pulse is required."
+                }
+            }
+        ]
     },
     {
-      route: 'bodyheat',
-      title: 'Body heat',
-      render: (
-        <View>
-          <InputControl
-            rules={{
-              min: {
-                value: 31,
-                message: 'Minimum value is 31.'
-              },
-              max: {
-                value: 43,
-                message: 'Maximum value is 43.'
-              },
-              required: "Body Heat is required."
-            }}
-            control={control}
-            name='Body heat'
-            keyboardType='numeric'
-          />
-        </View>
-      )
+        route: 'bodyheat',
+        title: 'Body heat',
+        inputs: [
+            {
+                name: 'Body heat',
+                rules: {
+                    min: {
+                    value: 31,
+                    message: 'Minimum value is 31.'
+                    },
+                    max: {
+                    value: 43,
+                    message: 'Maximum value is 43.'
+                    },
+                    required: "Body Heat is required."
+                }
+            }
+        ]
     },
     {
-      route: 'oxygen',
-      title: 'Oxygen Saturation',
-      render: (
-        <View>
-          <InputControl
-            rules={{
-              min: {
-                value: 60,
-                message: 'Minimum value is 60.'
-              },
-              max: {
-                value: 100,
-                message: 'Maximum value is 100.'
-              },
-              required: "Oxygen Saturation is required."
-            }}
-            control={control}
-            name='Oxygen saturation'
-            keyboardType='numeric'
-          />
-        </View>
-      )
-    },
-  ]);
+        route: 'oxygen',
+        title: 'Oxygen Saturation',
+        inputs: [
+            {
+                name: 'Oxygen saturation',
+                rules: {
+                    min: {
+                    value: 60,
+                    message: 'Minimum value is 60.'
+                    },
+                    max: {
+                    value: 100,
+                    message: 'Maximum value is 100.'
+                    },
+                    required: "Oxygen Saturation is required."
+                }
+            }
+        ]
+    }];
   const items = [
     {
       title: 'Take medicine',
@@ -205,8 +180,12 @@ const HomeScreen = () => {
             ))
           }
         </View>
-        {indices[selected].render}
-        <Button title='Save' onPress={handleSubmit(onSubmit)} />
+        <Indice
+          route={indices[selected].route}
+          title={indices[selected].title}
+          inputs={indices[selected].inputs}
+          withoutCard
+        />
       </Card>
         <Card>
             <Card.Title>Upcomming Events</Card.Title>
