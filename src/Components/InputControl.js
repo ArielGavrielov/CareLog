@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Platform, TouchableWithoutFeedback , View, FlatList } from 'react-native';
+import { Platform, TouchableWithoutFeedback , View, FlatList, StyleSheet } from 'react-native';
 import { Input, Text } from 'react-native-elements';
 import { useController } from 'react-hook-form';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import ItemBox  from './ItemBox';
 import { Button, Icon } from 'react-native-elements';
+import Autocomplete from 'react-native-autocomplete-input';
 
 export const InputControl = ({
     name, control, rules={}, trigger=() => console.log("there is no trigger."), render=null, keyboardType='default',
@@ -110,7 +111,6 @@ export const TimesInputControl = ({name, control, rules={}, render=null, leftIco
         fieldState: { error }
     } = useController({name: name.replace(/\s/g, '').toLowerCase(), control, rules, defaultValue:''});
     const [isTimePickerVisible, setTimePickerVisibility] = useState(false);
-    const [ID, setID] = React.useState(0);
     const flatListRef = React.useRef();
 
     const timeToString = (time) => {
@@ -129,22 +129,26 @@ export const TimesInputControl = ({name, control, rules={}, render=null, leftIco
                 onPress={() => setTimePickerVisibility(true)}
                 onBlur={onBlur}
             />
-            <View style={{maxHeight: 150, margin: 5}}>
+            {value.length > 0 ? 
+            <View style={{maxHeight: 100, margin: 5}}>
+                <Text>Swipe right to delete.</Text>
                 <FlatList
-                ref={flatListRef}
+                    style={{marginTop: 5}}
+                    ref={flatListRef}
                     data={value}
+                    keyExtractor={(item, index) => item + index}
                     renderItem={({item, index}) => {
                     return <ItemBox data={item} handleDelete={() => {
-                            const arr = [...value];
-                            arr.splice(index, 1);
-                            onChange(arr);
+                                const arr = [...value];
+                                arr.splice(index, 1);
+                                onChange(arr);
                         }} />;
                     }}
                     ItemSeparatorComponent={() => {
                         return <View style={{height: 1, backgroundColor: 'black'}}></View>;
                     }}
                 />
-            </View>
+            </View> : null }
             <DateTimePickerModal
                 locale="en_il"
                 isVisible={isTimePickerVisible}
@@ -153,23 +157,51 @@ export const TimesInputControl = ({name, control, rules={}, render=null, leftIco
                 onConfirm={(date) => {
                     setTimePickerVisibility(false);
                     let dateString = timeToString(date);
-                    console.log(value);
-                    let pos = value ? value.map((obj) => obj.value).indexOf(dateString) : -2;
-                    if(pos < 0) {
-                        const item = {value: timeToString(date), id: ID};
-                        const arr = [...value, item];
-                        if(pos === -1)
-                            arr.sort((a,b) => a.value > b.value ? 1 : a.value < b.value ? -1 : 0);
-                        onChange(arr);
-                        setID(ID+1);
-                        flatListRef.current.scrollToOffset({ animated: true, offset: 0 });
-                    }
-                    else
-                        flatListRef.current.scrollToOffset({ animated: true, offset: pos });
-                    trigger();
+                    if(value.length > 0) {
+                        let pos = value.map((value) => value).indexOf(dateString);
+                        if(pos === -1) {
+                            const arr = [...value, dateString];
+                            arr.sort((a,b) => a > b ? 1 : a < b ? -1 : 0);
+                            onChange(arr);
+                            flatListRef.current.scrollToIndex({ animated: true, index: arr.indexOf(dateString) });
+                        }
+                        else
+                            flatListRef.current.scrollToIndex({ animated: true, index: pos });
+                    } else
+                        onChange([dateString]);
                 }}
                 onCancel={() => setTimePickerVisibility(false)}
             />
         </View>
     )
 }
+
+const styles = StyleSheet.create({
+    MainContainer: {
+      backgroundColor: '#FAFAFA',
+      flex: 1,
+      padding: 12,
+    },
+    AutocompleteStyle: {
+      flex: 1,
+      left: 0,
+      position: 'absolute',
+      right: 0,
+      top: 0,
+      zIndex: 1,
+     borderWidth:1
+    },
+    SearchBoxTextItem: {
+      margin: 5,
+      fontSize: 16,
+      paddingTop: 4,
+    },
+    selectedTextContainer: {
+      flex: 1,
+      justifyContent: 'center',
+    },
+    selectedTextStyle: {
+      textAlign: 'center',
+      fontSize: 18,
+    },
+  });

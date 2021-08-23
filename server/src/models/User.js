@@ -82,7 +82,7 @@ const userSchema = new mongoose.Schema({
         }]
     },
     medicines: [ mongoose.Schema({
-        id: {
+        medicineRef: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'medicines'
         },
@@ -90,17 +90,20 @@ const userSchema = new mongoose.Schema({
             type: Number,
             required: true
         },
+        dosageamount: {
+            type: Number,
+            required: true
+        },
+        times: [{
+            type: String,
+            required: true
+        }],
         taken: [{
             date: {
                 type: String,
             },
-            takenCnt: {
-                type: Number,
-                default: 0
-            },
             time: [{
-                type: String,
-                validate: [arrayLimit, '{PATH} exceeds the limit of 3']
+                type: String
             }],
         }]
     }, { _id : false })]
