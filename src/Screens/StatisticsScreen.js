@@ -27,22 +27,35 @@ const StatisticsScreen = ({navigation}) => {
   const [selected, setSelected] = React.useState(indices.blood);
   const [data, setData] = React.useState({});
   const [Loading, setLoading] = React.useState(true);
+  const isScreenMounted = React.useRef(true);
 
   React.useEffect(() => {
-    const changeData = async () => {
+    isScreenMounted.current = true;
+    const changeData = () => {
       setLoading(true);
       if(selected) {
-        setData(await getIndice(selected.route));
-        //setLoading(false);
+        getIndice(selected.route).then((value) => {
+          console.log(value);
+          if(isScreenMounted.current)
+            setData(value)
+        })
+        .catch((err) => console.log(err))
+        .finally(() => {
+          if(isScreenMounted.current && data) setLoading(false);
+        });
       }
     }
     changeData();
-  }, [selected]);
 
+    return () => {
+      isScreenMounted.current = false;
+    }
+  }, [selected]);
+/*
   React.useMemo(() => {
     setLoading(false);
   }, [data]);
-
+*/
   return (
     <View>
       <View>

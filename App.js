@@ -38,12 +38,7 @@ const App = () => {
     };
   }, []);
 
-  React.useEffect(() => {
-    if(isReadyRef.current && state.userDetails)
-      setHeaderText(state.userDetails.firstname);
-  }, [isReadyRef]);
-
-  if(state.isLoading || !state.userDetails && !state.isSignout) {
+  if(state.isLoading) {
     return <SplashScreen />
   }
 
@@ -137,7 +132,10 @@ const App = () => {
         if(screenState) {
           let screenIndex = screenState.index;
           let screenName = screenState.routeNames[screenIndex];
-          setHeaderText(screenName == 'Home' ? "Hello " + state.userDetails.firstname : screenName);
+          if(state.userDetails !== null)
+            setHeaderText(screenName == 'Home' ? "Hello " + state.userDetails.firstname : screenName);
+          else
+            setHeaderText(screenName);
         } else
           setHeaderText(s.routeNames[s.index]);
       }}
@@ -158,7 +156,10 @@ const App = () => {
       }}
       ref={ navigationRef }
       onReady={() => {
-        setHeaderText("Hello " + state.userDetails.firstname);
+        if(state.userDetails !== null)
+          setHeaderText("Hello " + state.userDetails.firstname);
+        else
+          setHeaderText("Home");
         isReadyRef.current = true;
       }}
       >

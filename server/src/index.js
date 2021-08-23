@@ -5,6 +5,8 @@ const mongoose = require('mongoose');
 const requireAuth = require('./middlewares/requireAuth');
 const authRoutes = require('./routes/authRoutes');
 
+process.env.TZ = 'Asia/Jerusalem';
+
 const app = express();
 
 app.use(bodyParser.json());

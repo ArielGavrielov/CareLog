@@ -9,21 +9,17 @@ export const Indice = (props) => {
     const [isLoading, setIsLoading] = React.useState(false);
     const {control, handleSubmit, formState, trigger, reset} = useForm();
 
-    const onSubmit = async (values) => {
+    const onSubmit = (values) => {
         setIsLoading(true);
         Object.keys(values).forEach((el) => {
           values[el] = parseInt(values[el]);
         });
-        let res = await postIndices(props.route, values);
-        setIsLoading(false);
-        reset();
-        Alert.alert(
-            res.error ? 'Error' : 'Success',
-            res.message,
-            [
-                { text: "OK" }
-            ]
-        );
+        postIndices(props.route, values).then((value) => Alert.alert('Success', value.message, [{text: 'OK'}]))
+        . catch((err) => Alert.alert('ERROR', err.message, [{text: 'OK'}]))
+        .finally(() => {
+            setIsLoading(false);
+            reset();
+        });
     }
 
     return (

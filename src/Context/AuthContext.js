@@ -9,7 +9,7 @@ const authReducer = (state, action) => {
         case 'user_details':
             return {...state, userDetails: action.payload};
         case 'restore_token':
-            return {...state, token: action.payload, isLoading: false};
+            return {...state, token: action.payload, isLoading: false, isSignout: false};
         case 'add_error': // if not responsed code 200;
             return { ...state, errorMessage: action.payload, message: '' };
         case 'signin':
@@ -55,14 +55,13 @@ const restoreToken = dispatch => async () => {
     try {
         token = await SecureStore.getItemAsync('token');
         const compatible = await LocalAuthentication.hasHardwareAsync();
-        console.log(compatible);
+
         if(token && compatible) {
             const biometricAuth = await LocalAuthentication.authenticateAsync({
                 promptMessage: 'Login with Biometrics',
                 disableDeviceFallback: true,
                 cancelLabel : 'Cancel'
             });
-            console.log(biometricAuth);
 
             // need to remove it.
             await updateUserData(dispatch)(token);

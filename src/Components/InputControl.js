@@ -10,14 +10,16 @@ import Autocomplete from 'react-native-autocomplete-input';
 export const InputControl = ({
     name, control, rules={}, trigger=() => console.log("there is no trigger."), render=null, keyboardType='default',
     leftIcon=null, secureTextEntry=false, autoCapitalize='none', defaultValue='',
-    autoCorrect = false, style={}, containerStyle={}, onEndEditing=null
+    autoCorrect = false, style={}, containerStyle={}, onEndEditing=null, disabled=false
 }) => {
     const {
         field: { onChange, value, onBlur },
         fieldState: { error, invalid, isTouched }
     } = useController({name: name.replace(/\s/g, '').toLowerCase(), control, rules, defaultValue: defaultValue, shouldUnregister: false});
+
     return render ? render : (
         <Input
+            disabled={disabled}
             containerStyle={containerStyle}
             style={style}
             label={(rules.required ? '* ' : '') + name.charAt(0).toUpperCase() + name.slice(1)}
@@ -105,11 +107,11 @@ export const DateInputControl = ({name, control, rules={}, render=null, leftIcon
     )
 }
 
-export const TimesInputControl = ({name, control, rules={}, render=null, leftIcon=null,style={}, trigger=()=>null}) => {
+export const TimesInputControl = ({name, control, rules={}, render=null, defaultValue=[]}) => {
     const {
-        field: { onChange, value=[], onBlur },
+        field: { onChange, value=defaultValue, onBlur },
         fieldState: { error }
-    } = useController({name: name.replace(/\s/g, '').toLowerCase(), control, rules, defaultValue:''});
+    } = useController({name: name.replace(/\s/g, '').toLowerCase(), control, rules, defaultValue: defaultValue});
     const [isTimePickerVisible, setTimePickerVisibility] = useState(false);
     const flatListRef = React.useRef();
 
@@ -138,7 +140,7 @@ export const TimesInputControl = ({name, control, rules={}, render=null, leftIco
                     data={value}
                     keyExtractor={(item, index) => item + index}
                     renderItem={({item, index}) => {
-                    return <ItemBox data={item} handleDelete={() => {
+                        return <ItemBox data={item} handleDelete={() => {
                                 const arr = [...value];
                                 arr.splice(index, 1);
                                 onChange(arr);
@@ -147,6 +149,7 @@ export const TimesInputControl = ({name, control, rules={}, render=null, leftIco
                     ItemSeparatorComponent={() => {
                         return <View style={{height: 1, backgroundColor: 'black'}}></View>;
                     }}
+                    
                 />
             </View> : null }
             <DateTimePickerModal
@@ -157,18 +160,18 @@ export const TimesInputControl = ({name, control, rules={}, render=null, leftIco
                 onConfirm={(date) => {
                     setTimePickerVisibility(false);
                     let dateString = timeToString(date);
-                    if(value.length > 0) {
+                    if(value.length > 2) {
                         let pos = value.map((value) => value).indexOf(dateString);
                         if(pos === -1) {
                             const arr = [...value, dateString];
                             arr.sort((a,b) => a > b ? 1 : a < b ? -1 : 0);
                             onChange(arr);
-                            flatListRef.current.scrollToIndex({ animated: true, index: arr.indexOf(dateString) });
+                            //flatListRef.current.scrollToIndex({ animated: true, index: arr.indexOf(dateString) });
                         }
                         else
                             flatListRef.current.scrollToIndex({ animated: true, index: pos });
                     } else
-                        onChange([dateString]);
+                        onChange([...value, dateString]);
                 }}
                 onCancel={() => setTimePickerVisibility(false)}
             />
@@ -177,31 +180,4 @@ export const TimesInputControl = ({name, control, rules={}, render=null, leftIco
 }
 
 const styles = StyleSheet.create({
-    MainContainer: {
-      backgroundColor: '#FAFAFA',
-      flex: 1,
-      padding: 12,
-    },
-    AutocompleteStyle: {
-      flex: 1,
-      left: 0,
-      position: 'absolute',
-      right: 0,
-      top: 0,
-      zIndex: 1,
-     borderWidth:1
-    },
-    SearchBoxTextItem: {
-      margin: 5,
-      fontSize: 16,
-      paddingTop: 4,
-    },
-    selectedTextContainer: {
-      flex: 1,
-      justifyContent: 'center',
-    },
-    selectedTextStyle: {
-      textAlign: 'center',
-      fontSize: 18,
-    },
   });
