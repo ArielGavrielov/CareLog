@@ -6,6 +6,7 @@ import { InputControl } from '../Components/InputControl';
 import { useForm } from "react-hook-form";
 import { postIndices } from '../api/carelog';
 import { Indice } from '../Components/Indice';
+import moment from 'moment';
 
 import List from '../Components/List';
 import ProgressBar from '../Components/ProgressBar'
@@ -20,7 +21,14 @@ const events = [
 const HomeScreen = () => {
   const [selected, setSelected] = useState(0);
 
-  console.log("steps", getStepsBetween(new Date().setHours(0), new Date()));
+  let date = moment.utc().toDate();
+  date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+  
+  let start = moment.utc().toDate();
+  start.setMinutes(start.getMinutes() - start.getTimezoneOffset());
+  start.setUTCHours(0,0,0);
+
+  console.log("steps", getStepsBetween(start, date));
 
   const indices = [
     {

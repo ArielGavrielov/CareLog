@@ -18,7 +18,11 @@ export const postIndices = (type, value) => {
             }});
             resolve({error: false, message: response.data.message});
         } catch(err) {
-            reject({error: true, message: err.response.data.error});
+            console.log(err);
+            if(err.response)
+                reject({error: true, message: err.response.data.error});
+            else
+                reject({error: true, message: 'Check your network connection.'});
         }
     });
 };
@@ -33,7 +37,10 @@ export const getIndice = (type='') => {
             resolve(response.data);
         } catch(err) {
             console.log(err)
-            reject({error: true, message: err.response.data.error});
+            if(err.response)
+                reject({error: true, message: err.response.data.error});
+            else
+                reject({error: true, message: 'Check your network connection.'});
         }
     });
 }
@@ -49,7 +56,10 @@ export const getMedicines = () => {
             resolve(response.data);
         } catch(err) {
             console.log(err)
-            reject({error: true, message: err.response.data.error});
+            if(err.response)
+                reject({error: true, message: err.response.data.error});
+            else
+                reject({error: true, message: 'Check your network connection.'});
         }
     });
 }
@@ -63,7 +73,10 @@ export const postMedicine = (props) => {
             resolve(response.data);
         } catch(err) {
             console.log(err)
-            reject({error: true, message: err.response.data.error});
+            if(err.response)
+                reject({error: true, message: err.response.data.error});
+            else
+                reject({error: true, message: 'Check your network connection.'});
         }
     });
 } 
@@ -77,7 +90,10 @@ export const takeMedicine = (name) => {
             resolve(response.data);
         } catch(err) {
             console.log(err.response.data)
-            reject({error: true, message: err.response.data.error});
+            if(err.response)
+                reject({error: true, message: err.response.data.error});
+            else
+                reject({error: true, message: 'Check your network connection.'});
         }
     });
 }
@@ -92,7 +108,10 @@ export const deleteMedicine = (name) => {
             resolve(response.data);
         } catch(err) {
             console.log(err.response.data)
-            reject({error: true, message: err.response.data.error});
+            if(err.response)
+                reject({error: true, message: err.response.data.error});
+            else
+                reject({error: true, message: 'Check your network connection.'});
         }
     });
 }

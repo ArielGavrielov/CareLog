@@ -77,8 +77,8 @@ const SignupScreen = () => {
                         message: "Password must have at least 8 characters"
                     },
                     maxLength: {
-                        value: 32,
-                        message: "Maximum password characters is 32."
+                        value: 16,
+                        message: "Maximum password characters is 16."
                     },
                     required: "You must specify a password",
                     pattern: patterns.passwordPattern
@@ -201,6 +201,7 @@ const styles = StyleSheet.create({
     registerBtn: {
         borderRadius: 25,
         height: 50,
+        width: 100,
         backgroundColor: "pink",
         color: '#fff'
     }

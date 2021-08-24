@@ -1,28 +1,16 @@
 import React from 'react';
-import { View, Dimensions, FlatList, Alert } from 'react-native';
+import { View, Dimensions, FlatList, Alert, StyleSheet } from 'react-native';
 import { Button, Text, Card, Icon } from 'react-native-elements';
-import Modal from 'react-native-modal';
 import { InputControl, TimesInputControl } from '../Components/InputControl';
 import { useForm } from 'react-hook-form';
 import { postMedicine, getMedicines, takeMedicine, deleteMedicine } from '../api/carelog';
 import moment from 'moment';
+import ModalWithX from '../Components/ModalWithX';
 
-const AddMedication = ({onAdded, isModalVisible, setModalVisible, editValues=null}) => {
+const AddMedication = ({onAdded = () => console.log("need onAdded property."), isModalVisible, setModalVisible, editValues=null}) => {
     const {control, handleSubmit, trigger, formState, reset, setValue} = useForm();
     const [error, setError] = React.useState(null);
 
-    const addMedicationApi = async (props) => {
-        postMedicine(props).then((value) => {
-            Alert.alert('Success', (editValues ? 'Edited' : 'Added') +' successfully', [{text: 'OK', onPress: () => setModalVisible(false)}]);
-            onAdded();
-        }).catch((err) => Alert.alert('ERROR', err.message, [{text: 'OK'}]));
-        /*
-        if(res.error) setError(res.message);
-        else {
-            Alert.alert('Success', (editValues ? 'Edited' : 'Added') +' successfully', [{text: 'OK', onPress: () => setModalVisible(false)}]);
-            onAdded();
-        }*/
-    }
     React.useEffect(() => {
         if(!isModalVisible) {
             reset();
@@ -37,8 +25,14 @@ const AddMedication = ({onAdded, isModalVisible, setModalVisible, editValues=nul
 
     return (
         <View>
-            <Button title="Add Medication" onPress={() => setModalVisible(!isModalVisible)}/>
-            <Modal
+            <View style={{bottom: 0, left: 0, right: 0}}>
+                <Button
+                    title="Add Medication"
+                    onPress={() => setModalVisible(!isModalVisible)}
+                    icon={{name: "plus", type: 'feather', color: 'white'}}
+                />
+            </View>
+            <ModalWithX
                 isVisible={isModalVisible}
                 style={{flex:1}}
                 onBackdropPress={() => setModalVisible(false)}
@@ -46,52 +40,49 @@ const AddMedication = ({onAdded, isModalVisible, setModalVisible, editValues=nul
                 deviceHeight={Dimensions.get('window').height}
                 onRequestClose={() => setModalVisible(false)}
             >
-                <View style={{backgroundColor:"white", justifyContent: 'center', alignItems: 'center', padding: 10, borderRadius: 10}}>
-                    <Text h1>{(editValues ? 'Edit' : 'Add') + ' Medicine'}</Text>
-                    <InputControl
-                        disabled={editValues ? true : false}
-                        control={control}
-                        trigger={trigger}
-                        name="Name"
-                        rules={{
-                            required: true
-                        }}
-                    />
-                    <InputControl
-                        keyboardType="number-pad"
-                        control={control}
-                        trigger={trigger}
-                        name="Dosage amount"
-                        rules={{
-                            required: true,
-                            min: 1
-                        }}
-                    />
-                    <InputControl
-                        keyboardType="number-pad"
-                        control={control}
-                        trigger={trigger}
-                        name="Quantity"
-                        rules={{
-                            required: true,
-                            min: 1
-                        }}
-                    />
-                    <TimesInputControl
-                        control={control}
-                        trigger={trigger}
-                        name="Times"
-                        rules={{
-                            required: true
-                        }}
-                    />
-                    {error ? <Text style={{color: 'red'}}>{error}</Text> : null}
-                    <View style={{flexDirection: 'row'}}>
-                        <Button style={{marginHorizontal: 50}} title="Close" onPress={() => setModalVisible(!isModalVisible)} />
-                        <Button style={{marginHorizontal: 50}} title="Submit" onPress={handleSubmit(addMedicationApi)} />
-                    </View>
+                <Text h1>{(editValues ? 'Edit' : 'Add') + ' Medicine'}</Text>
+                <InputControl
+                    disabled={editValues ? true : false}
+                    control={control}
+                    trigger={trigger}
+                    name="Name"
+                    rules={{
+                        required: true
+                    }}
+                />
+                <InputControl
+                    keyboardType="number-pad"
+                    control={control}
+                    trigger={trigger}
+                    name="Dosage amount"
+                    rules={{
+                        required: true,
+                        min: 1
+                    }}
+                />
+                <InputControl
+                    keyboardType="number-pad"
+                    control={control}
+                    trigger={trigger}
+                    name="Quantity"
+                    rules={{
+                        required: true,
+                        min: 1
+                    }}
+                />
+                <TimesInputControl
+                    control={control}
+                    trigger={trigger}
+                    name="Times"
+                    rules={{
+                        required: true
+                    }}
+                />
+                {error ? <Text style={{color: 'red'}}>{error}</Text> : null}
+                <View style={{flexDirection: 'row', marginTop: 10}}>
+                    <Button title="Submit" onPress={handleSubmit(onAdded)} />
                 </View>
-            </Modal>
+            </ModalWithX>
         </View>
     );
 }
@@ -105,7 +96,22 @@ const MedicinesScreen = () => {
         editValues: null
     });
     const isScreenMounted = React.useRef(true);
+    const isAlertShowing = React.useRef(false);
     const [isModalVisible, setModalVisible] = React.useState(false);
+
+    const AsyncAlert = (title, message, buttons, options={}) => {
+        return new Promise((resolve, reject) => {
+            isAlertShowing.current = true;
+            Alert.alert(
+                title,
+                message,
+                buttons.map((value) => {return {text: value.text, onPress: value.onPress ? value.onPress : () => resolve(value.resolve ? value.resolve : null)}}),
+                options
+            );
+        }).finally(() => {
+            isAlertShowing.current = false;
+        });
+    }
 
     const take = (name, index) => {
         const loadingArr = state.isLoading;
@@ -113,83 +119,64 @@ const MedicinesScreen = () => {
         setState({...state, isLoading: loadingArr});
 
         takeMedicine(name).then((value) => {
-            Alert.alert("Success", "Updated successfully", [{text: 'OK'}]);
+            AsyncAlert("Success", "Updated successfully", [{text: 'OK'}]);
             setState({...state, screenLoading: true});
-        }).catch((err) => Alert.alert("ERROR", err.message, [{text: 'OK'}]))
+        }).catch((err) => AsyncAlert("ERROR", err.message, [{text: 'OK'}]))
         .finally(() => {
             loadingArr[index] = false;
             setState({...state, isLoading: loadingArr});
         });
-        /*
-        if(res.error) Alert.alert("ERROR", res.message, [{text: 'OK'}]);
-        else {
-            Alert.alert("Success", "Updated successfully", [{text: 'OK'}]);
-            setState({...state, screenLoading: true});
-        }
-        */
     }
 
     const remove = async (name) => {
-        const AsyncAlert = () => {
-            return new Promise((resolve, reject) => {
-                Alert.alert(
-                    'IMPORTANT',
-                    `By removing ${name} also all taken data will remove, continue?`,
-                    [
-                        {text: 'YES', onPress: () => resolve(true) },
-                        {text: 'NO', onPress: () => resolve(false) }
-                    ],
-                    { cancelable: false }
-                )
-            })
-        }
-        if(AsyncAlert()) {
+        let alertRes = await AsyncAlert('IMPORTANT',
+            `By removing ${name} also all taken data will remove, continue?`,
+            [
+                {text: 'YES', resolve: true },
+                {text: 'NO', resolve: false }
+            ]
+        );
+        if(alertRes) {
             deleteMedicine(name).then((value) => {
-                if(isScreenMounted.current) {
-                    Alert.alert("Success", "Removed successfully", [{text: 'OK'}]);
-                    setState({...state, screenLoading: true});
-                }
-            }).catch((err) => Alert.alert("ERROR", res.message, [{text: 'OK'}]));
-            /*
-            if(res.error) Alert.alert("ERROR", res.message, [{text: 'OK'}]);
-            else {
-                Alert.alert("Success", "Removed successfully", [{text: 'OK'}]);
+                AsyncAlert('Success', 'Removed successfully', [{text: 'OK', resolve: true}]);
                 setState({...state, screenLoading: true});
-            }
-            */
+            }).catch((err) => AsyncAlert("ERROR", err.message, [{text: 'OK'}]));
         }
     }
 
     React.useEffect(() => {
         const getMedics = () => {
-            console.log("Here", isScreenMounted.current);
+            console.log(isScreenMounted.current, isModalVisible, isAlertShowing.current);
+            if(!isScreenMounted.current && !isModalVisible && !isAlertShowing.current) return;
             let res = getMedicines();
             res.then((value) => {
-                if(isScreenMounted.current || isModalVisible)
+                console.log("length", value.length);
+                if(isScreenMounted.current || isModalVisible || isAlertShowing.current)
                     setState({...state, medications: value, isLoading: Array(res.length).fill(false), screenLoading: false});
             }).catch((err) => console.log(err));
         }
-
+        console.log(state.screenLoading);
         if(state.screenLoading || !state.medications)
             getMedics();
 
         return () => {
             isScreenMounted.current = false;
         }
-    }, [state]);
+    }, [state.screenLoading]);
 
     React.useEffect(() => {
         if(!isModalVisible && state.editValues)
             setState({...state, editValues: null});
     }, [isModalVisible]);
 
-    if(state.screenLoading && !state.medications) return <View style={{height: 500}}>
-        <Text style={{alignSelf: 'center', textAlignVertical: 'center'}}>Loading...</Text>
-        <AddMedication onAdded={() => setState({...state, screenLoading: true})}/>
-    </View>;
-    if(!state.medications || state.medications.length === 0)  return <AddMedication onAdded={() => setState({...state, screenLoading: true})}/>;
+    if(state.screenLoading && !state.medications) return <View style={{position: "absolute", left: 0, right: 0, bottom: 0, top: 0, alignItems: "center"}}>
+        <Text>Loading...</Text>
+    </View>
+
+    //if(!state.medications || state.medications.length === 0)  return <AddMedication onAdded={() => setState({...state, screenLoading: true})}/>
+
     return (
-        <View>
+        <View style={{flex: 1, height: Dimensions.get('window').height, width: Dimensions.get('window').width}}>
             <FlatList
                 data={state.medications}
                 renderItem={({item, index}) => (
@@ -234,12 +221,16 @@ const MedicinesScreen = () => {
                 numColumns={1}
                 extraData={state}
                 keyExtractor={(item, index) => item+" "+index}
-                style={{marginBottom: 10, height: 500}}
             />
             <AddMedication
                 isModalVisible={isModalVisible}
                 setModalVisible={setModalVisible}
-                onAdded={() => setState({...state, screenLoading: true})}
+                onAdded={(props) => {
+                    postMedicine(props).then((value) => {
+                        AsyncAlert('Success', (state.editValues ? 'Edited' : 'Added') +' successfully', [{text: 'OK', onPress: () => setModalVisible(false)}]);
+                        setState({...state, screenLoading: true})
+                    }).catch((err) => AsyncAlert('ERROR', err.message, [{text: 'OK'}]));
+                }}
                 editValues={state.editValues}
             />
         </View>

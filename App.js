@@ -1,9 +1,13 @@
 import React, { useContext } from 'react';
-import { useColorScheme, StatusBar, SafeAreaView } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { useColorScheme, SafeAreaView, Text, View, StyleSheet } from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createStackNavigator } from '@react-navigation/stack';
+import NetInfo, { useNetInfo } from "@react-native-community/netinfo";
+import { Button } from 'react-native-elements';
+import Modal from 'react-native-modal';
 
 import HomeScreen from './src/Screens/HomeScreen';
 import SecondScreen from './src/Screens/SecondScreen';
@@ -20,23 +24,49 @@ import { navigationRef, isReadyRef, navigate } from './src/navigationRef';
 import { NativeBaseProvider } from "native-base";
 import ForgotScreen from './src/Screens/ForgotScreen';
 import MedicinesScreen from './src/Screens/MedicinesScreen';
+import EventsScreen from './src/Screens/EventsScreen';
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 const App = () => {
+  const [isOffline, setOfflineStatus] = React.useState(false);
   const { state, restoreToken } = useContext(AuthContext);
   const [headerText, setHeaderText] = React.useState('');
   const scheme = useColorScheme();
 
   React.useEffect(() => {
+    const removeNetInfoSubscription = NetInfo.addEventListener((state) => {
+      const offline = !(state.isConnected && state.isInternetReachable);
+      console.log(offline);
+      setOfflineStatus(offline);
+    });
+
     restoreToken();
 
     return () => {
       isReadyRef.current = false
+      removeNetInfoSubscription();
     };
   }, []);
+
+  const NoInternetModal = ({show, onRetry, isRetrying}) => (
+    <Modal isVisible={show} style={styles.modal} animationInTiming={600}>
+      <View style={styles.modalContainer}>
+        <Text style={styles.modalTitle}>Connection Error</Text>
+        <Text style={styles.modalText}>
+          Oops! Looks like your device is not connected to the Internet.
+        </Text>
+        <Button title='Try Again' onPress={onRetry} disabled={isRetrying} />
+      </View>
+    </Modal>
+  );
+  
+  /*if(!useNetInfo().isInternetReachable) 
+    return <View style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center'}}>
+      <Text>Check your internet connection...</Text>
+    </View>*/
 
   if(state.isLoading) {
     return <SplashScreen />
@@ -62,19 +92,19 @@ const App = () => {
             component={HomeScreen}
           />
           <Tab.Screen 
-            name="Files"
+            name="Events"
             options={{
-              title: "Files",
+              title: "Events",
               tabBarIcon: ({ color, size }) => (
                 <Icon 
-                  name='file'
+                  name='calendar'
                   type='feather'
                   color={color}
                   size={size}
                 />
               )
             }} 
-            component={SecondScreen} 
+            component={EventsScreen} 
           />
           <Tab.Screen 
             name="Statistics" 
@@ -180,7 +210,7 @@ const App = () => {
           </Stack.Navigator>
         </>
         :
-        <SafeAreaView>
+        <SafeAreaView style={{flex: 1}}>
         <Stack.Navigator initialRouteName="Login">
           <Stack.Screen 
             name="Login" 
@@ -211,6 +241,11 @@ const App = () => {
         </Stack.Navigator>
         </SafeAreaView>
         }
+        <NoInternetModal
+            show={isOffline}
+            onRetry={() => restoreToken()}
+            isRetrying={state.isLoading}
+        />
       </NavigationContainer>
   );
 }
@@ -219,8 +254,47 @@ export default () => {
   return (
     <AuthProvider>
       <NativeBaseProvider>
+          <StatusBar style="auto" />
           <App />
       </NativeBaseProvider>
     </AuthProvider>
   );
 };
+
+const styles = StyleSheet.create({
+  // ...
+  modal: {
+    justifyContent: 'flex-end',
+    margin: 0,
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    paddingBottom: 40,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '600',
+  },
+  modalText: {
+    fontSize: 18,
+    color: '#555',
+    marginTop: 14,
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  button: {
+    backgroundColor: '#000',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 20,
+  },
+});

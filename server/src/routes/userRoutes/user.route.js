@@ -71,8 +71,20 @@ router.post('/reset-password', async (req,res) => {
     }
 });
 
+router.get('/reset-password/:userId/:token', async (req,res) => {
+    try {
+        let token = await resetToken.findOne(req.params);
+        if(!token) throw {tokenFound: false, message: 'token not found, please recheck.'};
+        res.send({tokenFound: true, token: req.params.token});
+    } catch(err) {
+        console.log(err);
+        res.status(422).send({error: err.message});
+    }
+});
+
 router.post("/reset-password/:userId/:token", async (req, res) => {
     try {
+        console.log(req.body.password);
         if(!req.body.password) return res.status(422).send({code: 422, error: 'You must specify new password'});
         let user = await User.findById(req.params.userId);
         if(!user) return res.status(422).send({code: 422, error: 'User not found'});
@@ -86,7 +98,7 @@ router.post("/reset-password/:userId/:token", async (req, res) => {
         user.password = req.body.password;
         await user.save();
         await token.delete();
-
+        console.log(user.password);
         res.send({message: 'Password reset sucessfully.'});
     } catch(e) {
         res.status(422).send({code: 422, error: 'Something went wrong with reset password'});

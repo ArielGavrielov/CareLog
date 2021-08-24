@@ -9,7 +9,7 @@ const authReducer = (state, action) => {
         case 'user_details':
             return {...state, userDetails: action.payload};
         case 'restore_token':
-            return {...state, token: action.payload, isLoading: false, isSignout: false};
+            return {...state, token: action.payload, isLoading: false};
         case 'add_error': // if not responsed code 200;
             return { ...state, errorMessage: action.payload, message: '' };
         case 'signin':
@@ -19,7 +19,7 @@ const authReducer = (state, action) => {
         case 'signout':
             return { ...state, errorMessage: '', token: null, isSignout: true, userDetails: null };
         case 'reset_password':
-            return { ...state, errorMessage: '', payload: action.payload};
+            return { ...state, errorMessage: '', resetPassword: {...state.resetPassword, ...action.payload}};
         case 'clear_error_message':
             return {...state, errorMessage: '', message:'' };
         default: 
@@ -44,9 +44,7 @@ const updateUserData = dispatch => async (token) => {
 }
 // clear error message
 const clearErrorMessage = dispatch => () => {
-    dispatch({
-        type: 'clear_error_message'
-    });
+    dispatch({type: 'clear_error_message'});
 }
 
 // Automatic signin
@@ -54,7 +52,7 @@ const restoreToken = dispatch => async () => {
     let token;
     try {
         token = await SecureStore.getItemAsync('token');
-        const compatible = await LocalAuthentication.hasHardwareAsync();
+        /*const compatible = await LocalAuthentication.hasHardwareAsync();
 
         if(token && compatible) {
             const biometricAuth = await LocalAuthentication.authenticateAsync({
@@ -62,18 +60,17 @@ const restoreToken = dispatch => async () => {
                 disableDeviceFallback: true,
                 cancelLabel : 'Cancel'
             });
-
-            // need to remove it.
-            await updateUserData(dispatch)(token);
-            dispatch({type: 'restore_token', payload: token});
-            /*if(biometricAuth.success) {
+            if(biometricAuth.success) {
                 await updateUserData(dispatch)(token);
                 dispatch({type: 'restore_token', payload: token});
-            } else dispatch({type: 'restore_token', payload: null});*/
+            } else dispatch({type: 'restore_token', payload: null});
         } else {
             await updateUserData(dispatch)(token);
             dispatch({type: 'restore_token', payload: token});
-        }
+        }*/
+        // need to remove it.
+        await updateUserData(dispatch)(token);
+        dispatch({type: 'restore_token', payload: token});
     } catch(e){
        console.log("cant to get token...");
        dispatch({type: 'restore_token', payload: null});
@@ -104,7 +101,33 @@ const resetPasswordRequest = dispatch => async ({email, birthdate}) => {
     } catch(err) {
         // add error
         console.log(err.message);
-        dispatch({ type: 'add_error', payload: 'Something went wrong with reset password.' });
+        dispatch({ type: 'add_error', payload: err.response.data.error });
+    }
+}
+
+const checkToken = dispatch => async (id, token) => {
+    try {
+        // get responsed
+        const response = await CareLogAPI.get(`/user/reset-password/${id}/${token}`);
+        dispatch({ type: 'reset_password', payload: response.data });
+        console.log(response.data);
+    } catch(err) {
+        // add error
+        console.log(err.message);
+        dispatch({ type: 'add_error', payload: err.response.data.error });
+    }
+};
+
+const changePassword = dispatch => async (id, token, password) => {
+    try {
+        // get responsed
+        const response = await CareLogAPI.post(`/user/reset-password/${id}/${token}`, {password});
+        dispatch({ type: 'reset_password', payload: response.data });
+        console.log(response.data);
+    } catch(err) {
+        // add error
+        console.log(err.response.data.error);
+        dispatch({ type: 'add_error', payload: err.response.data.error });
     }
 }
 
@@ -132,6 +155,6 @@ const signout = dispatch => async () => {
 
 export const { Provider, Context } = createDataContext(
     authReducer,
-    { signin, signout, signup, clearErrorMessage, restoreToken, resetPasswordRequest },
-    { token: null, errorMessage: '', isLoading: true, isSignout: true, payload:{message: '', id: ''}, userDetails: null }
+    { signin, signout, signup, clearErrorMessage, restoreToken, resetPasswordRequest, checkToken, changePassword },
+    { token: null, errorMessage: '', isLoading: true, isSignout: true, resetPassword:{message: '', id: ''}, userDetails: null }
 );
