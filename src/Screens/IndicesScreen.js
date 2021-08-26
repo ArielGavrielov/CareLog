@@ -63,6 +63,7 @@ const IndicesScreen = () => {
     {
         route: 'bodyheat',
         title: 'Body heat',
+        icon: {type: 'font-awesome-5', name: 'thermometer-half'},
         inputs: [
             {
                 name: 'Body heat',
@@ -109,6 +110,7 @@ const IndicesScreen = () => {
                         key={i}
                         route={item.route}
                         title={item.title}
+                        icon={item.icon}
                         inputs={item.inputs}
                     />
                 ))

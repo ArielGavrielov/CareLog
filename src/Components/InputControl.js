@@ -114,6 +114,7 @@ export const TimesInputControl = ({name, control, rules={}, render=null, default
     } = useController({name: name.replace(/\s/g, '').toLowerCase(), control, rules, defaultValue: defaultValue});
     const [isTimePickerVisible, setTimePickerVisibility] = useState(false);
     const flatListRef = React.useRef();
+    const flatListIndex = React.useRef(0);
 
     const timeToString = (time) => {
         let hour = time.getHours();
@@ -136,15 +137,21 @@ export const TimesInputControl = ({name, control, rules={}, render=null, default
                 <Text>Swipe right to delete.</Text>
                 <FlatList
                     style={{marginTop: 5}}
-                    ref={flatListRef}
+                    ref={(list) => flatListRef.current = list}
                     data={value}
                     keyExtractor={(item, index) => item + index}
+                    scrollToOverflowEnabled
                     renderItem={({item, index}) => {
-                        return <ItemBox data={item} handleDelete={() => {
-                                const arr = [...value];
-                                arr.splice(index, 1);
-                                onChange(arr);
-                        }} />;
+                        return <ItemBox 
+                                    data={item}
+                                    handleDelete={() => {
+                                        const arr = [...value];
+                                        arr.splice(index, 1);
+                                        onChange(arr);
+                                        if(index >= arr.length)
+                                            flatListRef.current.scrollToOffset({ animated: true, offset: arr.indexOf(dateString) });
+                                    }}
+                        />
                     }}
                     ItemSeparatorComponent={() => {
                         return <View style={{height: 1, backgroundColor: 'black'}}></View>;
@@ -160,18 +167,14 @@ export const TimesInputControl = ({name, control, rules={}, render=null, default
                 onConfirm={(date) => {
                     setTimePickerVisibility(false);
                     let dateString = timeToString(date);
-                    if(value.length > 2) {
-                        let pos = value.map((value) => value).indexOf(dateString);
-                        if(pos === -1) {
-                            const arr = [...value, dateString];
-                            arr.sort((a,b) => a > b ? 1 : a < b ? -1 : 0);
-                            onChange(arr);
-                            //flatListRef.current.scrollToIndex({ animated: true, index: arr.indexOf(dateString) });
-                        }
-                        else
-                            flatListRef.current.scrollToIndex({ animated: true, index: pos });
+                    let pos = value.map((value) => value).indexOf(dateString);
+                    if(pos === -1) {
+                        const arr = [...value, dateString];
+                        arr.sort((a,b) => a > b ? 1 : a < b ? -1 : 0);
+                        onChange(arr);
+                        setTimeout(() => flatListRef.current.scrollToIndex({ animated: true, index: arr.indexOf(dateString) }), 100);
                     } else
-                        onChange([...value, dateString]);
+                        flatListRef.current.scrollToIndex({ animated: true, index: pos });
                 }}
                 onCancel={() => setTimePickerVisibility(false)}
             />

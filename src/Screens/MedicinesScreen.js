@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Dimensions, FlatList, Alert, StyleSheet } from 'react-native';
-import { Button, Text, Card, Icon } from 'react-native-elements';
+import DropDownPicker from 'react-native-dropdown-picker';
+import { Button, Text, Card, Icon, Divider } from 'react-native-elements';
 import { InputControl, TimesInputControl } from '../Components/InputControl';
 import { useForm } from 'react-hook-form';
 import { postMedicine, getMedicines, takeMedicine, deleteMedicine } from '../api/carelog';
@@ -41,6 +42,7 @@ const AddMedication = ({onAdded = () => console.log("need onAdded property."), i
                 onRequestClose={() => setModalVisible(false)}
             >
                 <Text h1>{(editValues ? 'Edit' : 'Add') + ' Medicine'}</Text>
+                <Divider orientation="vertical" />
                 <InputControl
                     disabled={editValues ? true : false}
                     control={control}
@@ -87,18 +89,91 @@ const AddMedication = ({onAdded = () => console.log("need onAdded property."), i
     );
 }
 
+const MedicationMoreInfo = ({data, children, isInfoVisible, setInfoVisible}) => {
+    const [dateChoosen, setDateChoosen] = React.useState();
+    const [dateChooseOpen, setDateChooseOpen] = React.useState(false);
+    const [takens, setTakens] = React.useState();
+
+    React.useEffect(() => {
+        if(isInfoVisible) {
+            setTakens(data.taken.map((value,index) => {return {label: value.date, value: value, key: "value.date" + index}}));
+            setDateChoosen(data.taken ? data.taken[0] : null);
+        }
+    }, [isInfoVisible]);
+
+    if(!data) return null;
+
+    return <View>
+            <ModalWithX 
+                isVisible={isInfoVisible}
+                onBackdropPress={() => setInfoVisible(false)}
+                onRequestClose={() => setInfoVisible(false)}
+                deviceWidth={Dimensions.get('window').width}
+                deviceHeight={Dimensions.get('window').height}
+            >
+                <Text h1>{data.medicineRef.name} Info</Text>
+                <Divider orientation="vertical" style={{marginVertical: 10}} />
+                <Text h2>Basic information</Text>
+                <Text>Stock quantity: {data.quantity}</Text>
+                <Text>Dosage amount: {data.dosageamount}</Text>
+                <FlatList
+                    contentContainerStyle={{alignItems: 'center'}}
+                    ListHeaderComponent={<Text style={{backgroundColor: 'white', fontWeight:'bold'}}>Times to take:</Text>}
+                    stickyHeaderIndices={[0]}
+                    ListEmptyComponent={<Text>No Data</Text>}
+                    style={{maxHeight: 70}}
+                    scrollEnabled={data.times.length > 3}
+                    data={data.times}
+                    keyExtractor={(item, index) => item + index}
+                    renderItem={({item}) => <Text>{moment.utc(item, 'HH:mm').local().format('HH:mm')}</Text>}
+                />
+                <Divider orientation="vertical" style={{marginVertical: 10}} />
+                <Text h2>Takens Stats</Text>
+                <DropDownPicker
+                    itemKey="label"
+                    setItems={setTakens}
+                    open={dateChooseOpen}
+                    value={dateChoosen}
+                    items={takens}
+                    setOpen={setDateChooseOpen}
+                    setValue={setDateChoosen}
+                    maxHeight={120}
+                />
+                { dateChoosen ? 
+                <FlatList
+                    contentContainerStyle={{alignItems: 'center'}}
+                    ListHeaderComponent={dateChoosen ? <Text h4 style={{backgroundColor: 'white'}}>{dateChoosen.date}</Text> : null}
+                    stickyHeaderIndices={[0]}
+                    ListEmptyComponent={<Text>No Data</Text>}
+                    //scrollEnabled={dateChoosen.time.length > 2}
+                    style={{maxHeight: 70}}
+                    data={dateChoosen.time}
+                    keyExtractor={(item, index) => item + index}
+                    renderItem={({item}) => <Text>{moment.utc(item, 'HH:mm:ss').local().format('HH:mm:ss')}</Text>}
+                /> : null }
+                <Divider orientation="vertical" style={{marginVertical: 10}} />
+                <Text h2>Actions</Text>
+                <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
+                    {children}
+                </View>
+            </ModalWithX>
+    </View>
+}
 
 const MedicinesScreen = () => {
     const [state, setState] = React.useState({
         medications: null,
         isLoading: [],
         screenLoading: true,
-        editValues: null
+        editValues: null,
+        itemInfo: null
     });
     const isScreenMounted = React.useRef(true);
     const isAlertShowing = React.useRef(false);
     const [isModalVisible, setModalVisible] = React.useState(false);
+    const [isInfoVisible, setInfoVisible] = React.useState(false);
 
+    // async alert - waiting for user response.
     const AsyncAlert = (title, message, buttons, options={}) => {
         return new Promise((resolve, reject) => {
             isAlertShowing.current = true;
@@ -113,6 +188,7 @@ const MedicinesScreen = () => {
         });
     }
 
+    // take medicine handle
     const take = (name, index) => {
         const loadingArr = state.isLoading;
         loadingArr[index] = true;
@@ -138,24 +214,21 @@ const MedicinesScreen = () => {
         );
         if(alertRes) {
             deleteMedicine(name).then((value) => {
-                AsyncAlert('Success', 'Removed successfully', [{text: 'OK', resolve: true}]);
-                setState({...state, screenLoading: true});
+                AsyncAlert('Success', 'Removed successfully', [{text: 'OK', resolve: true}])
+                .finally(() => {setInfoVisible(false); setState({...state, screenLoading: true}); });
             }).catch((err) => AsyncAlert("ERROR", err.message, [{text: 'OK'}]));
         }
     }
 
     React.useEffect(() => {
         const getMedics = () => {
-            console.log(isScreenMounted.current, isModalVisible, isAlertShowing.current);
             if(!isScreenMounted.current && !isModalVisible && !isAlertShowing.current) return;
             let res = getMedicines();
             res.then((value) => {
-                console.log("length", value.length);
                 if(isScreenMounted.current || isModalVisible || isAlertShowing.current)
                     setState({...state, medications: value, isLoading: Array(res.length).fill(false), screenLoading: false});
             }).catch((err) => console.log(err));
         }
-        console.log(state.screenLoading);
         if(state.screenLoading || !state.medications)
             getMedics();
 
@@ -173,8 +246,6 @@ const MedicinesScreen = () => {
         <Text>Loading...</Text>
     </View>
 
-    //if(!state.medications || state.medications.length === 0)  return <AddMedication onAdded={() => setState({...state, screenLoading: true})}/>
-
     return (
         <View style={{flex: 1, height: Dimensions.get('window').height, width: Dimensions.get('window').width}}>
             <FlatList
@@ -184,23 +255,26 @@ const MedicinesScreen = () => {
                     <Card.Title>{item.medicineRef.name}</Card.Title>
                     <Card.Divider color='black' />
                     <View style={{alignItems: 'center'}}>
-                        <Text>Quantity: {item.quantity}</Text>
+                        <Text>Stock Quantity: {item.quantity}</Text>
                         <Text>Dosage amount: {item.dosageamount}</Text>
                         <Text>Time for take:</Text>
                         <Text>{item.times.map((time) => moment.utc(time, 'HH:mm').local().format('HH:mm')).join(' ')}</Text>
                     </View>
                     <View style={{flexDirection: 'row', bottom: -10, alignSelf: 'auto', justifyContent: 'space-around'}}>
                         <Button
-                            title='Remove'
-                            icon={{type: 'feather', name: 'trash', size: 15, color: 'white'}}
-                            onPress={() => remove(item.medicineRef.name)}
-                        />
-                        <Button
-                            style={{width: 70}}
+                            icon={{type: 'font-awesome-5', name: 'hand-holding', color: 'white', size: 15}}
+                            style={{width: 80}}
                             loading={state.isLoading[index]}
                             disabled={state.isLoading[index]}
                             title='Taken'
                             onPress={() => take(item.medicineRef.name, index)}
+                        />
+                        <Button
+                            title="More info"
+                            onPress={() => {
+                                setState({...state, itemInfo: item});
+                                setInfoVisible(true);
+                            }}
                         />
                         <Button
                             icon={{type: 'feather', name: 'edit', size: 15, color: 'white'}}
@@ -233,6 +307,18 @@ const MedicinesScreen = () => {
                 }}
                 editValues={state.editValues}
             />
+            <MedicationMoreInfo 
+                data={state.itemInfo} 
+                //taken={state.itemInfo.taken}
+                isInfoVisible={isInfoVisible}
+                setInfoVisible={setInfoVisible}
+            >
+                <Button
+                    title='Remove'
+                    icon={{type: 'feather', name: 'trash', size: 15, color: 'white'}}
+                    onPress={() => remove(state.itemInfo.medicineRef.name)}
+                />
+            </MedicationMoreInfo>
         </View>
     );
 };

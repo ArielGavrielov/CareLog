@@ -1,11 +1,11 @@
 import React, { useContext } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { useColorScheme, SafeAreaView, Text, View, StyleSheet } from 'react-native';
-import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
+import { SafeAreaView, Text, View, StyleSheet } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createStackNavigator } from '@react-navigation/stack';
-import NetInfo, { useNetInfo } from "@react-native-community/netinfo";
+import NetInfo from '@react-native-community/netinfo';
 import { Button } from 'react-native-elements';
 import Modal from 'react-native-modal';
 
@@ -34,25 +34,24 @@ const App = () => {
   const [isOffline, setOfflineStatus] = React.useState(false);
   const { state, restoreToken } = useContext(AuthContext);
   const [headerText, setHeaderText] = React.useState('');
-  const scheme = useColorScheme();
 
   React.useEffect(() => {
-    const removeNetInfoSubscription = NetInfo.addEventListener((state) => {
-      const offline = !(state.isConnected && state.isInternetReachable);
-      console.log(offline);
-      setOfflineStatus(offline);
+    const unsubscribe = NetInfo.addEventListener(({ isInternetReachable }) => {
+      console.log(isInternetReachable);
+      if (typeof isInternetReachable !== 'boolean') return;
+      setOfflineStatus(!isInternetReachable);
     });
-
+    
     restoreToken();
 
     return () => {
-      isReadyRef.current = false
-      removeNetInfoSubscription();
+      isReadyRef.current = false;
+      unsubscribe();
     };
   }, []);
 
   const NoInternetModal = ({show, onRetry, isRetrying}) => (
-    <Modal isVisible={show} style={styles.modal} animationInTiming={600}>
+    <Modal isVisible={isOffline} style={styles.modal} animationInTiming={600}>
       <View style={styles.modalContainer}>
         <Text style={styles.modalTitle}>Connection Error</Text>
         <Text style={styles.modalText}>
@@ -62,11 +61,6 @@ const App = () => {
       </View>
     </Modal>
   );
-  
-  /*if(!useNetInfo().isInternetReachable) 
-    return <View style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center'}}>
-      <Text>Check your internet connection...</Text>
-    </View>*/
 
   if(state.isLoading) {
     return <SplashScreen />
@@ -168,21 +162,6 @@ const App = () => {
             setHeaderText(screenName);
         } else
           setHeaderText(s.routeNames[s.index]);
-      }}
-      theme={scheme === 'dark' ? {
-        ...DarkTheme,
-        colors: {
-          ...DarkTheme.colors,
-          primary: 'rgb(255,255,255)',
-          background:'#000'
-        },
-      } : {
-        ...DefaultTheme,
-        colors: {
-          ...DefaultTheme.colors,
-          primary: 'rgb(0,0,0)',
-          background:'#fff'
-        },
       }}
       ref={ navigationRef }
       onReady={() => {

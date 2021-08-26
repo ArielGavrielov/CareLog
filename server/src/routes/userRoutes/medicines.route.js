@@ -34,6 +34,7 @@ router.post('/', async (req,res) => {
     let user = await User.findOne({_id: req.user._id, "medicines.medicineRef": medicine._id});
     for(let i = 0; i < req.body.times.length; i++)
         req.body.times[i] = moment(req.body.times[i], 'HH:mm').utc().format('HH:mm');
+    req.body.times.sort((a,b) => a > b ? 1 : a < b ? -1 : 0);
     if(user) {
         User.updateOne(
             {_id: req.user._id, "medicines.medicineRef": medicine._id},
@@ -114,7 +115,7 @@ router.put('/take/:name', async (req,res) => {
         console.log(closestTime.value);
         if(parseFloat(closestTime.value) > parseFloat(difToApprove)) {
             let time = moment.utc(closestTime.dif.hours()+":"+closestTime.dif.minutes()+":"+closestTime.dif.seconds(), "h:m:s");
-            throw {message: 'Next time to take ' + userPopulate[i].medicineRef.name + ' is more: ' + time.format(timeFormat) + " ("+closestTime.time.local().format('HH:mm')+")"}
+            throw {message: `Next time to take ${userPopulate[i].medicineRef.name} is ${closestTime.time.fromNow()} (${closestTime.time.local().format('HH:mm')})`}
         }
         if(j === userPopulate[i].taken.length) {
             console.log(-userPopulate[i].dosageamount);
@@ -152,8 +153,7 @@ router.delete('/:name', async (req,res) => {
     try {
         let medicine = await Medicine.findOne({name: req.params.name});
         User.updateOne({_id: req.user._id}, { $pull: { 'medicines': { medicineRef: medicine._id }}}, (err,data) => {
-            if(err) throw err;
-            if(data.nModified === 0) throw {message: 'Medicine not found'};
+            if(err || data.nModified === 0) return res.status(422).send({error: 'Medicine not found, try relaunch app.'});
             res.send(data);
         });
     } catch(err) {

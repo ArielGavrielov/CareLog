@@ -19,7 +19,9 @@ const authReducer = (state, action) => {
         case 'signout':
             return { ...state, errorMessage: '', token: null, isSignout: true, userDetails: null };
         case 'reset_password':
-            return { ...state, errorMessage: '', resetPassword: {...state.resetPassword, ...action.payload}};
+            if(action.payload)
+                return { ...state, errorMessage: '', resetPassword: {...state.resetPassword, ...action.payload}};
+            return { ...state, errorMessage: '', resetPassword: {message: '', id: ''}};
         case 'clear_error_message':
             return {...state, errorMessage: '', message:'' };
         default: 
@@ -131,6 +133,10 @@ const changePassword = dispatch => async (id, token, password) => {
     }
 }
 
+const resetDone = dispatch => () => {
+    dispatch({ type: 'reset_password', payload: null });
+}
+
 // signin post
 const signin = (dispatch) => async ({ email, password }) => {
     try {
@@ -155,6 +161,6 @@ const signout = dispatch => async () => {
 
 export const { Provider, Context } = createDataContext(
     authReducer,
-    { signin, signout, signup, clearErrorMessage, restoreToken, resetPasswordRequest, checkToken, changePassword },
+    { signin, signout, signup, clearErrorMessage, restoreToken, resetPasswordRequest, checkToken, changePassword, resetDone },
     { token: null, errorMessage: '', isLoading: true, isSignout: true, resetPassword:{message: '', id: ''}, userDetails: null }
 );

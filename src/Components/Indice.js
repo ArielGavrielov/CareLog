@@ -1,6 +1,6 @@
 import React from 'react';
-import { Alert } from 'react-native';
-import { Card, Text, Icon, Button } from 'react-native-elements';
+import { Alert, View } from 'react-native';
+import { Card, Icon, Button } from 'react-native-elements';
 import { useForm } from "react-hook-form";
 import { InputControl } from '../Components/InputControl';
 import { postIndices } from '../api/carelog';
@@ -44,7 +44,10 @@ export const Indice = (props) => {
         </>
          :
         <Card>
-            <Card.Title>{props.title}</Card.Title>
+            <View style={{flexDirection:'row', justifyContent: 'center'}}>
+                {props.icon ? <Icon type={props.icon.type} name={props.icon.name} size={20} /> : null }
+                <Card.Title>{props.title}</Card.Title>
+            </View>
             <Card.Divider color='#FFC0CB' />
             {props.inputs.map((input, i) => (
                 <InputControl 

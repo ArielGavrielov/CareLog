@@ -17,7 +17,7 @@ mongoose.connect(mongoUri, {
     useNewUrlParser: true,
     useCreateIndex: true,
     useUnifiedTopology: true,
-    useFindAndModify: true
+    useFindAndModify: false
 });
 mongoose.connection.on('connected', () => {
     console.log('connected to mongodb instance');

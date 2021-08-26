@@ -1,10 +1,9 @@
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet, Dimensions, Alert } from 'react-native';
 import { Text, Image, Button } from 'react-native-elements';
 import { Context as AuthContext } from '../Context/AuthContext';
 import { InputControl, DateInputControl } from '../Components/InputControl';
-import { emailPattern, birthdatePattern } from '../Components/Patterns';
 import ModalWithX from '../Components/ModalWithX';
 import * as patterns from '../Components/Patterns';
 
@@ -130,7 +129,8 @@ const CheckTokenModal = (props) => {
 }
 const ForgotScreen = (props) => {
     const { control, trigger, handleSubmit, formState, setValue } = useForm();
-    const { state, resetPasswordRequest, checkToken, changePassword, clearErrorMessage } = React.useContext(AuthContext);
+    const isScreenMounted = React.useRef(true);
+    const { state, resetPasswordRequest, checkToken, changePassword, resetDone } = React.useContext(AuthContext);
     const [dataState, setDataState] = React.useState({
         isLoading: false,
         countdown: 0
@@ -152,14 +152,35 @@ const ForgotScreen = (props) => {
     });
 
     React.useEffect(() => {
-        console.log(state);
-        if(state.resetPassword.id && !state.resetPassword.tokenFound && modal !== 1) {
-            setModal(1);
-            clearErrorMessage();
+        isScreenMounted.current = true;
+
+        if(state.resetPassword.success) {
+            const AsyncAlert = (title, message, buttons, options={}) => {
+                return new Promise((resolve, reject) => {
+                    Alert.alert(
+                        title,
+                        message,
+                        buttons.map((value) => {return {text: value.text, onPress: value.onPress ? value.onPress : () => resolve(value.resolve ? value.resolve : null)}}),
+                        options
+                    );
+                });
+            }
+    
+            AsyncAlert('Sucees', 'Password chaned sucessfully.', [{text: 'OK'}])
+            .finally(() => {
+                setModal(0);
+                props.navigation.navigate('Login');
+                resetDone();
+            });
+        } else if(state.resetPassword.id && !state.resetPassword.tokenFound && modal !== 1) {
+            if(isScreenMounted.current)
+                setModal(1);
         } else if(state.resetPassword.id && state.resetPassword.tokenFound && modal !== 2) {
             setModal(0);
-            clearErrorMessage();
             setTimeout(() => setModal(2), 500);
+        }
+        return () => {
+            isScreenMounted.current = false;
         }
     }, [state]);
 
@@ -176,7 +197,7 @@ const ForgotScreen = (props) => {
                 leftIcon={{type: 'font-awesome-5', name: 'envelope'}}
                 rules={{
                     required: "You must specify a email address",
-                    pattern: emailPattern
+                    pattern: patterns.emailPattern
                 }}
             />
             <DateInputControl
@@ -241,7 +262,7 @@ const styles = StyleSheet.create({
     Btn: {
         borderRadius: 25,
         height: 50,
-        width: 150,
+        width: 170,
         color: '#fff'
     },
     errorMessage: {

@@ -2,9 +2,6 @@ import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Rating, Text, Avatar, Divider, Card, ListItem, Button, Icon } from 'react-native-elements';
 import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
-import { InputControl } from '../Components/InputControl';
-import { useForm } from "react-hook-form";
-import { postIndices } from '../api/carelog';
 import { Indice } from '../Components/Indice';
 import moment from 'moment';
 

@@ -18,7 +18,8 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.arielariel1010.CareLog"
+      "bundleIdentifier": "com.arielariel1010.CareLog",
+      "userInterfaceStyle": "automatic"
     },
     "android": {
       "adaptiveIcon": {

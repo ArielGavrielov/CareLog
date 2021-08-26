@@ -99,7 +99,7 @@ router.post("/reset-password/:userId/:token", async (req, res) => {
         await user.save();
         await token.delete();
         console.log(user.password);
-        res.send({message: 'Password reset sucessfully.'});
+        res.send({message: 'Password reset sucessfully.', success: true});
     } catch(e) {
         res.status(422).send({code: 422, error: 'Something went wrong with reset password'});
         console.log(e);
