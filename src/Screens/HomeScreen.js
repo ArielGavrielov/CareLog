@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Rating, Text, Avatar, Divider, Card, ListItem, Button, Icon } from 'react-native-elements';
+import { View, StyleSheet, Alert } from 'react-native';
+import { AirbnbRating, Text, Avatar, Divider, Card, ListItem, Button, Icon } from 'react-native-elements';
 import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
 import { Indice } from '../Components/Indice';
+import { getFeeling, postFeeling } from '../api/carelog';
 import moment from 'moment';
 
 import List from '../Components/List';
@@ -17,15 +18,8 @@ const events = [
 
 const HomeScreen = () => {
   const [selected, setSelected] = useState(0);
-
-  let date = moment.utc().toDate();
-  date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
-  
-  let start = moment.utc().toDate();
-  start.setMinutes(start.getMinutes() - start.getTimezoneOffset());
-  start.setUTCHours(0,0,0);
-
-  console.log("steps", getStepsBetween(start, date));
+  const [rating, setRating] = useState(null);
+  const isScreenMounted = React.useRef();
 
   const indices = [
     {
@@ -148,23 +142,53 @@ const HomeScreen = () => {
       checked: true
     }
   ];
-  
-  const [rating, setRating] = useState(5);
+
+  React.useEffect(() => {
+    isScreenMounted.current = true;
+    if(!rating) {
+      if(!isScreenMounted.current) return;
+      getFeeling(moment.utc().format('Y-MM-DD'))
+        .then((res) => {
+          if(!isScreenMounted.current) return;
+          console.log(res);
+          setRating({lastChange: moment.utc(res.lastChange, 'HH:mm:ss').local().format('HH:mm:ss'), value: res.feeling});
+        }).catch(({error}) => {
+          if(!isScreenMounted.current) return;
+          setRating({lastChange: 'No change today yet.', value: 3});
+          if(!error)
+            Alert.alert('ERROR', 'Please try again later.', [{text: 'ok'}]);
+        });
+    }
+    return () => {
+      isScreenMounted.current = false;
+    }
+  }, []);
 
   return (
     <ScrollView nestedScrollEnabled = {true}>
       <Card>
-        <Card.Title>How do you feel?</Card.Title>
+        <Card.Title>How do you feel today?</Card.Title>
         <Card.Divider color = '#FFC0CB'/>
-        <Rating
-          reviews={['Terrible', 'Bad', 'Okay', 'Good', 'Great']}
-          type='heart'
-          imageSize={40}
-          showRating
-          fractions={0}
-          startingValue={rating}
-          onFinishRating={(v) => setRating(v)}
-        />
+        { rating ? 
+        <View>
+          <Text>Last change: {rating.lastChange}</Text>
+          <AirbnbRating
+            reviews={['Terrible', 'Bad', 'Okay', 'Good', 'Great']}
+            defaultRating={rating.value}
+            onFinishRating={(v) => {
+              postFeeling(v).then((data) => {
+                if(data.success) {
+                  setRating({lastChange: moment().format('HH:mm:ss'), value: v});
+                } else {
+                  Alert.alert('ERROR', 'Please try again later.', [{text: 'ok'}]);
+                }
+              }).catch(({error}) => {
+                if(!error)
+                  Alert.alert('ERROR', 'Something went wrong. Please try again later.', [{text: 'ok'}])
+              });
+            }}
+          />
+        </View> : null}
       </Card>
       <Card>
         <Card.Title>Indices</Card.Title>

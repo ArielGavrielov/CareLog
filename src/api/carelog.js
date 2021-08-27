@@ -27,6 +27,7 @@ export const postIndices = (type, value) => {
     });
 };
 
+//get user indice by type
 export const getIndice = (type='') => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -63,6 +64,8 @@ export const getMedicines = () => {
         }
     });
 }
+
+//user adds new medicine
 export const postMedicine = (props) => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -79,7 +82,9 @@ export const postMedicine = (props) => {
                 reject({error: true, message: 'Check your network connection.'});
         }
     });
-} 
+}  
+
+// user takes medicine 
 export const takeMedicine = (name) => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -98,6 +103,7 @@ export const takeMedicine = (name) => {
     });
 }
 
+// delete medicine for user by name 
 export const deleteMedicine = (name) => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -109,6 +115,44 @@ export const deleteMedicine = (name) => {
         } catch(err) {
             console.log(err.response.data)
             if(err.response)
+                reject({error: true, message: err.response.data.error});
+            else
+                reject({error: true, message: 'Check your network connection.'});
+        }
+    });
+}
+
+// Feelings
+//get user feeling by date
+export const getFeeling = (date='') => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const response = await CareLogAPI.get('/user/feelings/'+date,
+            { headers: {
+                'Authorization': 'Bearer ' + await SecureStore.getItemAsync('token')
+            }});
+            resolve(response.data);
+        } catch(err) {
+            console.log(err.response.data)
+            if(err.response.data)
+                reject({error: true, message: err.response.data.error});
+            else
+                reject({error: true, message: 'Check your network connection.'});
+        }
+    });
+}
+// post new feeling 
+export const postFeeling = (feeling) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const response = await CareLogAPI.post('/user/feelings/', {feeling: feeling},
+            { headers: {
+                'Authorization': 'Bearer ' + await SecureStore.getItemAsync('token')
+            }});
+            resolve(response.data);
+        } catch(err) {
+            console.log(err.response.data)
+            if(err.response.data)
                 reject({error: true, message: err.response.data.error});
             else
                 reject({error: true, message: 'Check your network connection.'});

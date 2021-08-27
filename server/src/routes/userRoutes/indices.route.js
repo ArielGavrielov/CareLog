@@ -2,40 +2,29 @@ const express = require('express');
 const router = express.Router();
 const User = require('../../models/User');
 
-function getWeeksRange(date) {
-    const curr = new Date(date.time);
-    const first = curr.getDate() - curr.getDay();
-    const last = first + 6;
-    const format = { year: 'numeric', month: '2-digit', day: '2-digit' };
-    var firstday = new Date(curr.setDate(first)).toLocaleDateString("he-IL", format);
-    var lastday = new Date(curr.setDate(last)).toLocaleDateString("he-IL", format);
-    ;
-    return `${firstday.slice(0, 5).replaceAll('.', '/')}-${lastday.slice(0, 5).replaceAll('.', '/')}`
-  }
-  function twoDigits(number) {
+function twoDigits(number) {
     const numString = "0" + number;
     return numString.substring(numString.length - 2);
-  }
-  
-  function getWeekStart(currentdate) {
+}
+
+function getWeekStart(currentdate) {
     const date = new Date(currentdate);
     date.setDate(date.getDate() - date.getDay());
     const sow = twoDigits(date.getDate()) + "/" + twoDigits(date.getMonth() + 1);
     date.setDate(date.getDate() + 6);
     const eow = twoDigits(date.getDate()) + "/" + twoDigits(date.getMonth() + 1);
     return sow + "-" + eow;
-  }
+}
   
-  function getDay(number) {
-    days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+function getDay(number) {
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     return days[number];
-  }
-  
+}
+// get user indices  
 router.get('/', (req,res) => {
-    
     res.send(req.user.indices);
 });
-
+//get indice by type
 router.get('/:type', (req,res) => {
     if(!req.params.type || !req.user.indices[req.params.type])
         return res.status(422).send({error: 'indice not found.'});
@@ -56,6 +45,7 @@ router.get('/:type', (req,res) => {
     res.send(result);
 });
 
+//get indice by type for statistic
 router.get('/statistic/:type', (req,res) => {
     if(req.params.type === '' || !req.user.indices[req.params.type])
         return res.status(422).send({error: 'indice not found.'});
@@ -111,6 +101,7 @@ router.get('/statistic/:type', (req,res) => {
     }
 })
 
+//post indice by type
 router.post('/:type', (req,res) => {
     switch(req.params.type) {
         case 'blood':

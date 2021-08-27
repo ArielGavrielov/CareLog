@@ -12,7 +12,7 @@ const diffBetweenDates = (startTime, endTime, abs=false) => {
     let dif = abs ? moment.duration(endTime.diff(startTime)).abs() : moment.duration(endTime.diff(startTime));
     return dif.asMinutes();
 }
-
+//get user medicine
 router.get('/', async (req,res) => {
     let details = await User.findOne({_id: req.user._id})
         .populate('medicines.medicineRef', '-_id -createdBy');
@@ -20,22 +20,29 @@ router.get('/', async (req,res) => {
     res.send(details.medicines);
 
 });
+// get user all medicines
 router.get('/all', async (req,res) => {
     res.send(await Medicine.find());
 });
 
+// post new medicine for user
 router.post('/', async (req,res) => {
+    // Check if medicine exist.
     let medicine = await Medicine.findOne({name: req.body.name});
     if(!medicine) {
+        // if not exist create one.
         req.body['createdBy'] = req.user._id;
         medicine = await Medicine.create(req.body);
     }
-
-    let user = await User.findOne({_id: req.user._id, "medicines.medicineRef": medicine._id});
+    // convert the times from user to utc.
     for(let i = 0; i < req.body.times.length; i++)
         req.body.times[i] = moment(req.body.times[i], 'HH:mm').utc().format('HH:mm');
     req.body.times.sort((a,b) => a > b ? 1 : a < b ? -1 : 0);
+
+    let user = await User.findOne({_id: req.user._id, "medicines.medicineRef": medicine._id});
+    // if user has that medicine before.
     if(user) {
+        // update user medicine rules.
         User.updateOne(
             {_id: req.user._id, "medicines.medicineRef": medicine._id},
             {$set: {
@@ -46,9 +53,9 @@ router.post('/', async (req,res) => {
             (err,data) => {
                 res.send(err ? err : data.nModified === 0 ? {error: 'Not modified.'} : data);
         }); 
-    }
-    else {
-        User.findByIdAndUpdate(req.user._id, {$push: {"medicines": {medicineRef: medicine._id, ...req.body}}}, (err,data) => {
+    } else {
+        // add medicicine to user medicines array
+        User.findByIdAndUpdate(req.user._id, {$addToSet: {"medicines": {medicineRef: medicine._id, ...req.body}}}, (err,data) => {
             res.send(err ? err : data);
         });
     }
@@ -149,6 +156,7 @@ router.put('/take/:name', async (req,res) => {
     }
 }); 
 
+// delete medicine by name
 router.delete('/:name', async (req,res) => {
     try {
         let medicine = await Medicine.findOne({name: req.params.name});
@@ -160,10 +168,6 @@ router.delete('/:name', async (req,res) => {
         console.log(err);
         res.status(422).send({error: err.message});
     }
-});
-
-router.get('/test', async (req,res) => {
-    await Medicine.deleteMany();
 });
 
 module.exports = router;

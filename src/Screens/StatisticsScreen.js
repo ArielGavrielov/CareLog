@@ -1,8 +1,8 @@
 import React from 'react';
 import { Text, Divider } from 'react-native-elements'
 import { View, Dimensions, TouchableOpacity } from 'react-native';
-import { IndiceChart } from '../Components/Chart';
-import { getIndice } from '../api/carelog';
+import { IndiceChart, FeelingChart } from '../Components/Chart';
+import { getIndice, getFeeling } from '../api/carelog';
 
 const StatisticsScreen = ({navigation}) => {
   const indices = {
@@ -25,40 +25,44 @@ const StatisticsScreen = ({navigation}) => {
   };
 
   const [selected, setSelected] = React.useState(indices.blood);
-  const [data, setData] = React.useState({});
+  const [indicesData, setIndicesData] = React.useState(null);
+  const [feelingData, setFeelingData] = React.useState(null);
   const [Loading, setLoading] = React.useState(true);
   const isScreenMounted = React.useRef(true);
 
   React.useEffect(() => {
-    isScreenMounted.current = true;
-    const changeData = () => {
-      setLoading(true);
-      if(selected) {
-        getIndice(selected.route).then((value) => {
-          console.log(value);
-          if(isScreenMounted.current)
-            setData(value)
-        })
-        .catch((err) => console.log(err))
-        .finally(() => {
-          if(isScreenMounted.current && data) setLoading(false);
-        });
-      }
-    }
-    changeData();
-
-    return () => {
-      isScreenMounted.current = false;
+    setLoading(true);
+    if(selected) {
+      getIndice(selected.route).then((data) => {
+        if(isScreenMounted.current)
+          setIndicesData(data)
+      })
+      .catch((err) => console.log(err))
+      .finally(() => {
+        if(isScreenMounted.current) setLoading(false);
+      });
     }
   }, [selected]);
-/*
-  React.useMemo(() => {
-    setLoading(false);
-  }, [data]);
-*/
+
+  React.useEffect(() => {
+    isScreenMounted.current = true;
+    if(isScreenMounted.current) {
+      console.log("again 1");
+      getFeeling().then((data) => {
+        if(isScreenMounted.current)
+          setFeelingData(data);
+          console.log(data);
+      }).catch((err) => setFeelingData({}));
+    }
+    return () => {
+      setFeelingData(null);
+      isScreenMounted.current = false;
+    }
+  }, []);
+
   return (
-    <View>
-      <View>
+    <View style={{backgroundColor: 'white', height: Dimensions.get('window').height}}>
+      <View style={{height: 370}}>
           <Text h3 style={{alignSelf: 'center'}}>Indices</Text>
           <View style={{flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
             {
@@ -82,14 +86,24 @@ const StatisticsScreen = ({navigation}) => {
             }
           </View>
           <Divider color='#FFC0CB' style={{marginBottom: 10}}/>
-          {Loading || data && Object.keys(data).length === 0 && data.constructor === Object ? <Text style={{alignSelf: 'center'}}>Loading...</Text> :
-          data.error ? <Text style={{alignSelf: 'center'}}>No Data...</Text> :
+          {Loading || indicesData && Object.keys(indicesData).length === 0 && indicesData.constructor === Object ? <Text style={{alignSelf: 'center'}}>Loading...</Text> :
+          !indicesData || indicesData.error ? <Text style={{alignSelf: 'center'}}>No Data...</Text> :
           <IndiceChart
             type={selected.route}
-            data={data}
+            data={indicesData}
             navigation={navigation}
           />
           }
+        </View>
+        <View>
+          <Text h3 style={{alignSelf: 'center'}}>Feeling</Text>
+          <Divider color='#FFC0CB' style={{marginBottom: 10}}/>
+          {feelingData && Object.keys(feelingData).length > 0 ? 
+          <FeelingChart 
+            data={feelingData}
+          /> : !feelingData ?
+            <Text style={{alignSelf: 'center'}}>Loading...</Text>
+            : <Text style={{alignSelf: 'center'}}>No Data...</Text> }
         </View>
     </View>
     );

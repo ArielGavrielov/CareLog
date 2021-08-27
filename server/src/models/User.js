@@ -106,6 +106,39 @@ const userSchema = new mongoose.Schema({
                 type: String
             }],
         }]
+    }, { _id : false })],
+    feelings: [ mongoose.Schema({
+        date: {
+            type: String,
+            unique: true,
+            default: moment.utc().format('Y-MM-DD')
+        },
+        lastChange: {
+            type: String,
+            default: moment.utc().format('HH:mm:ss')
+        },
+        feeling: {
+            type: Number,
+            min: 1,
+            max: 5,
+            required: true
+        }
+    }, { _id : false })],
+    events: [mongoose.Schema({
+        title: {
+            type: String,
+            required: true
+        },
+        body: {
+            type: String
+        },
+        time: {
+            type: String,
+            required: true
+        },
+        address: {
+            type: String
+        }
     }, { _id : false })]
 });
 

@@ -7,9 +7,12 @@ const User = require('../../models/User');
 const requireAuth = require('../../middlewares/requireAuth');
 const indices = require('./indices.route');
 const medicines = require('./medicines.route');
+const feeling = require('./feeling.route');
 
 router.use('/indices', requireAuth, indices);
 router.use('/medicines', requireAuth, medicines);
+router.use('/feelings', requireAuth, feeling);
+
 
 router.get('/', requireAuth, (req, res) => {
     User.findOne({_id: req.user._id}, (err, data) => {
@@ -19,6 +22,7 @@ router.get('/', requireAuth, (req, res) => {
     })
 });
 
+// handle signup for new user
 router.post('/signup', async (req, res) => {
     const { email, firstname, lastname, birthdate, username, password, phone } = req.body;
     try {
@@ -32,6 +36,7 @@ router.post('/signup', async (req, res) => {
     }
 });
 
+// handle sign in for user 
 router.post('/signin', async (req, res) => {
     const { email, password } = req.body;
     if(!email || !password) return res.status(422).send({ code: 422, error: 'Email/Password not filled.'});

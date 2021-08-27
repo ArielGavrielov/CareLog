@@ -10,7 +10,6 @@ import { Button } from 'react-native-elements';
 import Modal from 'react-native-modal';
 
 import HomeScreen from './src/Screens/HomeScreen';
-import SecondScreen from './src/Screens/SecondScreen';
 import LoginScreen from './src/Screens/LoginScreen';
 import AccountScreen from './src/Screens/AccountScreen';
 import StatisticsScreen from './src/Screens/StatisticsScreen';
@@ -70,21 +69,6 @@ const App = () => {
     return (
       <Tab.Navigator
         initialRouteName="Home">
-          <Tab.Screen
-            name="Home"
-            options={{
-              title: "Home",
-              tabBarIcon: ({ color, size }) => (
-                <Icon 
-                  name='home'
-                  type='feather'
-                  color={color}
-                  size={size}
-                />
-              )
-            }}
-            component={HomeScreen}
-          />
           <Tab.Screen 
             name="Events"
             options={{
@@ -114,6 +98,21 @@ const App = () => {
               )
             }} 
             component={StatisticsScreen} 
+          />
+          <Tab.Screen
+            name="Home"
+            options={{
+              title: "Home",
+              tabBarIcon: ({ color, size }) => (
+                <Icon 
+                  name='home'
+                  type='feather'
+                  color={color}
+                  size={size}
+                />
+              )
+            }}
+            component={HomeScreen}
           />
           <Tab.Screen 
             name="Indices" 
