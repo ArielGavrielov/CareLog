@@ -90,14 +90,28 @@ const AddMedication = ({onAdded = () => console.log("need onAdded property."), i
 }
 
 const MedicationMoreInfo = ({data, children, isInfoVisible, setInfoVisible}) => {
-    const [dateChoosen, setDateChoosen] = React.useState();
+    const [dateChoosen, setDateChoosen] = React.useState(null);
     const [dateChooseOpen, setDateChooseOpen] = React.useState(false);
     const [takens, setTakens] = React.useState();
 
     React.useEffect(() => {
         if(isInfoVisible) {
-            setTakens(data.taken.map((value,index) => {return {label: value.date, value: value, key: "value.date" + index}}));
-            setDateChoosen(data.taken ? data.taken[0] : null);
+            console.log(data.taken);
+            let takenData = data.taken.map((value,index) => {
+                value.time.sort((a,b) => moment(a, 'HH:mm:ss').diff(moment(b, 'HH:mm:ss')));
+                return {label: value.date, value: value}
+            });
+            takenData.sort((a,b) => moment(b.label, 'Y-MM-DD').diff(moment(a.label, 'Y-MM-DD')));
+            setTakens(takenData);
+        }
+
+        return () => {
+            if(!isInfoVisible) {
+                setTakens();
+                setDateChooseOpen(false);
+                setDateChoosen(null);
+                console.log("unmounted");
+            }
         }
     }, [isInfoVisible]);
 
@@ -114,8 +128,14 @@ const MedicationMoreInfo = ({data, children, isInfoVisible, setInfoVisible}) => 
                 <Text h1>{data.medicineRef.name} Info</Text>
                 <Divider orientation="vertical" style={{marginVertical: 10}} />
                 <Text h2>Basic information</Text>
-                <Text>Stock quantity: {data.quantity}</Text>
-                <Text>Dosage amount: {data.dosageamount}</Text>
+                <View style={{flexDirection: 'row'}}>
+                    <Text style={{fontWeight:'bold'}}>Stock quantity: </Text>
+                    <Text>{data.quantity}</Text>
+                </View>
+                <View style={{flexDirection: 'row'}}>
+                    <Text style={{fontWeight:'bold'}}>Dosage amount: </Text>
+                    <Text>{data.dosageamount}</Text>
+                </View>
                 <FlatList
                     contentContainerStyle={{alignItems: 'center'}}
                     ListHeaderComponent={<Text style={{backgroundColor: 'white', fontWeight:'bold'}}>Times to take:</Text>}
@@ -137,7 +157,7 @@ const MedicationMoreInfo = ({data, children, isInfoVisible, setInfoVisible}) => 
                     items={takens}
                     setOpen={setDateChooseOpen}
                     setValue={setDateChoosen}
-                    maxHeight={120}
+                    maxHeight={100}
                 />
                 { dateChoosen ? 
                 <FlatList

@@ -9,29 +9,34 @@ import { useForm } from 'react-hook-form';
 import { InputControl, EventTimeInputControl } from '../Components/InputControl';
 import moment from 'moment';
 
-const AddEvent = ({isAddEventModal, setAddEventModal, onSubmit}) => {
+const PushEvent = ({isPushEventModal, setPushEventModal, onSubmit}) => {
     const {control, handleSubmit, trigger, formState, reset, setValue} = useForm();
 
     React.useEffect(() => {
-        return () => reset();
-    }, [isAddEventModal]);
+        return () => {
+            if(formState.isSubmitSuccessful) {
+                reset();
+                console.log("reset2");
+            }
+        }
+    }, [isPushEventModal]);
 
     return (
         <View>
             <View style={{bottom: 0, left: 0, right: 0}}>
                 <Button
                     title="Add Event"
-                    onPress={() => setAddEventModal(!isAddEventModal)}
+                    onPress={() => setPushEventModal(!isPushEventModal)}
                     icon={{name: "plus", type: 'feather', color: 'white'}}
                 />
             </View>
             <ModalWithX
-                isVisible={isAddEventModal}
+                isVisible={isPushEventModal}
                 style={{flex:1}}
-                onBackdropPress={() => setAddEventModal(false)}
+                onBackdropPress={() => setPushEventModal(false)}
                 deviceWidth={Dimensions.get('window').width}
                 deviceHeight={Dimensions.get('window').height}
-                onRequestClose={() => setAddEventModal(false)}
+                onRequestClose={() => setPushEventModal(false)}
             >
                 <Text h1>Add Event</Text>
                 <InputControl
@@ -132,11 +137,11 @@ const EventsScreen = () => {
     const isScreenMounted = React.useRef();
     const [events, setEvents] = React.useState(null);
     const [isLoading, setIsLoading] = React.useState(true);
-    const [isAddEventModal, setAddEventModal] = React.useState(false);
+    const [isPushEventModal, setPushEventModal] = React.useState(false);
 
     const onSubmit = (props) => {
         postEvent(props).then((res) => {
-            setAddEventModal(false);
+            setPushEventModal(false);
         }).catch((err) => console.log(err))
         .finally(() => setIsLoading(true));
     }
@@ -212,9 +217,9 @@ const EventsScreen = () => {
                     items={events} 
                     renderItem={(item)=> renderItem(item)}
             />
-            <AddEvent 
-                isAddEventModal={isAddEventModal} 
-                setAddEventModal={setAddEventModal}
+            <PushEvent 
+                isPushEventModal={isPushEventModal} 
+                setPushEventModal={setPushEventModal}
                 onSubmit={onSubmit}
             />
         </>

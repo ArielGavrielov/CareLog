@@ -150,8 +150,8 @@ export const TimesInputControl = ({name, control, rules={}, render=null, default
                                         const arr = [...value];
                                         arr.splice(index, 1);
                                         onChange(arr);
-                                        if(index >= arr.length)
-                                            flatListRef.current.scrollToOffset({ animated: true, offset: arr.indexOf(dateString) });
+                                        //if(index >= arr.length)
+                                        //    flatListRef.current.scrollToOffset({ animated: true, offset: arr.indexOf(dateString) });
                                     }}
                         />
                     }}
@@ -174,7 +174,8 @@ export const TimesInputControl = ({name, control, rules={}, render=null, default
                         const arr = [...value, dateString];
                         arr.sort((a,b) => a > b ? 1 : a < b ? -1 : 0);
                         onChange(arr);
-                        setTimeout(() => flatListRef.current.scrollToIndex({ animated: true, index: arr.indexOf(dateString) }), 100);
+                        let index = arr.indexOf(dateString);
+                        setTimeout(() => flatListRef.current.scrollToIndex({ animated: true, index: index >= 2 ? (index - 1) : 0 }), 100);
                     } else
                         flatListRef.current.scrollToIndex({ animated: true, index: pos });
                 }}
