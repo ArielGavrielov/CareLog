@@ -123,28 +123,11 @@ const userSchema = new mongoose.Schema({
             max: 5,
             required: true
         }
-    }, { _id : false })],
-    events: [mongoose.Schema({
-        title: {
-            type: String,
-            required: true
-        },
-        body: {
-            type: String
-        },
-        time: {
-            type: String,
-            required: true
-        },
-        address: {
-            type: String
-        }
     }, { _id : false })]
 });
 
 userSchema.pre('save', function(next) {
     const user = this;
-    console.log("IS???");
     if(!user.isModified('password')) return next();
 
     bcrypt.genSalt(10, (err, salt) => {

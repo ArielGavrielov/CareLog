@@ -13,7 +13,6 @@ import { getStepsBetween } from '../Components/getSteps';
 const events = [
   { start: '07-09-2021 13:30:00', end: '2021-09-07 02:00:00', title: 'Dr. Mor Ben Shushan', summary: 'Nahariya' },
   { start: '07-09-2021 14:30:00', end: '2021-09-07 03:00:00', title: 'Dr. Ariel Gavrielov', summary: 'Akko' },
-  { start: '07-09-2021 15:30:00', end: '2021-09-07 04:00:00', title: 'Dr. Shadi', summary: 'Kfar' }
 ]
 
 const HomeScreen = () => {

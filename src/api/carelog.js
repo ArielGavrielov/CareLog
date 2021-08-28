@@ -47,6 +47,7 @@ export const getIndice = (type='') => {
 }
 
 // Medicines
+// get Medicines
 export const getMedicines = () => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -152,6 +153,44 @@ export const postFeeling = (feeling) => {
             resolve(response.data);
         } catch(err) {
             console.log(err.response.data)
+            if(err.response.data)
+                reject({error: true, message: err.response.data.error});
+            else
+                reject({error: true, message: 'Check your network connection.'});
+        }
+    });
+}
+
+// Events
+// Get user events
+export const getEvents = () => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const response = await CareLogAPI.get('/user/events/',
+            { headers: {
+                'Authorization': 'Bearer ' + await SecureStore.getItemAsync('token')
+            }});
+            resolve(response.data);
+        } catch(err) {
+            console.log(err.response.data);
+            if(err.response.data)
+                reject({error: true, message: err.response.data.error});
+            else
+                reject({error: true, message: 'Check your network connection.'});
+        }
+    });
+}
+
+export const postEvent = (event) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const response = await CareLogAPI.post('/user/events/', event,
+            { headers: {
+                'Authorization': 'Bearer ' + await SecureStore.getItemAsync('token')
+            }});
+            resolve(response.data);
+        } catch(err) {
+            console.log(err.response.data);
             if(err.response.data)
                 reject({error: true, message: err.response.data.error});
             else

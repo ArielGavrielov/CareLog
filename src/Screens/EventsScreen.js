@@ -3,77 +3,192 @@ import { View, Dimensions } from 'react-native';
 import { Card, Button, Text, Divider } from 'react-native-elements'; 
 import {Agenda} from 'react-native-calendars';
 import {NavigationApps, Waze} from "react-native-navigation-apps";
-import Modal from 'react-native-modal';
 import ModalWithX from '../Components/ModalWithX';
+import { getEvents, postEvent } from '../api/carelog';
+import { useForm } from 'react-hook-form';
+import { InputControl, EventTimeInputControl } from '../Components/InputControl';
+import moment from 'moment';
+
+const AddEvent = ({isAddEventModal, setAddEventModal, onSubmit}) => {
+    const {control, handleSubmit, trigger, formState, reset, setValue} = useForm();
+
+    React.useEffect(() => {
+        return () => reset();
+    }, [isAddEventModal]);
+
+    return (
+        <View>
+            <View style={{bottom: 0, left: 0, right: 0}}>
+                <Button
+                    title="Add Event"
+                    onPress={() => setAddEventModal(!isAddEventModal)}
+                    icon={{name: "plus", type: 'feather', color: 'white'}}
+                />
+            </View>
+            <ModalWithX
+                isVisible={isAddEventModal}
+                style={{flex:1}}
+                onBackdropPress={() => setAddEventModal(false)}
+                deviceWidth={Dimensions.get('window').width}
+                deviceHeight={Dimensions.get('window').height}
+                onRequestClose={() => setAddEventModal(false)}
+            >
+                <Text h1>Add Event</Text>
+                <InputControl
+                    name='Title'
+                    control={control}
+                    rules={{required: 'You must specify title of event'}}
+                    trigger={trigger}
+                />
+                <InputControl
+                    name='Body'
+                    multiline={true}
+                    numberOfLines={4}
+                    control={control}
+                    trigger={trigger}
+                />
+                <InputControl
+                    name='Address'
+                    control={control}
+                    trigger={trigger}
+                />
+                <EventTimeInputControl
+                    name='Time'
+                    control={control}
+                    rules={{required: 'You must specify time of event'}}
+                    trigger={trigger}
+                />
+                <Button
+                    title='Add Event'
+                    onPress={handleSubmit(onSubmit)}
+                />
+            </ModalWithX>
+        </View>
+    );
+} 
+
+const MoreInfoModal = ({item}) => {
+    const [isModalVisible, setModalVisible] = React.useState(false);
+
+    return (
+        <View>
+            <Button 
+                title="More Info"
+                icon={{name: 'info', type: 'feather', color: 'white'}}
+                onPress={() => setModalVisible(!isModalVisible)}
+            />
+            <ModalWithX
+                isVisible={isModalVisible}
+                animationInTiming={500}
+                animationOutTiming={500}
+                animationIn='zoomIn'
+                animationOut='zoomOut'
+                style={{flex:1}}
+                onBackdropPress={() => setModalVisible(false)}
+                deviceWidth={Dimensions.get('window').width}
+                deviceHeight={Dimensions.get('window').height}
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <Text h3>{item.title}</Text>
+                <Text h4>{item.time}{item.address ? ` at ${item.address}` : null}</Text>
+                <Divider orientation="vertical" />
+                {item.body ? <Text style={{fontSize: 16, margin: 10}}>{item.body}</Text> : null}
+                {item.address ? <><Divider orientation="vertical" />
+                <NavigationApps
+                    iconSize={30}
+                    row
+                    viewMode='view'
+                    address={item.address}
+                /></> : null}
+            </ModalWithX>
+        </View>
+    );
+}
+
+const EditModal = ({item}) => {
+    const [isModalVisible, setModalVisible] = React.useState(false);
+
+    return (
+        <View>
+            <Button 
+                title="Edit"
+                icon={{name: 'edit', type: 'feather', color: 'white'}}
+                onPress={() => setModalVisible(!isModalVisible)}
+            />
+            <ModalWithX
+                isVisible={isModalVisible}
+                style={{flex:1}}
+                onBackdropPress={() => setModalVisible(false)}
+                deviceWidth={Dimensions.get('window').width}
+                deviceHeight={Dimensions.get('window').height}
+                onRequestClose={() => setModalVisible(false)}
+            >
+            </ModalWithX>
+        </View>
+    );
+}
 
 const EventsScreen = () => {
+    const isScreenMounted = React.useRef();
+    const [events, setEvents] = React.useState(null);
+    const [isLoading, setIsLoading] = React.useState(true);
+    const [isAddEventModal, setAddEventModal] = React.useState(false);
 
-    const MoreInfoModal = ({item}) => {
-        const [isModalVisible, setModalVisible] = React.useState(false);
-
-        return (
-            <View>
-                <Button 
-                    title="More Info"
-                    icon={{name: 'info', type: 'feather', color: 'white'}}
-                    onPress={() => setModalVisible(!isModalVisible)}
-                />
-                <ModalWithX
-                    isVisible={isModalVisible}
-                    animationInTiming={500}
-                    animationOutTiming={500}
-                    animationIn='zoomIn'
-                    animationOut='zoomOut'
-                    style={{flex:1}}
-                    onBackdropPress={() => setModalVisible(false)}
-                    deviceWidth={Dimensions.get('window').width}
-                    deviceHeight={Dimensions.get('window').height}
-                    onRequestClose={() => setModalVisible(false)}
-                >
-                    <Text h3>{item.title}</Text>
-                    <Text h4>{item.time} at {item.address}</Text>
-                    <Divider orientation="vertical" />
-                    <Text style={{fontSize: 16, margin: 10}}>{item.body}</Text>
-                    <Divider orientation="vertical" />
-                    <NavigationApps
-                        iconSize={30}
-                        row
-                        viewMode='view'
-                        address={item.address}
-                    />
-                </ModalWithX>
-            </View>
-        );
+    const onSubmit = (props) => {
+        postEvent(props).then((res) => {
+            setAddEventModal(false);
+        }).catch((err) => console.log(err))
+        .finally(() => setIsLoading(true));
     }
 
-    const EditModal = ({item}) => {
-        const [isModalVisible, setModalVisible] = React.useState(false);
+    React.useEffect(() => {
+        isScreenMounted.current = true;
+        if(isScreenMounted.current && isLoading) {
+            getEvents().then((events) => {
+                if(!isScreenMounted.current || !isLoading) return;
 
-        return (
-            <View>
-                <Button 
-                    title="Edit"
-                    icon={{name: 'edit', type: 'feather', color: 'white'}}
-                    onPress={() => setModalVisible(!isModalVisible)}
-                />
-                <ModalWithX
-                    isVisible={isModalVisible}
-                    style={{flex:1}}
-                    onBackdropPress={() => setModalVisible(false)}
-                    deviceWidth={Dimensions.get('window').width}
-                    deviceHeight={Dimensions.get('window').height}
-                    onRequestClose={() => setModalVisible(false)}
-                >
-                </ModalWithX>
-            </View>
-        );
-    }
+                const eventsFormat = {}; // format for react calendar
+                const TIMEFORMAT = 'HH:mm'
+                const DATEFORMAT = 'Y-MM-DD'
+                const DATETIMEFORMAT = 'Y-MM-DD HH:mm';
+                events.map((event) => {
+                    const dateMoment = moment.utc(event.time, DATETIMEFORMAT).local();
+                    const dateString = dateMoment.format(DATEFORMAT);
+                    const timeString = dateMoment.format(TIMEFORMAT);
+                    if(!eventsFormat[dateString]) eventsFormat[dateString] = [];
+                    eventsFormat[dateString].push({
+                        title: event.title, 
+                        body: event.body, 
+                        time: timeString, 
+                        address: event.address,
+                        id: event._id
+                    });
+                });
+                console.log(eventsFormat);
+                setEvents(eventsFormat);
+            }).catch((err) => {
+                if(!isScreenMounted.current) return;
+                setEvents({});
+            })
+            .finally(() => {
+                if(!isScreenMounted.current) return;
+                setIsLoading(false);
+            });
+        }
+        return () => {
+            isScreenMounted.current = false;
+        }
+    }, [isLoading]);
 
+    if(!events) return <View style={{position: "absolute", left: 0, right: 0, bottom: 0, top: 0, alignItems: "center"}}>
+            <Text>Loading...</Text>
+        </View>
+    
     const renderItem = (item) => {
         return (
-          <Card onPress={() => Alert.alert(item.name)}>
+          <Card>
             <Card.Title>{item.title} - {item.time}</Card.Title>
-            <View style={{flexDirection: 'row', justifyContent: 'space-around', marginBottom: 5}}>
+            {item.address ? <View style={{flexDirection: 'row', justifyContent: 'space-around', marginBottom: 5}}>
                 <Text style={{textAlignVertical: 'center'}}>{item.address}</Text>
                 <NavigationApps
                     iconSize={30}
@@ -81,7 +196,7 @@ const EventsScreen = () => {
                     viewMode='view'
                     address={item.address}
                 />
-            </View>
+            </View> : item.body ? <Text style={{fontSize: 16, margin: 10}}>{item.body}</Text> : null}
             <Card.Divider color='black'/>
             <View style={{flexDirection: 'row', alignSelf: 'auto', justifyContent: 'space-around'}}>
                 <MoreInfoModal item={item}/>
@@ -91,18 +206,18 @@ const EventsScreen = () => {
         );
       }
 
-    return <Agenda
-                showClosingKnob 
-                selected={'2021-08-23'}
-                items={{
-                    '2021-08-23': [
-                        { title: 'Dr. Ariel Gavrielov', time: '08:00', address: 'Akko', body: 'Lorem ipsum dolor sit amet consectetur adipiscing elit' },
-                        //{ title: 'item 2 - any js object', time: '07:00', address: 'Nahariya', body: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Mus mauris vitae ultricies leo.' }
-                    ]
-                }} 
-                renderItem={(item)=> renderItem(item)}
-                hideKnob={false}
-        />
+    return <>
+            <Agenda
+                    showClosingKnob 
+                    items={events} 
+                    renderItem={(item)=> renderItem(item)}
+            />
+            <AddEvent 
+                isAddEventModal={isAddEventModal} 
+                setAddEventModal={setAddEventModal}
+                onSubmit={onSubmit}
+            />
+        </>
 }
 
 export default EventsScreen;

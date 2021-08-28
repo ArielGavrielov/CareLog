@@ -5,12 +5,12 @@ import { useController } from 'react-hook-form';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import ItemBox  from './ItemBox';
 import { Button, Icon } from 'react-native-elements';
-import Autocomplete from 'react-native-autocomplete-input';
+import moment from 'moment';
 
 export const InputControl = ({
     name, control, rules={}, trigger=() => console.log("there is no trigger."), render=null, keyboardType='default',
     leftIcon=null, secureTextEntry=false, autoCapitalize='none', defaultValue='',
-    autoCorrect = false, style={}, containerStyle={}, onEndEditing=null, disabled=false
+    autoCorrect = false, style={}, containerStyle={}, onEndEditing=null, disabled=false, multiline=false, numberOfLines=1, maxLength=256
 }) => {
     const {
         field: { onChange, value, onBlur },
@@ -22,6 +22,9 @@ export const InputControl = ({
             disabled={disabled}
             containerStyle={containerStyle}
             style={style}
+            multiline={multiline}
+            numberOfLines={numberOfLines}
+            maxLength={maxLength}
             label={(rules.required ? '* ' : '') + name.charAt(0).toUpperCase() + name.slice(1)}
             keyboardType={keyboardType}
             inputContainerStyle={error && {borderBottomColor:'red'}}
@@ -88,7 +91,7 @@ export const DateInputControl = ({name, control, rules={}, render=null, leftIcon
             </TouchableWithoutFeedback>
             <DateTimePickerModal
                 locale="he_il"
-                display={Platform.OS === 'ios' && Platform.Version > 14 ? 'inline' : ''}
+                display={Platform.OS === 'ios' && Platform.Version >= 14 ? 'inline' : ''}
                 isVisible={isDatePickerVisible}
                 maximumDate={new Date()}
                 minimumDate={new Date(new Date().setFullYear(new Date().getFullYear() - 120))}
@@ -114,7 +117,6 @@ export const TimesInputControl = ({name, control, rules={}, render=null, default
     } = useController({name: name.replace(/\s/g, '').toLowerCase(), control, rules, defaultValue: defaultValue});
     const [isTimePickerVisible, setTimePickerVisibility] = useState(false);
     const flatListRef = React.useRef();
-    const flatListIndex = React.useRef(0);
 
     const timeToString = (time) => {
         let hour = time.getHours();
@@ -182,5 +184,54 @@ export const TimesInputControl = ({name, control, rules={}, render=null, default
     )
 }
 
+export const EventTimeInputControl = ({name, control, rules={}, render=null, leftIcon=null,style={}, trigger=()=>console.log("there is no trigger.")}) => {
+    const {
+        field: { onChange, value, onBlur },
+        fieldState: { error }
+    } = useController({name: name.replace(/\s/g, '').toLowerCase(), control, rules, defaultValue:''});
+    const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+
+    return (
+        <View style={{flexDirection: 'row'}}>
+            <TouchableWithoutFeedback
+                onPress={() => setDatePickerVisibility(true)}
+                onBlur={onBlur}
+            >
+                <View style={{flex: 1}}>
+                    <Input
+                    editable={false}
+                    style={style}
+                    label={(rules.required ? '* ' : '') + name.charAt(0).toUpperCase() + name.slice(1)}
+                    inputContainerStyle={error && {borderBottomColor:'red'}}
+                    errorMessage={error && error.message}
+                    leftIcon={leftIcon}
+                    onChangeText={(text) => {
+                        onChange(text);
+                        trigger(name);
+                    }}
+                    value={value}
+                    autoFocus={false}
+                    onTouchEnd={() => setDatePickerVisibility(true)}
+                    />
+                </View>
+            </TouchableWithoutFeedback>
+            <DateTimePickerModal
+                locale="he_il"
+                display={Platform.OS === 'ios' && Platform.Version >= 14 ? 'inline' : ''}
+                isVisible={isDatePickerVisible}
+                mode="datetime"
+                headerTextIOS="Enter event time"
+                date={moment(value, 'Y-MM-DD HH:mm').isValid() ? moment(value, 'Y-MM-DD HH:mm').toDate() : moment().toDate()}
+                onConfirm={(date) => {
+                    setDatePickerVisibility(false);
+                    Date.parse()
+                    onChange(moment(date, 'Y-MM-DD HH:mm').format('Y-MM-DD HH:mm'));
+                    trigger();
+                }}
+                onCancel={() => setDatePickerVisibility(false)}
+            />
+        </View>
+    )
+}
 const styles = StyleSheet.create({
   });

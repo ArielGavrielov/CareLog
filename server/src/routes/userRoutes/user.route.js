@@ -8,11 +8,12 @@ const requireAuth = require('../../middlewares/requireAuth');
 const indices = require('./indices.route');
 const medicines = require('./medicines.route');
 const feeling = require('./feeling.route');
+const events = require('./events.route');
 
 router.use('/indices', requireAuth, indices);
 router.use('/medicines', requireAuth, medicines);
 router.use('/feelings', requireAuth, feeling);
-
+router.use('/events', requireAuth, events);
 
 router.get('/', requireAuth, (req, res) => {
     User.findOne({_id: req.user._id}, (err, data) => {
