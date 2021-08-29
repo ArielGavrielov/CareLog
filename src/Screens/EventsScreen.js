@@ -214,6 +214,7 @@ const EventsScreen = () => {
     return <>
             <Agenda
                     showClosingKnob 
+                    renderEmptyData={() => <Text>No Data</Text>}
                     items={events} 
                     renderItem={(item)=> renderItem(item)}
             />

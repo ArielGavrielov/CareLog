@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../../models/User');
+const moment = require('moment');
 
 function twoDigits(number) {
     const numString = "0" + number;
@@ -138,6 +139,40 @@ router.post('/:type', (req,res) => {
             break;
         default: res.send({error: 'indice not found'});
     }
-})
+});
+
+// DEBUG - testing
+router.post('/fill/data', async (req,res) => {
+    if(!req.get('host').includes('localhost')) return res.send('Cant access');
+
+    let day = moment.utc('2020-09-01', 'Y-MM-DD');
+    let set = {blood: [], bodyheat: [], pulse: [], oxygen: []};
+    while(day.isBefore(moment())) {
+        //if(Math.random() > 0.5) {
+            let diastolic = Math.floor(Math.random() * (140 - 70 + 1)) + 70;
+            let systolic = Math.floor(Math.random() * (200 - (diastolic < 100 ? 100 : (diastolic+10)) + 1)) + (diastolic < 100 ? 100 : (diastolic+10));
+            let randomBlood = {diastolic: diastolic, systolic: systolic};
+            set.blood.push({time: day.format('Y-MM-DD'), ...randomBlood});
+        //}
+        //if(Math.random() > 0.5) {
+            let randomPulse = (Math.floor(Math.random() * (200 - 50 + 1)) + 50);
+            console.log(randomPulse);
+            set.pulse.push({time: day.format('Y-MM-DD'), pulse: randomPulse});
+        //}
+        //if(Math.random() > 0.5) {
+            let randomBodyheat = Math.floor(Math.random() * (39 - 35 + 1)) + 35;
+            set.bodyheat.push({time: day.format('Y-MM-DD'), bodyheat: randomBodyheat});
+        //}
+        //if(Math.random() > 0.5) {
+            let randomOxygen = Math.floor(Math.random() * (100 - 90 + 1)) + 90;
+            set.oxygen.push({time: day.format('Y-MM-DD'), oxygen: randomOxygen});
+        //}
+        day.add(1, 'day');
+    }
+    //console.log(addToSet);
+    update = await User.updateOne({_id: req.user._id}, 
+        {$set: {"indices": set}});
+    res.send(update);
+});
 
 module.exports = router;

@@ -23,7 +23,9 @@ function getDay(number) {
 }
 // get user feeling 
 router.get('/', async (req,res) => {
-
+    // sort feelings
+    req.user.feelings.sort((a,b) => moment(`${b.date} ${b.lastChange}`, 'Y-MM-DD HH:mm:ss').diff(moment(`${a.date} ${a.lastChange}`, 'Y-MM-DD HH:mm:ss')));
+    // build response for statistics
     const result = req.user.feelings.map((el) => el).reduce((acc, e) => {
         const date = new Date(e.date);
         const year = date.getFullYear();
@@ -77,6 +79,25 @@ router.post('/', async (req,res) => {
     } catch(err) {
         res.status(422).send({error: err.message});
     }
+});
+
+// DEBUG - testing
+router.post('/fill-random-data', async (req,res) => {
+    if(!req.get('host').includes('localhost')) return res.send('Cant access');
+
+    let day = moment('2021-07-01', 'Y-MM-DD');
+    let addToSet = [];
+    while(day.isBefore(moment())) {
+        if(Math.random() > 0.5) {
+            let randomFeel = Math.floor(Math.random() * 5) + 1;
+            addToSet.push({date: day.format('Y-MM-DD'), feeling: randomFeel});
+        }
+        day.add(1, 'day');
+    }
+    //console.log(addToSet);
+    update = await User.updateOne({_id: req.user._id}, 
+        {$addToSet: {"feelings": {$each: addToSet}}});
+    res.send(update);
 });
 
 module.exports = router;

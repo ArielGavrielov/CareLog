@@ -25,6 +25,9 @@ import ForgotScreen from './src/Screens/ForgotScreen';
 import MedicinesScreen from './src/Screens/MedicinesScreen';
 import EventsScreen from './src/Screens/EventsScreen';
 
+import registerForPushNotifications from './src/api/registerForPushNotifications';
+
+
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -47,6 +50,10 @@ const App = () => {
       isReadyRef.current = false;
       unsubscribe();
     };
+  }, []);
+
+  React.useEffect(() => {
+    registerForPushNotifications()
   }, []);
 
   const NoInternetModal = ({show, onRetry, isRetrying}) => (
