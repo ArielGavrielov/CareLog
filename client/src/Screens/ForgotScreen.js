@@ -145,8 +145,6 @@ const ForgotScreen = (props) => {
     }
 
     React.useEffect(() => {
-        setValue('email', 'ariel@gavrielov.dev');
-        setValue('birthdate', '1997-01-28');
         if(dataState.countdown > 0)
             setTimeout(() => setDataState({...dataState, countdown: dataState.countdown-1}), 1000);
     });

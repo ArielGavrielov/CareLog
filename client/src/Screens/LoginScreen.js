@@ -11,7 +11,7 @@ import { InputControl } from '../Components/InputControl';
 import * as patterns from '../Components/Patterns';
 
 const LoginScreen = ({navigation}) => {
-  const { state, signin } = React.useContext(AuthContext);
+  const { state, signin, clearErrorMessage } = React.useContext(AuthContext);
   const { control, handleSubmit, trigger, formState, getValues } = useForm();
   const isMounted = React.useRef(null);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -30,6 +30,7 @@ const LoginScreen = ({navigation}) => {
   React.useEffect(() => {
     isMounted.current = true;
     return () => {
+      clearErrorMessage();
       isMounted.current = false;
     }
   }, []);

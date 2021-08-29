@@ -1,5 +1,6 @@
 require('./models/User');
 const express = require('express');
+const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const requireAuth = require('./middlewares/requireAuth');
@@ -10,7 +11,9 @@ process.env.TZ = 'Asia/Jerusalem';
 
 const app = express();
 
+app.use(cors());
 app.use(bodyParser.json());
+
 app.use('/api', authRoutes);
 app.use('/notifications', pushNotifications);
 
@@ -28,4 +31,4 @@ mongoose.connection.on('error', (err) => {
     console.error('mongodb error', err);
 });
 
-app.listen(process.env.PORT || 3000, () => console.log('Listening to ' + process.env.PORT || 3000));
+app.listen(process.env.PORT || 3001, () => console.log('Listening to ' + process.env.PORT || 3001));

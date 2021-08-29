@@ -25,9 +25,15 @@ router.get('/', requireAuth, (req, res) => {
 
 // handle signup for new user
 router.post('/signup', async (req, res) => {
-    const { email, firstname, lastname, birthdate, username, password, phone } = req.body;
+    const { email, firstname, lastname, birthdate, password, phone } = req.body;
+    if(!email || !password || !firstname || !lastname || !birthdate || !phone) return res.status(422).send({ code: 422, error: 'Form not filled.'});
+
     try {
-        const user = new User({ email, firstname, lastname, birthdate, username, password, phone });
+        const oldUser = await User.findOne({$or: [{email: email}, {phone: phone}]});
+        if(oldUser)
+            throw({message: "User already exist. Please login"});
+        
+        const user = new User({ email, firstname, lastname, birthdate, password, phone });
         await user.save();
         const token = jwt.sign({ userId: user._id }, 'kvruAGAPYFCXD3qzNFdWCUdewFYH0ZnC');
         res.send({ token });

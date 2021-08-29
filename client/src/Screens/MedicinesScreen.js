@@ -234,26 +234,31 @@ const MedicinesScreen = () => {
         );
         if(alertRes) {
             deleteMedicine(name).then((value) => {
+                setState({...state, screenLoading: true});
                 AsyncAlert('Success', 'Removed successfully', [{text: 'OK', resolve: true}])
-                .finally(() => {setInfoVisible(false); setState({...state, screenLoading: true}); });
+                .finally(() => {setInfoVisible(false); });
             }).catch((err) => AsyncAlert("ERROR", err.message, [{text: 'OK'}]));
         }
     }
 
     React.useEffect(() => {
+        isScreenMounted.current = true;
         const getMedics = () => {
-            if(!isScreenMounted.current && !isModalVisible && !isAlertShowing.current) return;
+            if(!isScreenMounted.current) return;
             let res = getMedicines();
             res.then((value) => {
-                if(isScreenMounted.current || isModalVisible || isAlertShowing.current)
+                if(isScreenMounted.current)
                     setState({...state, medications: value, isLoading: Array(res.length).fill(false), screenLoading: false});
+                console.log("here", isScreenMounted.current);
             }).catch((err) => console.log(err));
         }
         if(state.screenLoading || !state.medications)
             getMedics();
 
         return () => {
-            isScreenMounted.current = false;
+            if(!isModalVisible && !isAlertShowing.current && !isInfoVisible)
+                isScreenMounted.current = false;
+            console.log(isScreenMounted.current);
         }
     }, [state.screenLoading]);
 
@@ -270,6 +275,12 @@ const MedicinesScreen = () => {
         <View style={{flex: 1, height: Dimensions.get('window').height, width: Dimensions.get('window').width}}>
             <FlatList
                 data={state.medications}
+                contentContainerStyle={(!state.medications || state.medications.length === 0) && {flex: 1}}
+                ListEmptyComponent={() => (
+                    <View style={{justifyContent: 'center', alignItems: 'center', flex:1}}>
+                        <Text h1 style={{}}>Nothing to show!</Text>
+                    </View>
+                )}
                 renderItem={({item, index}) => (
                 <Card>
                     <Card.Title>{item.medicineRef.name}</Card.Title>

@@ -88,7 +88,8 @@ const signup = dispatch => async ({email, password, firstname, lastname, birthda
         dispatch({ type: 'signup', payload: response.data.token });
     } catch(err) {
         // add error
-        dispatch({ type: 'add_error', payload: err.message });
+        console.log(err.response.data);
+        dispatch({ type: 'add_error', payload: err.response.data.error });
     }
 };
 

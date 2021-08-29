@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet, Keyboard } from 'react-native';
-import { Image, Text, Button, SocialIcon } from 'react-native-elements';
+import { View, ScrollView, StyleSheet, Dimensions } from 'react-native';
+import { Image, Text, Button } from 'react-native-elements';
 import { useForm, Controller } from 'react-hook-form';
 import BouncyCheckbox from "react-native-bouncy-checkbox";
 
@@ -9,14 +9,18 @@ import { InputControl, DateInputControl } from '../Components/InputControl';
 import { Context as AuthContext } from '../Context/AuthContext';
 
 const SignupScreen = () => {
-    const { state, signup } = React.useContext(AuthContext);
+    const { state, signup, clearErrorMessage } = React.useContext(AuthContext);
     const { control, handleSubmit, watch, trigger, formState } = useForm();
     const onSubmit = (data) => {
         signup({...data, phone: data.phonenumber});
     }
 
+    React.useEffect(() => {
+        return () => clearErrorMessage();
+    }, []);
+
     return (
-    <View >
+    <View style={{width: Dimensions.get('screen').width, height: Dimensions.get('screen').height, backgroundColor: 'white'}}>
         <View style={{alignItems: "center",justifyContent: "center"}}>
             <Image style={styles.image} source={require("../assets/logo-197X69.png")} />
             <Text h3 style={styles.headerText}>Create account</Text>
@@ -155,6 +159,7 @@ const SignupScreen = () => {
                 validate: value => value == false ? 'You must accept terms and conditions' : true
             }}
         />
+        {state.errorMessage ? <Text>{state.errorMessage}</Text> : null}
         <Button
             buttonStyle={ styles.registerBtn } 
             titleStyle= {{ color: "white", padding: 10 }}
@@ -163,30 +168,6 @@ const SignupScreen = () => {
             onPress={handleSubmit(onSubmit, (errors) => console.log(errors))}
         />
         </ScrollView>
-        <View style={{flexDirection: 'row', alignItems: 'center', margin:20}}>
-            <View style={{flex: 1, height: 1, backgroundColor: 'pink'}} />
-            <View>
-                <Text style={{width: 50, textAlign: 'center'}}>OR</Text>
-            </View>
-            <View style={{flex: 1, height: 1, backgroundColor: 'pink'}} />
-        </View>
-
-        <View style={{flexDirection:'row', alignItems: "center", justifyContent: "center"}}>
-            <SocialIcon
-                title='Facebook'
-                type='facebook'
-                button
-                on
-                style={{width:"30%"}}
-            />
-            <SocialIcon
-                title='Google'
-                type='google'
-                button
-                on
-                style={{width:"30%"}}
-            />
-        </View>
     </View>
 )};
 
