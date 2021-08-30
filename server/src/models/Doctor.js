@@ -26,7 +26,10 @@ const Doctor = new mongoose.Schema({
         type: String,
         unique: true,
         validate: /^\+?(972|0)(\-)?0?([5]{1}[0-9]{1}\d{7})$/
-    }
+    },
+    patients: [{
+        type: mongoose.Schema.Types.ObjectId
+    }]
 });
 
 Doctor.pre('save', function(next) {
@@ -47,8 +50,7 @@ Doctor.pre('save', function(next) {
 Doctor.methods.comparePassword = function comparePassword(candidatePassword) {
     return new Promise((resolve, reject) => {
         bcrypt.compare(candidatePassword, this.password, (err, isSame) => {
-            if(err) return reject(err);
-            if(!isSame) return reject(false);
+            if(err || !isSame) return reject({message: 'Login failed'});
 
             resolve(true);
         });

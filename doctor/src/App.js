@@ -1,39 +1,30 @@
 import React from 'react';
 import './App.css';
-import { Card } from 'react-bootstrap';
-import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
+import { Context as AuthContext } from './Context/AuthContext';
 
-import Login from "./components/login.component";
-import SignUp from "./components/signup.component";
+import AuthNavigation from './Navigations/AuthNavigation';
+import UnAuthNavigation from './Navigations/UnAuthNavigation';
 
-function App() {
-  return (<Router>
+const  App = () => {
+  const {state, restoreToken} = React.useContext(AuthContext);
+
+  React.useEffect(() => {
+    const tryLocal = () => {
+      if(!state.token)
+        restoreToken();
+      console.log("here");
+    }
+    tryLocal();
+    // eslint-disable-next-line
+  }, [state.token]);
+
+  if(state.isLoading) return null;
+
+  return (
     <div className="App">
-      <nav className="navbar navbar-expand-lg navbar-light fixed-top">
-        <div className="container">
-          <Link className="navbar-brand" to={"/sign-in"}>positronX.io</Link>
-          <div className="collapse navbar-collapse" id="navbarTogglerDemo02">
-            <ul className="navbar-nav ml-auto">
-              <li className="nav-item">
-                <Link className="nav-link" to={"/sign-in"}>Login</Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" to={"/sign-up"}>Sign up</Link>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </nav>
-      <div className="auth-wrapper">
-        <div className="auth-inner">
-          <Switch>
-            <Route exact path='/' component={Login} />
-            <Route path="/sign-in" component={Login} />
-            <Route path="/sign-up" component={SignUp} />
-          </Switch>
-        </div>
-      </div>
-    </div></Router>
+      {state.token ? <AuthNavigation /> :
+      <UnAuthNavigation /> }
+    </div>
   );
 }
 

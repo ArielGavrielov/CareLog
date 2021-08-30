@@ -9,7 +9,7 @@ export const phonePattern = {
 };
 
 export const passwordPattern = {
-        value: /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,32}$/,
+        value: /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,16}$/,
         message: "Password must contains uppercase,lowercase,number"
 };
 
