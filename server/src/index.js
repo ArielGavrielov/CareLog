@@ -1,6 +1,7 @@
 require('./models/User');
 const express = require('express');
 const cors = require('cors');
+//const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const requireAuth = require('./middlewares/requireAuth');
@@ -8,6 +9,8 @@ const authRoutes = require('./routes/authRoutes');
 const pushNotifications = require('./utils/pushNotification');
 
 process.env.TZ = 'Asia/Jerusalem';
+process.env.TOKEN_SECRET = '492a8890b096551f14e2138293dcde5fd84613b8a2154f4911cd607cc1e79289691121726bc1669dc070c96cb2363a61b16eca07093f86280ddc5f700fd0ad88';
+
 
 const app = express();
 

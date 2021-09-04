@@ -169,7 +169,7 @@ router.post('/fill/data', async (req,res) => {
         //}
         day.add(1, 'day');
     }
-    //console.log(addToSet);
+
     update = await User.updateOne({_id: req.user._id}, 
         {$set: {"indices": set}});
     res.send(update);

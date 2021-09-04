@@ -37,20 +37,24 @@ const restoreToken = dispatch => async () => {
 }
 
 // signin post
-const signin = (dispatch) => async ({ email, password }) => {
-    try {
-        console.log("signin");
-        // get responsed
-        const response = await CareLogAPI.post('/doctor/signin', { email, password });
-        // save token at local storage
-        console.log(response.data);
-        localStorage.setItem('token', response.data.token);
-        dispatch({ type: 'signin', payload: response.data.token });
-    } catch(err) {
-        // add error
-        console.log(err.response.data.error);
-        dispatch({ type: 'add_error', payload: err.response.data.error });
-    }
+const signin = (dispatch) => ({ email, password }) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            console.log("signin");
+            // get responsed
+            const response = await CareLogAPI.post('/doctor/signin', { email, password });
+            // save token at local storage
+            console.log(response.data);
+            localStorage.setItem('token', response.data.token);
+            dispatch({ type: 'signin', payload: response.data.token });
+            resolve(true);
+        } catch(err) {
+            // add error
+            console.log(err.response.data.error);
+            dispatch({ type: 'add_error', payload: err.response.data.error });
+            reject(false);
+        }
+    });
 };
 
 // signout - remove token from securestore

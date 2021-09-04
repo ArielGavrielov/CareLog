@@ -215,24 +215,24 @@ const HomeScreen = () => {
           withoutCard
         />
       </Card>
-        <Card>
+        {/*<Card>
             <Card.Title>Upcomming Events</Card.Title>
             <Card.Divider color='#FFC0CB'/>
             {events.map((event, i) => (
-        <ListItem key={i} bottomDivider >
-            <ListItem.Content>
-            <ListItem.Title>{event.title}</ListItem.Title>
-            <ListItem.Subtitle>{event.summary}</ListItem.Subtitle>
-            <ListItem.Subtitle>{event.start}</ListItem.Subtitle>
-            </ListItem.Content>
-            <ListItem.Chevron />
-        </ListItem>
+              <ListItem key={i} bottomDivider >
+                  <ListItem.Content>
+                  <ListItem.Title>{event.title}</ListItem.Title>
+                  <ListItem.Subtitle>{event.summary}</ListItem.Subtitle>
+                  <ListItem.Subtitle>{event.start}</ListItem.Subtitle>
+                  </ListItem.Content>
+                  <ListItem.Chevron />
+              </ListItem>
             ))}
             <Button
               icon={<Icon name='code' color='#ffffff' />}
               buttonStyle={styles.buttonS}
               title='SEE ALL EVENTS  BUTTON' />
-        </Card>
+        </Card>*/}
         <List title='To-Do List' items={items}/>
         <ProgressBar
           title='Daily progress'

@@ -140,7 +140,7 @@ export const IndiceChart = (props) => {
         },
         propsForLabels: {
             fontFamily: 'Arial'
-        },
+        }
     };
     return (
         <View>
@@ -201,6 +201,10 @@ export const IndiceChart = (props) => {
                         r: '4',
                     }
                 }}
+                onDataPointClick={(data) => {
+                    console.log(data);
+                    <View style={{position:'absolute' ,bottom: data.y, top: data.y, right: data.x, left: data.x}}><Text>{data.value}</Text></View>
+                }}
                 withShadow={false}
                 data={statistic}
                 width={Dimensions.get('window').width}
@@ -225,15 +229,6 @@ export const IndiceChart = (props) => {
     );
 }
 
-export const StepsChart = () => {
-
-    return (
-        <View>
-
-        </View>
-    );
-}
-
 export const FeelingChart = (props) => {
 
     const [isLoading, setIsLoading] = React.useState(true);
@@ -247,13 +242,16 @@ export const FeelingChart = (props) => {
 
         if(!Array.isArray(indexes.year.arr) || !Array.isArray(indexes.week.arr) || Object.keys(props.data).length == 0) return;
 
+        console.log(props.data);
+
         data['labels'] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         data['labels'].forEach(day => {
             if(!data['datasets']) data['datasets'] = [{data: []}];
 
             const dayValue = props.data[indexes.year.arr[indexes.year.i]][indexes.week.arr[indexes.week.i]][day];
-            data['datasets'][0]['data'].push(dayValue ? dayValue : null);
+            data['datasets'][0]['data'].push(dayValue ? dayValue : 0);
         });
+        //console.log(data);
         setStatistic(data);
     }
 
@@ -288,6 +286,7 @@ export const FeelingChart = (props) => {
 
     function* yLabel() {
         yield* ['No data', 'Terrible', 'Bad', 'Okay', 'Good', 'Great'];
+        //yield* [0, 1, 2, 3, 4, 5];
     }
     const yLabelIterator = yLabel();
 
@@ -303,7 +302,7 @@ export const FeelingChart = (props) => {
         setDataOfWeek();
         setIsLoading(false);
     }, [indexes]);
-    console.log(statistic);
+
     const chartConfig = {
         backgroundColor: "#ffffff",
         backgroundGradientFrom: "#ffffff",
@@ -380,19 +379,11 @@ export const FeelingChart = (props) => {
                 </View>
             </View>
             <BarChart
-                getDotProps={(dataPoint) => {
-                    if(dataPoint === null) return {
-                        r: '0',
-                        strokeWidth: '0',
-                    }
-                    return {
-                        r: '4',
-                    }
-                }}
                 withShadow={false}
                 data={statistic}
                 segments={5}
                 fromNumber={5}
+                fromZero
                 width={Dimensions.get('window').width}
                 height={220}
                 chartConfig={chartConfig}

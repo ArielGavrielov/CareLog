@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const moment = require('moment');
 
 const Event = new mongoose.Schema({
-    userId: {type: mongoose.Schema.Types.ObjectId, ref: 'events'},
+    userId: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
     title: {
         type: String,
         required: true

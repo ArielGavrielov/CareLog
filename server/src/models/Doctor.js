@@ -27,9 +27,7 @@ const Doctor = new mongoose.Schema({
         unique: true,
         validate: /^\+?(972|0)(\-)?0?([5]{1}[0-9]{1}\d{7})$/
     },
-    patients: [{
-        type: mongoose.Schema.Types.ObjectId
-    }]
+    patients: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}]
 });
 
 Doctor.pre('save', function(next) {

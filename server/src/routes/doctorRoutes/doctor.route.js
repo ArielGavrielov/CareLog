@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
+const doctorRequireAuth = require('../../middlewares/doctorRequireAuth');
 const Doctor = require('../../models/Doctor');
+const User = require('../../models/User');
 
 router.get('/', (req,res) => {
     res.send("API works!");
@@ -17,7 +19,7 @@ router.post('/signin', async (req, res) => {
         if(!doctor) throw({message: 'Invalid email'});
 
         await doctor.comparePassword(password);
-        const token = jwt.sign({ doctorId: doctor._id }, 'kvruAGAPYFCXD3qzNFdWCUdewFYH0ZnC');
+        const token = jwt.sign({ doctorId: doctor._id }, process.env.TOKEN_SECRET, { expiresIn: "1h" });
         res.send({ token });
     } catch(err) {
         return res.status(422).send({ code: 422, error: err.message });
@@ -37,7 +39,7 @@ router.post('/signup', async (req, res) => {
         
         const doctor = new Doctor({ email, firstname, lastname, password, phone });
         await doctor.save();
-        const token = jwt.sign({ doctorId: doctor._id }, 'kvruAGAPYFCXD3qzNFdWCUdewFYH0ZnC');
+        const token = jwt.sign({ doctorId: doctor._id }, process.env.TOKEN_SECRET, { expiresIn: "1h" });
         res.send({ token });
     } catch(err) {
         console.log(err.message);
@@ -45,4 +47,35 @@ router.post('/signup', async (req, res) => {
     }
 });
 
+router.post('/link-patient', doctorRequireAuth, async (req,res) => {
+    try {
+        if(!req.body.email || !req.body.phone) throw {message: 'Form unfilled.'};
+
+        let user = await User.findOne({email: req.body.email, phone: req.body.phone});
+        if(!user) throw {message: 'User not found.'};
+
+        if(req.doctor.patients.includes(user._id)) throw {message: 'User already linked.'};
+        console.log(req.doctor);
+        Doctor.updateOne({_id: req.doctor._id}, {$addToSet: {"patients": user._id}}, (err,data) => {
+            if(err) console.log(err);
+            else res.send({message: 'Added successfully.'});
+            console.log(data);
+        });
+    } catch(err) {
+        console.log(err.message);
+        return res.status(422).send({code: 422, error: err.message});
+    }
+});
+
+router.get('/patients', doctorRequireAuth, async (req,res) => {
+    let patients = [];
+    console.log(`start at ${new Date()}`);
+    let doctor = await Doctor.findById(req.doctor._id).lean().populate('patients', '-indices');
+    console.log(`end at ${new Date()}`);
+    res.send(doctor);
+});
+
+router.get('/secret', (req,res) => {
+    res.send(process.env.TOKEN_SECRET);
+})
 module.exports = router;

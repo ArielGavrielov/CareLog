@@ -2,11 +2,6 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const moment = require('moment')
 
-const arrayLimit = (props) => {
-    console.log(props);
-    return props.length < 3;
-}
-
 const userSchema = new mongoose.Schema({
     email: {
         type: String,
@@ -40,8 +35,8 @@ const userSchema = new mongoose.Schema({
         unique: true,
         validate: /^\+?(972|0)(\-)?0?([5]{1}[0-9]{1}\d{7})$/
     },
-    indices: {
-        blood: [{
+    indices: mongoose.Schema({
+        blood: [mongoose.Schema({
             time: {
                 type: String,
                 default: new Date().toUTCString()
@@ -52,8 +47,8 @@ const userSchema = new mongoose.Schema({
             diastolic: {
                 type: Number
             }
-        }],
-        pulse: [{
+        }, { _id : false })],
+        pulse: [mongoose.Schema({
             time: {
                 type: String,
                 default: new Date().toUTCString()
@@ -61,8 +56,8 @@ const userSchema = new mongoose.Schema({
             pulse: {
                 type: Number
             }
-        }],
-        bodyheat: [{
+        }, { _id : false })],
+        bodyheat: [mongoose.Schema({
             time: {
                 type: String,
                 default: new Date().toUTCString()
@@ -70,8 +65,8 @@ const userSchema = new mongoose.Schema({
             bodyheat: {
                 type: Number,
             }
-        }],
-        oxygen: [{
+        }, { _id : false })],
+        oxygen: [mongoose.Schema({
             time: {
                 type: String,
                 default: new Date().toUTCString()
@@ -79,8 +74,8 @@ const userSchema = new mongoose.Schema({
             oxygen: {
                 type: Number,
             }
-        }]
-    },
+        }, { _id : false })]
+    }, { _id : false }),
     medicines: [ mongoose.Schema({
         medicineRef: {
             type: mongoose.Schema.Types.ObjectId,

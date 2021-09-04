@@ -5,7 +5,7 @@ const PUSH_ENDPOINT = 'https://carelog.herokuapp.com/notifications/token';
 const registerForPushNotifications = async () => {
   const { status } = await Notifications.getPermissionsAsync();
   if (status !== 'granted') {
-    alert('No notification permissions!');
+    //alert('No notification permissions!');
     return;
   }
 

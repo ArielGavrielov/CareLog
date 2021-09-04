@@ -14,9 +14,17 @@ export default function Login() {
     return passwordReg.test(formState.password) && emailReg.test(formState.email);
   }
 
+  React.useState(() => {
+    return () => window.location.href = '/';
+  }, [])
+
   function handleSubmit(event) {
     event.preventDefault();
-    signin(formState);
+    signin(formState).then((success) => {
+      console.log(success);
+      if(success) window.location.href = '/';
+    }).catch((err) => console.log(err));
+
   }
 
   return (

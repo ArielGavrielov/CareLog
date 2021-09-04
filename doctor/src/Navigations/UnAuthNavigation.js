@@ -1,23 +1,17 @@
-import { Navbar, Nav, Container } from 'react-bootstrap';
 import Login from "../components/Login/login.component";
+import logo from '../logo-1500X500.png';
 import { Switch, Route } from "react-router-dom";
 
 const UnAuthNavigation = () => {
     return (
-        <div>
-            <Navbar>
-                <Container>
-                    <Navbar.Toggle aria-controls='responsive-navbar-nav' />
-                    <Navbar.Collapse>
-                        <Nav>
-                            <Nav.Link href='/'>Sign In</Nav.Link>
-                        </Nav>
-                    </Navbar.Collapse>
-                </Container>
-            </Navbar>
-            <Switch>
-                <Route exact path='/' component={Login} />
-            </Switch>
+        <div style={{display: 'flex',  justifyContent:'center', alignItems:'center', height: '100vh'}}>
+            <div>
+                <img src={logo} style={{width: 150, height: 50}} alt='CareLog'/>
+                <h3>Doctor Dashboard simulation</h3>
+                <Switch>
+                    <Route exact path='/*' component={Login} />
+                </Switch>
+            </div>
         </div>
     )
 }
