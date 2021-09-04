@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const DEBUG = true;
+const DEBUG = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
 
 export const CareLogAPI = axios.create({
     baseURL: DEBUG ? 'http://localhost:3001/api/' : 'https://carelog.herokuapp.com/api/',
@@ -10,6 +10,7 @@ export const CareLogAPI = axios.create({
 
 // Add a request interceptor
 CareLogAPI.interceptors.request.use(function (config) {
+    console.log(process.env.NODE_ENV);
     let token = localStorage.getItem('token');
     config.headers.Authorization =  token;
 
@@ -26,7 +27,6 @@ CareLogAPI.interceptors.response.use((response) => {
 
         return Promise.reject("Token expired.").finally(() => {
             window.location.reload();
-            alert('Token expired.');
         });
     } else
         return Promise.reject(error);

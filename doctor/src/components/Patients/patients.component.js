@@ -9,8 +9,6 @@ import { Link } from 'react-router-dom';
 
 const { SearchBar } = Search;
 
-//const linkFollow = 
-
 const columns = [
     {
         dataField: '_id',
@@ -46,47 +44,71 @@ const columns = [
                 <Link to={{ 
                     pathname: `/patient/${row._id}`, 
                     patientData: row
-                  }}>Read More...</Link>
+                  }}>More details</Link>
             );
           }
     }
 ];
 
+const pageListRenderer = ({
+    pages,
+    onPageChange
+  }) => {
+    // just exclude <, <<, >>, >
+    const pageWithoutIndication = pages.filter(p => typeof p.page !== 'string');
+    return (
+      <div style={{margin: 10}}>
+        {
+          pageWithoutIndication.map(p => (
+            <button key={p.page} className="btn btn-primary" onClick={ () => onPageChange(p.page) }>{ p.page }</button>
+          ))
+        }
+      </div>
+    );
+  };
+
 const Patients = () => {
-    const [patients, setPatients] = React.useState([]);
+    const [state, setState] = React.useState({
+        patients: [],
+        isFetched: false
+    });
     React.useEffect(() => {
-        //if(patients.length === 0)
         CareLogAPI.get('/doctor/patients').then((response) => {
-            setPatients(response.data);
+            setState({patients: response.data, isFetched: true});
         }).catch((err) => {
             console.log(err)
         });
     }, []);
 
+    const Pagingoptions = {
+        pageListRenderer
+      };
+
     return (
         <div>
             <ToolkitProvider
                 keyField="_id"
-                data={ patients }
+                data={ state.patients }
                 columns={ columns }
                 search
             >
                 {
                     props => (
                     <div>
-                        {console.log(props.searchProps)}
-                        <h3>Input something at below input field:</h3>
                         <SearchBar 
                             { ...props.searchProps }
+                            placeholder='Seach patient'
+                            srText='Search patient:'
                         />
-                        <hr />
                         <BootstrapTable
                             { ...props.baseProps }
                             striped
                             hover
                             condensed
-                            overlay={overlayFactory()}
-                            pagination={paginationFactory()}
+                            loading={!state.isFetched}
+                            noDataIndication={() => { return state.isFetched ? 'No data' : 'Loading...'}}
+                            overlay={overlayFactory({ spinner: true, background: 'rgba(192,192,192,0.3)', text: <b>Loading...</b>})}
+                            pagination={paginationFactory(Pagingoptions)}
                         />
                     </div>
                     )

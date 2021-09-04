@@ -63,7 +63,7 @@ router.post('/link-patient', doctorRequireAuth, async (req,res) => {
         });
     } catch(err) {
         console.log(err.message);
-        return res.status(422).send({code: 422, error: err.message});
+        res.status(422).send({code: 422, error: err.message});
     }
 });
 
@@ -74,7 +74,28 @@ router.get('/patients', doctorRequireAuth, async (req,res) => {
     res.send(doctor.patients);
 });
 
-router.get('/secret', (req,res) => {
-    res.send(require('crypto').randomBytes(256).toString('hex'));
-})
+// get patient details;
+router.get('/patient/:id', doctorRequireAuth, async (req,res) => {
+    try {
+        // if id param isnt a valid mongodb objectid
+        if(!require('mongoose').Types.ObjectId.isValid(req.params.id))
+            throw {message: `${req.params.id} isn't a user id`}
+
+        // if patient isnt at doctor patients array
+        if(!req.doctor.patients.includes(req.params.id))
+            throw {message: 'patient not found'};
+        
+        let patientDetails = await User.findById(req.params.id);
+
+        // if patient user scheme not found
+        if(!patientDetails)
+            throw {message: 'User not found.'};
+
+        res.send(patientDetails);
+    } catch(err) {
+        console.log(err);
+        res.status(422).send({error: err.message});
+    }
+});
+
 module.exports = router;

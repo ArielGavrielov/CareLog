@@ -37,7 +37,7 @@ const restoreToken = dispatch => async () => {
 }
 
 // signin post
-const signin = (dispatch) => ({ email, password }) => {
+const signin = (dispatch) => async ({ email, password }) => {
     return new Promise(async (resolve, reject) => {
         try {
             console.log("signin");
@@ -55,17 +55,16 @@ const signin = (dispatch) => ({ email, password }) => {
             dispatch({ type: 'add_error', payload: err.response.data.error });
             reject(false);
         }
-    }).then((success) => {
-        console.log(success);
-        if(success) window.location.reload();
     });
 };
 
 // signout - remove token from securestore
 const signout = dispatch => async () => {
-    localStorage.removeItem('token');
+    if(localStorage.getItem('token')) {
+        localStorage.removeItem('token');
+        window.location.reload();
+    }
     dispatch({type: 'signout'});
-    window.location.reload();
 };
 
 export const { Provider, Context } = createDataContext(

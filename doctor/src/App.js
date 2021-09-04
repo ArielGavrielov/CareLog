@@ -5,7 +5,7 @@ import AuthNavigation from './Navigations/AuthNavigation';
 import UnAuthNavigation from './Navigations/UnAuthNavigation';
 
 const  App = () => {
-  const {state, restoreToken, signout} = React.useContext(AuthContext);
+  const { state, restoreToken } = React.useContext(AuthContext);
 
   React.useEffect(() => {
     if(!state.token) {

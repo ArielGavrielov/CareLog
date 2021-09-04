@@ -9,6 +9,9 @@ import Home from "../components/Home/home.component";
 import Patients from '../components/Patients/patients.component';
 import PatientDetails from '../components/PatientDetails/PatientDetails.component';
 
+const NotFound = () => {
+    return <h1>Page not found</h1>
+}
 const AuthNavigation = () => {
     const { signout } = React.useContext(AuthContext);
 
@@ -35,10 +38,9 @@ const AuthNavigation = () => {
                     <Navbar.Collapse>
                         <Nav>
                             {routes.map((route, index) => {
-                                if(route.navLink)
-                                    return <Nav.Link key={route + index} href={route.path}>{route.navLink}</Nav.Link>
-                                })}
-                            <Nav.Link href='/signout'>Sign out</Nav.Link>
+                                return route.navLink ? <Nav.Link key={route + index} href={route.path}>{route.navLink}</Nav.Link> : null
+                            })}
+                            <Nav.Link onClick={() => signout()}>Sign out</Nav.Link>
                         </Nav>
                     </Navbar.Collapse>
                 </Container>
@@ -47,7 +49,7 @@ const AuthNavigation = () => {
                 {routes.map((route, index) => 
                     <Route key={route + index} exact path={route.path} component={route.component} />
                 )}
-                <Route path='/signout' render={() => {signout(); return null;}} />
+                <Route component={NotFound} />
             </Switch>
         </div>
     )

@@ -21,7 +21,6 @@ export default function Login() {
   function handleSubmit(event) {
     event.preventDefault();
     signin(formState).then((success) => {
-      console.log(success);
       if(success) window.location.href = '/';
     }).catch((err) => console.log(err));
 
