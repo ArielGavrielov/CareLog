@@ -47,7 +47,7 @@ const AuthNavigation = () => {
                 {routes.map((route, index) => 
                     <Route key={route + index} exact path={route.path} component={route.component} />
                 )}
-                <Route path='/signout' render={() => {signout(); window.location.href = '/'; return null;}} />
+                <Route path='/signout' render={() => {signout(); return null;}} />
             </Switch>
         </div>
     )
