@@ -10,7 +10,7 @@ const authReducer = (state, action) => {
         case 'signin':
             return { ...state, errorMessage: '', token: action.payload };
         case 'signout':
-            return { ...state, errorMessage: '', token: null };
+            return { ...state, errorMessage: '', token: null, isLoading: false };
         case 'clear_error_message':
             return {...state, errorMessage: '' };
         default: 
@@ -50,10 +50,14 @@ const signin = (dispatch) => ({ email, password }) => {
             resolve(true);
         } catch(err) {
             // add error
+            console.log(err);
             console.log(err.response.data.error);
             dispatch({ type: 'add_error', payload: err.response.data.error });
             reject(false);
         }
+    }).then((success) => {
+        console.log(success);
+        if(success) window.location.reload();
     });
 };
 
@@ -61,6 +65,7 @@ const signin = (dispatch) => ({ email, password }) => {
 const signout = dispatch => async () => {
     localStorage.removeItem('token');
     dispatch({type: 'signout'});
+    window.location.reload();
 };
 
 export const { Provider, Context } = createDataContext(

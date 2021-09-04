@@ -5,7 +5,7 @@ import AuthNavigation from './Navigations/AuthNavigation';
 import UnAuthNavigation from './Navigations/UnAuthNavigation';
 
 const  App = () => {
-  const {state, restoreToken} = React.useContext(AuthContext);
+  const {state, restoreToken, signout} = React.useContext(AuthContext);
 
   React.useEffect(() => {
     if(!state.token) {
@@ -13,6 +13,21 @@ const  App = () => {
     }
     // eslint-disable-next-line
   }, []);
+
+  React.useEffect(() => {
+    const checkToken = () => {
+      let token = localStorage.getItem('token');
+      //if(!token && state.token)
+      //  signout();
+      console.log("token", token);
+    }
+  
+    window.addEventListener('storage', checkToken)
+  
+    return () => {
+      window.removeEventListener('storage', checkToken)
+    }
+  }, [])
 
   if(state.isLoading) return null;
 

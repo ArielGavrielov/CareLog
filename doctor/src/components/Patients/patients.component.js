@@ -54,13 +54,13 @@ const columns = [
 
 const Patients = () => {
     const [patients, setPatients] = React.useState([]);
-    console.log(localStorage.getItem('token'));
     React.useEffect(() => {
         //if(patients.length === 0)
         CareLogAPI.get('/doctor/patients').then((response) => {
             setPatients(response.data);
+        }).catch((err) => {
+            console.log(err)
         });
-        console.log(patients);
     }, []);
 
     return (

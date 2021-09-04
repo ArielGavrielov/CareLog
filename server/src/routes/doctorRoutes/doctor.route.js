@@ -19,15 +19,15 @@ router.post('/signin', async (req, res) => {
         if(!doctor) throw({message: 'Invalid email'});
 
         await doctor.comparePassword(password);
-        const token = jwt.sign({ doctorId: doctor._id }, process.env.TOKEN_SECRET, { expiresIn: "1h" });
+        const token = jwt.sign({ doctorId: doctor._id }, process.env.TOKEN_SECRET, { expiresIn: '1 day' });
         res.send({ token });
     } catch(err) {
         return res.status(422).send({ code: 422, error: err.message });
     }
 });
 
-// handle signup for new user
-router.post('/signup', async (req, res) => {
+// create account for new doctor
+router.post('/create-doctor-account', async (req, res) => {
     try {
         const { email, firstname, lastname, password, phone } = req.body;
         if(!email || !password || !firstname || !lastname || !phone)
@@ -39,7 +39,7 @@ router.post('/signup', async (req, res) => {
         
         const doctor = new Doctor({ email, firstname, lastname, password, phone });
         await doctor.save();
-        const token = jwt.sign({ doctorId: doctor._id }, process.env.TOKEN_SECRET, { expiresIn: "1h" });
+        const token = jwt.sign({ doctorId: doctor._id }, process.env.TOKEN_SECRET, { expiresIn: '1 day' });
         res.send({ token });
     } catch(err) {
         console.log(err.message);
@@ -68,14 +68,13 @@ router.post('/link-patient', doctorRequireAuth, async (req,res) => {
 });
 
 router.get('/patients', doctorRequireAuth, async (req,res) => {
-    let patients = [];
     console.log(`start at ${new Date()}`);
     let doctor = await Doctor.findById(req.doctor._id).lean().populate('patients', '-indices');
     console.log(`end at ${new Date()}`);
-    res.send(doctor);
+    res.send(doctor.patients);
 });
 
 router.get('/secret', (req,res) => {
-    res.send(process.env.TOKEN_SECRET);
+    res.send(require('crypto').randomBytes(256).toString('hex'));
 })
 module.exports = router;
