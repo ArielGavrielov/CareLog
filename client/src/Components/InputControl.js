@@ -10,7 +10,7 @@ import moment from 'moment';
 export const InputControl = ({
     name, control, rules={}, trigger=() => console.log("there is no trigger."), render=null, keyboardType='default',
     leftIcon=null, secureTextEntry=false, autoCapitalize='none', defaultValue='',
-    autoCorrect = false, style={}, containerStyle={}, onEndEditing=null, disabled=false, multiline=false, numberOfLines=1, maxLength=256
+    autoCorrect=false, style={}, containerStyle={}, onEndEditing=null, disabled=false, multiline=false, numberOfLines=1, maxLength=256
 }) => {
     const {
         field: { onChange, value, onBlur },
@@ -29,13 +29,14 @@ export const InputControl = ({
             keyboardType={keyboardType}
             inputContainerStyle={error && {borderBottomColor:'red'}}
             errorMessage={error && error.message}
+            defaultValue={defaultValue}
             leftIcon={leftIcon}
             onBlur={onBlur}
             onChangeText={(text) => {
                 onChange(text);
                 /*if(isTouched || invalid)*/ trigger(name);
             }}
-            value={value}
+            value={value ? value : defaultValue}
             secureTextEntry={secureTextEntry}
             autoCapitalize={autoCapitalize}
             autoCorrect={autoCorrect}

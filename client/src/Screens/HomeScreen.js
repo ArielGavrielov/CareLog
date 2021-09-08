@@ -1,23 +1,81 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
+import { View, StyleSheet, Alert, Dimensions } from 'react-native';
 import { AirbnbRating, Text, Avatar, Divider, Card, ListItem, Button, Icon } from 'react-native-elements';
 import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
 import { Indice } from '../Components/Indice';
+import ModalWithX from '../Components/ModalWithX';
 import { getFeeling, postFeeling } from '../api/carelog';
 import moment from 'moment';
 
 import List from '../Components/List';
 import ProgressBar from '../Components/ProgressBar'
 import { getStepsBetween } from '../Components/getSteps';
+import { useForm } from 'react-hook-form';
+import { InputControl } from '../Components/InputControl';
+import { AsyncAlert } from '../Components/AsyncAlert';
 
-const events = [
-  { start: '07-09-2021 13:30:00', end: '2021-09-07 02:00:00', title: 'Dr. Mor Ben Shushan', summary: 'Nahariya' },
-  { start: '07-09-2021 14:30:00', end: '2021-09-07 03:00:00', title: 'Dr. Ariel Gavrielov', summary: 'Akko' },
-]
+const BadFeelingModal = ({isModalVisible, setModalVisible, rating, setRating}) => {
+  const {control, handleSubmit} = useForm();
+  const [isLoading, setLoading] = React.useState(false);
+
+  const postWithReason = ({reason}) => {
+    setLoading(true);
+    postFeeling(rating, reason).then((data) => {
+      console.log(data);
+      if(data.success) {
+        setRating({lastChange: moment().format('HH:mm:ss'), value: rating});
+        setLoading(false);
+        setModalVisible(false);
+      } else
+        AsyncAlert('ERROR', 'Please try again later.', [{text: 'OK'}]).finally(() => {
+          setLoading(false);
+          setModalVisible(false);
+        });
+      
+    }).catch((error) => {
+      console.log(error);
+      if(!error)
+        AsyncAlert('ERROR', 'Something went wrong. Please try again later.', [{text: 'OK'}]).finally(() => {
+          setLoading(false);
+          setModalVisible(false);
+        });
+    });
+  }
+
+  return (
+    <>
+    <ModalWithX
+      isVisible={isModalVisible}
+      style={{flex:1}}
+      onBackdropPress={handleSubmit(postWithReason)}
+      deviceWidth={Dimensions.get('window').width}
+      deviceHeight={Dimensions.get('window').height}
+      onRequestClose={handleSubmit(postWithReason)}
+    >
+      <Text h3>Bad feeling prompt</Text>
+      <Text>sorry for that you feeling bad, We hope that you'll feel better.</Text>
+      <Text>You can add a reason to inform the doctor. (optional)</Text>
+      <InputControl
+        name='Reason'
+        control={control}
+        defaultValue={''}
+      />
+      <Button
+        title='Send'
+        loading={isLoading}
+        disabled={isLoading}
+        onPress={handleSubmit(postWithReason)}
+      />
+    </ModalWithX>
+    </>
+  )
+}
 
 const HomeScreen = () => {
   const [selected, setSelected] = useState(0);
   const [rating, setRating] = useState(null);
+  const [choosenRating, setChoosenRating] = React.useState(0);
+  const [isModalVisible, setModalVisible] = React.useState(false);
   const isScreenMounted = React.useRef();
 
   const indices = [
@@ -115,32 +173,6 @@ const HomeScreen = () => {
             }
         ]
     }];
-  const items = [
-    {
-      title: 'Take medicine',
-      checked: false,
-    },
-    {
-      title: 'Go for a examination',
-      checked: true
-    },
-    {
-      title: 'Enter indices',
-      checked: true
-    },
-    {
-      title: 'Go for a examination',
-      checked: true
-    },
-    {
-      title: 'Go for a examination',
-      checked: true
-    },
-    {
-      title: 'Go for a examination',
-      checked: true
-    }
-  ];
 
   React.useEffect(() => {
     isScreenMounted.current = true;
@@ -175,19 +207,30 @@ const HomeScreen = () => {
             reviews={['Terrible', 'Bad', 'Okay', 'Good', 'Great']}
             defaultRating={rating.value}
             onFinishRating={(v) => {
-              postFeeling(v).then((data) => {
-                if(data.success) {
-                  setRating({lastChange: moment().format('HH:mm:ss'), value: v});
-                } else {
-                  Alert.alert('ERROR', 'Please try again later.', [{text: 'ok'}]);
-                }
-              }).catch(({error}) => {
-                if(!error)
-                  Alert.alert('ERROR', 'Something went wrong. Please try again later.', [{text: 'ok'}])
-              });
+              setChoosenRating(v);
+              if(v < 3) {
+                setModalVisible(true);
+              } else {
+                postFeeling(v).then((data) => {
+                  if(data.success) {
+                    setRating({lastChange: moment().format('HH:mm:ss'), value: v});
+                  } else {
+                    Alert.alert('ERROR', 'Please try again later.', [{text: 'ok'}]);
+                  }
+                }).catch(({error}) => {
+                  if(!error)
+                    Alert.alert('ERROR', 'Something went wrong. Please try again later.', [{text: 'ok'}])
+                });
+              }
             }}
           />
         </View> : null}
+        <BadFeelingModal
+            isModalVisible={isModalVisible}
+            setModalVisible={setModalVisible}
+            rating={choosenRating}
+            setRating={setRating}
+          />
       </Card>
       <Card>
         <Card.Title>Indices</Card.Title>
@@ -233,27 +276,6 @@ const HomeScreen = () => {
               buttonStyle={styles.buttonS}
               title='SEE ALL EVENTS  BUTTON' />
         </Card>*/}
-        <List title='To-Do List' items={items}/>
-        <ProgressBar
-          title='Daily progress'
-          data={[
-            {
-              title: 'Water',
-              colorScheme: 'blue',
-              value: 9,
-              min: 0,
-              max: 10
-            },
-            {
-              title: 'Steps',
-              colorScheme: 'green',
-              value: 1000,
-              min: 0,
-              max: 5000
-            }
-          ]}
-        />
-       
     </ScrollView>
          
     );

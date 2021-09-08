@@ -42,8 +42,7 @@ const columns = [
         formatter: (cell, row, rowIndex, formatExtraData) => {
             return (
                 <Link to={{ 
-                    pathname: `/patient/${row._id}`, 
-                    patientData: row
+                    pathname: `/patient/${row._id}`
                   }}>More details</Link>
             );
           }

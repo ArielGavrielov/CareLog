@@ -9,6 +9,7 @@ export const CareLogAPI = axios.create({
 });
 
 // Indices
+// post indice by type
 export const postIndices = (type, value) => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -143,15 +144,28 @@ export const getFeeling = (date='') => {
     });
 }
 // post new feeling 
-export const postFeeling = (feeling) => {
+export const postFeeling = (feeling, reason=null) => {
     return new Promise(async (resolve, reject) => {
         try {
-            const response = await CareLogAPI.post('/user/feelings/', {feeling: feeling},
-            { headers: {
-                'Authorization': 'Bearer ' + await SecureStore.getItemAsync('token')
-            }});
+            console.log(reason);
+            let response;
+            if(!reason) {
+                console.log('no reason');
+                response = await CareLogAPI.post('/user/feelings/', {feeling: feeling},
+                { headers: {
+                    'Authorization': 'Bearer ' + await SecureStore.getItemAsync('token')
+                }});
+            }
+            else {
+                console.log('reason');
+                response = await CareLogAPI.post('/user/feelings/', {feeling: feeling, reason: reason},
+                { headers: {
+                    'Authorization': 'Bearer ' + await SecureStore.getItemAsync('token')
+                }});
+            }
             resolve(response.data);
         } catch(err) {
+            console.log('error');
             console.log(err.response.data)
             if(err.response.data)
                 reject({error: true, message: err.response.data.error});

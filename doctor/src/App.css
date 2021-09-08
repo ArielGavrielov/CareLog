@@ -1,7 +1,4 @@
 @import 'bootstrap/dist/css/bootstrap.min.css';
-.App {
-  text-align: center;
-}
 
 .App-logo {
   height: 40vmin;
@@ -43,4 +40,11 @@
     left: 50%;
     top: 50%;
     transform: 'translate(-50%, -50%)';
+}
+
+
+
+.App {
+  font-family: sans-serif;
+  text-align: center;
 }

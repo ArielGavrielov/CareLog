@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Dimensions, FlatList, Alert, StyleSheet } from 'react-native';
+import { View, Dimensions, FlatList, StyleSheet } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { Button, Text, Card, Icon, Divider } from 'react-native-elements';
 import { InputControl, TimesInputControl } from '../Components/InputControl';
@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { postMedicine, getMedicines, takeMedicine, deleteMedicine } from '../api/carelog';
 import moment from 'moment';
 import ModalWithX from '../Components/ModalWithX';
+import { AsyncAlert } from '../Components/AsyncAlert';
 
 const AddMedication = ({onAdded = () => console.log("need onAdded property."), isModalVisible, setModalVisible, editValues=null}) => {
     const {control, handleSubmit, trigger, formState, reset, setValue} = useForm();
@@ -193,21 +194,6 @@ const MedicinesScreen = () => {
     const [isModalVisible, setModalVisible] = React.useState(false);
     const [isInfoVisible, setInfoVisible] = React.useState(false);
 
-    // async alert - waiting for user response.
-    const AsyncAlert = (title, message, buttons, options={}) => {
-        return new Promise((resolve, reject) => {
-            isAlertShowing.current = true;
-            Alert.alert(
-                title,
-                message,
-                buttons.map((value) => {return {text: value.text, onPress: value.onPress ? value.onPress : () => resolve(value.resolve ? value.resolve : null)}}),
-                options
-            );
-        }).finally(() => {
-            isAlertShowing.current = false;
-        });
-    }
-
     // take medicine handle
     const take = (name, index) => {
         const loadingArr = state.isLoading;
@@ -215,9 +201,9 @@ const MedicinesScreen = () => {
         setState({...state, isLoading: loadingArr});
 
         takeMedicine(name).then((value) => {
-            AsyncAlert("Success", "Updated successfully", [{text: 'OK'}]);
+            AsyncAlert("Success", "Updated successfully", [{text: 'OK'}], {}, isAlertShowing);
             setState({...state, screenLoading: true});
-        }).catch((err) => AsyncAlert("ERROR", err.message, [{text: 'OK'}]))
+        }).catch((err) => AsyncAlert("ERROR", err.message, [{text: 'OK'}], {}, isAlertShowing))
         .finally(() => {
             loadingArr[index] = false;
             setState({...state, isLoading: loadingArr});
@@ -230,14 +216,16 @@ const MedicinesScreen = () => {
             [
                 {text: 'YES', resolve: true },
                 {text: 'NO', resolve: false }
-            ]
+            ],
+            {},
+            isAlertShowing
         );
         if(alertRes) {
             deleteMedicine(name).then((value) => {
                 setState({...state, screenLoading: true});
-                AsyncAlert('Success', 'Removed successfully', [{text: 'OK', resolve: true}])
+                AsyncAlert('Success', 'Removed successfully', [{text: 'OK', resolve: true}], {}, isAlertShowing)
                 .finally(() => {setInfoVisible(false); });
-            }).catch((err) => AsyncAlert("ERROR", err.message, [{text: 'OK'}]));
+            }).catch((err) => AsyncAlert("ERROR", err.message, [{text: 'OK'}], {}, isAlertShowing));
         }
     }
 
@@ -332,9 +320,9 @@ const MedicinesScreen = () => {
                 setModalVisible={setModalVisible}
                 onAdded={(props) => {
                     postMedicine(props).then((value) => {
-                        AsyncAlert('Success', (state.editValues ? 'Edited' : 'Added') +' successfully', [{text: 'OK', onPress: () => setModalVisible(false)}]);
+                        AsyncAlert('Success', (state.editValues ? 'Edited' : 'Added') +' successfully', [{text: 'OK', onPress: () => setModalVisible(false)}], {}, isAlertShowing);
                         setState({...state, screenLoading: true})
-                    }).catch((err) => AsyncAlert('ERROR', err.message, [{text: 'OK'}]));
+                    }).catch((err) => AsyncAlert('ERROR', err.message, [{text: 'OK'}], {}, isAlertShowing));
                 }}
                 editValues={state.editValues}
             />

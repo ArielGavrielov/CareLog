@@ -65,8 +65,14 @@ router.post('/', async (req,res) => {
         if(found) {
             if(req.body.feeling === found.feeling) throw {message: 'same feeling.'};
 
-            let update = await User.updateOne({_id: req.user._id, "feelings.date": moment.utc().format('Y-MM-DD')},
-                {$set: {"feelings.$.lastChange": moment.utc().format('HH:mm:ss'), "feelings.$.feeling": req.body.feeling}});
+            let update;
+            if(req.body.reason)
+                update = await User.updateOne({_id: req.user._id, "feelings.date": moment.utc().format('Y-MM-DD')},
+                {$set: {"feelings.$.lastChange": moment.utc().format('HH:mm:ss'), "feelings.$.feeling": req.body.feeling, "feelings.$.reason": req.body.reason}});
+            else
+                update = await User.updateOne({_id: req.user._id, "feelings.date": moment.utc().format('Y-MM-DD')},
+                {$set: {"feelings.$.lastChange": moment.utc().format('HH:mm:ss'), "feelings.$.feeling": req.body.feeling},
+                $unset: {"feelings.$.reason": 1}});
 
             if(update.nModified === 0) throw {message: 'nothing change.'};
             res.send({success: true, message: 'feeling updated.'});
@@ -77,6 +83,7 @@ router.post('/', async (req,res) => {
             res.send({success: true, message: 'feeling added.'});
         }
     } catch(err) {
+
         res.status(422).send({error: err.message});
     }
 });

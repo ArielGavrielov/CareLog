@@ -19,9 +19,8 @@ const  App = () => {
       let token = localStorage.getItem('token');
       //if(!token && state.token)
       //  signout();
-      console.log("token", token);
     }
-  
+    console.log("token", localStorage.getItem('token'));
     window.addEventListener('storage', checkToken)
   
     return () => {
@@ -32,9 +31,10 @@ const  App = () => {
   if(state.isLoading) return null;
 
   return (
-    <div className="App">
+    <div className="App wrapper">
       {state.token ? <AuthNavigation /> :
-      <UnAuthNavigation /> }
+      <UnAuthNavigation /> 
+    }
     </div>
   );
 }
