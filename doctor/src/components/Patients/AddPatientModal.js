@@ -23,7 +23,10 @@ const AddPatientModal = () => {
         event.preventDefault();
         if(!validateForm()) return;
         CareLogAPI.post('/doctor/link-patient', formState)
-        .then((res) => setState({success: res.data.message}))
+        .then((res) => {
+            setState({success: res.data.message});
+            setTimeout(() => window.location.reload(), 1000);
+        })
         .catch((err) => setState({error: err.response.data.error}));
     }
 
@@ -62,7 +65,7 @@ const AddPatientModal = () => {
                         </Form.Group>
                         {state.success ? <div><b style={{color: 'green'}}>{state.success}</b></div> : state.error ? <div><b style={{color: 'red'}}>{state.error}</b></div> : null}
                         <Button block size="lg" type="submit" disabled={!validateForm()}>
-                            Send request to patient
+                            Link patient
                         </Button>
                     </Form>
                 </Modal>

@@ -3,6 +3,7 @@ const moment = require('moment');
 
 const Event = new mongoose.Schema({
     userId: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
+    doctorId: {type: mongoose.Schema.Types.ObjectId, ref: 'doctors'},
     title: {
         type: String,
         required: true

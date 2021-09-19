@@ -39,10 +39,37 @@ router.post('/', async (req,res) => {
     try {
         req.body.time = moment(req.body.time, DATETIMEFORMAT).utc().format(DATETIMEFORMAT);
         let event = await Event.create({userId: req.user._id, ...req.body});
-        res.send(event);
+        res.send({success: 'Added succuss.'});
     } catch(err) {
         res.status(422).send(err);
     }
+});
+
+router.post('/:id', async (req,res) => {
+    try {
+        if(!req.params.id || req.params.id == '')
+            throw {message: 'event id is require.'};
+
+
+        const {title, body, address, time} = req.body;
+        let utcTime = moment(time, DATETIMEFORMAT, true).utc();
+
+        if(!title) throw {message: 'Title is require.'};
+        if(!time || !utcTime.isValid()) throw {message: 'Time is require.'};
+
+        let event = await Event.findOneAndUpdate({_id: req.params.id, userId: req.user._id}, {$set: {title, body, address, time: utcTime.format(DATETIMEFORMAT)}}, {new: true});
+
+        if(!event)
+            throw {message: 'Event not found.'};
+        
+        if(event.nModified == 0)
+            throw {message: 'Nothing change.'};
+        
+        res.send({success: 'Edit success.'});
+    } catch(err) {
+        res.status(422).send({error: err.message});
+    }
+        
 });
 
 router.delete('/:id', async (req,res) => {

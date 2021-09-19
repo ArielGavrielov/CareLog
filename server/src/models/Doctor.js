@@ -17,6 +17,10 @@ const Doctor = new mongoose.Schema({
         required: true,
         validate: /^(?=.{2,20}$)[a-zA-Z]+(?:[-'\s][a-zA-Z]{2,20})*$/
     },
+    address: {
+        type: String,
+        required: true
+    },
     password: {
         type: String,
         required: true,
@@ -26,6 +30,31 @@ const Doctor = new mongoose.Schema({
         type: String,
         unique: true,
         validate: /^\+?(972|0)(\-)?0?([5]{1}[0-9]{1}\d{7})$/
+    },
+    workDay: [{
+        date: {
+            type: String,
+            required: true
+        },
+        meetings: [{
+            userId: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
+            time: {
+                type: String,
+                required: true
+            }
+        }]
+    }],
+    startWorkTime: {
+        type: String,
+        default: '08:00'
+    },
+    endWorkTime: {
+        type: String,
+        default: '21:00'
+    },
+    breakTime: {
+        type: Array,
+        default: ['13:00', '14:00']
     },
     patients: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}]
 });

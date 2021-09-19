@@ -5,7 +5,11 @@ const doctorRequireAuth = require('../../middlewares/doctorRequireAuth');
 const Doctor = require('../../models/Doctor');
 const User = require('../../models/User');
 const moment = require('moment');
+const sendEmail = require("../../utils/sendMail");
+const meetings = require('./meetings.route');
 
+
+router.use('/meetings', meetings);
 router.get('/', (req,res) => {
     res.send("API works!");
 })
@@ -55,13 +59,23 @@ router.post('/link-patient', doctorRequireAuth, async (req,res) => {
         let user = await User.findOne({email: req.body.email, phone: req.body.phone});
         if(!user) throw {message: 'User not found.'};
 
-        if(req.doctor.patients.includes(user._id)) throw {message: 'User already linked.'};
-        console.log(req.doctor);
-        Doctor.updateOne({_id: req.doctor._id}, {$addToSet: {"patients": user._id}}, (err,data) => {
-            if(err) console.log(err);
-            else res.send({message: 'Added successfully.'});
-            console.log(data);
-        });
+        let isInDoctors = user.doctors.filter((e) => e.doctorRef.equals(req.doctor._id)).length > 0;
+        let isInPatients = req.doctor.patients.includes(user._id);
+
+        if(isInPatients && isInDoctors) 
+            throw {message: 'User already linked.'};
+
+        let addPatient = null, addDoctor = null;
+        if(!isInPatients)
+            addPatient = await Doctor.updateOne({_id: req.doctor._id}, {$addToSet: {"patients": user._id}});
+        if(!isInDoctors)
+            addDoctor = await User.updateOne({_id: user._id}, {$addToSet: {'doctors': {doctorRef: req.doctor._id}}})
+
+        if((addPatient && addPatient.nModified === 1) || (addDoctor && addDoctor.nModified === 1)) {
+            res.send({message: 'Added successfully.'});
+            sendEmail(user.email, "CareLog - Doctor linking", `Dr. ${req.doctor.firstname} ${req.doctor.lastname} has linked your account to doctor system.`);
+        } else
+            throw {message: 'Unknown error.'};
     } catch(err) {
         console.log(err.message);
         res.status(422).send({code: 422, error: err.message});
@@ -84,7 +98,11 @@ router.get('/patients', doctorRequireAuth, async (req,res) => {
 * Oxygen saturation: 95% or higher
 * Bodyheat: 36-37-9
 */
-const patientIndicesLastMonth = (patientIndices) => {
+const patientIndicesLastMonth = (patient) => {
+    patientIndices = patient.indices;
+    if(patientIndices)
+        patientIndices = patientIndices.toJSON();
+
     let comments = {
         pulse: [],
         blood: [],
@@ -111,63 +129,84 @@ const patientIndicesLastMonth = (patientIndices) => {
         }
     }
 
-    let indicesTypes = Object.keys(patientIndices);
+    let indicesTypes = Object.keys(normalIndices);
 
+    let startMoment = moment().subtract(1, 'months');
+    if(moment(patient.createDate).isAfter(startMoment))
+        startMoment = moment(patient.createDate);
+    
     indicesTypes.map((indiceType) => {
-        let startMoment = moment().subtract(1, 'months').subtract(1, 'day');
+        let missingDays = moment().diff(startMoment, 'days');
 
-        let lastMonthIndice = patientIndices[indiceType].filter((e) =>
-            new Date(e.time) >= startMoment.toDate()
-        );
-        lastMonthIndice.sort((a,b) => new Date(a.time) > new Date(b.time));
-        console.log(lastMonthIndice);
+        if(patientIndices && patientIndices[indiceType]) {
+            let lastMonthIndice = patientIndices[indiceType].filter((e) =>
+                new Date(e.time) >= startMoment.toDate()
+            );
+            let dateIterator = moment.utc({format: 'Y-MM-DD'}).subtract(1, 'months');
 
-        let dateIterator = moment({format: 'Y-MM-DD'}).subtract(1, 'months');
-        let missingDays = moment().diff(moment().subtract(1, 'months'), 'days');
+            lastMonthIndice.sort((a,b) => new Date(a.time) > new Date(b.time));
 
-        lastMonthIndice.map((indice) => {
-            if(!dateIterator.isSame(indice.time, 'day')) {
-                missingDays--;
-                dateIterator = moment(indice.time, 'Y-MM-DD');
-            }
-            
-            if(indiceType == 'blood' &&
-            (indice.systolic > normalIndices.blood.systolicMax || indice.diastolic > normalIndices.blood.diastolicMax)) {
-                comments.blood.push(`${indice.time} - abnormal indice (${indice.systolic}/${indice.diastolic} mmHg)`);
-            } else if(indice[indiceType] < normalIndices[indiceType].min || indice[indiceType] > normalIndices[indiceType].max){
-                comments[indiceType].push(`${indice.time} - abnormal indice (${indice[indiceType]})`);
-            }
-        });
+            lastMonthIndice.map((indice) => {
+                if(!dateIterator.isSame(indice.time, 'day')) {
+                    missingDays--;
+                    dateIterator = moment(indice.time, 'Y-MM-DD');
+                }
+                indice.time = moment.utc(indice.time).local().format('Y-MM-DD HH:mm:ss');
+                
+                if(indiceType == 'blood' &&
+                (indice.systolic > normalIndices.blood.systolicMax || indice.diastolic > normalIndices.blood.diastolicMax)) {
+                    comments.blood.push(`${indice.time} - abnormal indice (${indice.systolic}/${indice.diastolic} mmHg)`);
+                } else if(indice[indiceType] < normalIndices[indiceType].min || indice[indiceType] > normalIndices[indiceType].max){
+                    comments[indiceType].push(`${indice.time} - abnormal indice (${indice[indiceType]})`);
+                }
+            });
+        }
+        
         if(missingDays > 0)
-            comments[indiceType].push(`Missing indices in ${missingDays} days.`);
-        console.log(missingDays);
+            comments[indiceType].push(`Missing indices in ${missingDays} ${missingDays == 1 ? 'day' : 'days'}.`);
     });
 
     return comments;
 }
 
 // get details about patient feeling
-const patientBadFeelingLastMonth = (patientFeelings) => {
-    let startMoment = moment().subtract(1, 'months').subtract(1, 'day');
+const patientBadFeelingLastMonth = (patient) => {
+    let patientFeelings = patient.feelings;
+    let comments = [];
+    let startMoment = moment().subtract(1, 'months');
+    if(moment(patient.createDate).isAfter(startMoment))
+        startMoment = moment(patient.createDate);
+    
     let lastMonthBadFeelings = patientFeelings.filter((e) =>
-        new Date(e.date) >= startMoment.toDate() && e.feeling < 3
+        moment(e.date).toDate() >= startMoment.toDate()
+    );
+
+    let missingDays = moment().diff(startMoment, 'days') - lastMonthBadFeelings.length;
+    if(missingDays > 0) comments.push(`Patient does'nt filled his feeling ${missingDays} ${missingDays == 1 ? 'day' : 'days'}.`);
+    lastMonthBadFeelings = lastMonthBadFeelings.filter((e) =>
+        e.feeling < 3
     );
     lastMonthBadFeelings.sort((a,b) => new Date(a.date) > new Date(b.date));
+    lastMonthBadFeelings.map((feel) => comments.push(`${moment.utc(feel.date + ' ' + feel.lastChange).local().format('Y-MM-DD HH:mm:ss')} - The patient felt ${feel.feeling}/5, ${feel.reason ? `the reason is: ${feel.reason}.` : `he does'nt filled a reason.`}`));
 
-    return lastMonthBadFeelings;
+    return comments;
 }
 
 // get comments for medicines
 const patientMedicinesComments = (patientMedicines) => {
     const comments = {};
-    let startMoment = moment().subtract(1, 'months').subtract(1, 'day');
     patientMedicines.map((medicine) => {
         if(medicine.quantity < medicine.dosageamount * medicine.times.length * 2) {
             if(!comments[medicine.medicineRef.name]) comments[medicine.medicineRef.name] = [];
             comments[medicine.medicineRef.name].push(`Need to restock, there is ${medicine.quantity} left and the patient need taking the drug ${medicine.dosageamount * medicine.times.length} per day.`)
         }
 
-        let missingDays = moment().diff(moment().subtract(1, 'months'), 'days');
+        let startMoment = moment().subtract(1, 'months');
+        if(moment(medicine.startDate).isAfter(startMoment))
+            startMoment = moment(medicine.startDate);
+
+        let missingDays = moment().diff(startMoment, 'days');
+        console.log(moment(), startMoment, missingDays);
 
         let medicineLastMonthTaken = medicine.taken.filter((e) => new Date(e.date) >= startMoment.toDate())
         medicineLastMonthTaken.map((taken) => {
@@ -180,10 +219,9 @@ const patientMedicinesComments = (patientMedicines) => {
         })
         if(missingDays > 0) {
             if(!comments[medicine.medicineRef.name]) comments[medicine.medicineRef.name] = [];
-            comments[medicine.medicineRef.name].push(`The patient have missing up ${missingDays} whole days of taking the drug!`)
+            comments[medicine.medicineRef.name].push(`The patient have missing up to ${missingDays} ${missingDays == 1 ? 'day' : 'days'} of taking the drug!`)
         } 
     });
-
     return comments;
 }
 router.get('/patient/:id', doctorRequireAuth, async (req,res) => {
@@ -196,17 +234,26 @@ router.get('/patient/:id', doctorRequireAuth, async (req,res) => {
         if(!req.doctor.patients.includes(req.params.id))
             throw {message: 'patient not found'};
         
-        let patientDetails = await User.findById(req.params.id).populate('medicines.medicineRef');
+        let patientDetails = await User.findById(req.params.id).populate('medicines.medicineRef').select('-password -__v');
 
         // if patient user scheme not found
         if(!patientDetails)
             throw {message: 'User not found.'};
 
-        res.send({...patientDetails.toJSON(),
-            indices: patientIndicesLastMonth(patientDetails.indices.toJSON()),
-            feelings: patientBadFeelingLastMonth(patientDetails.feelings),
+        let comments = {
+            indices: patientIndicesLastMonth(patientDetails),
+            feelings: patientBadFeelingLastMonth(patientDetails),
             medicines: patientMedicinesComments(patientDetails.medicines)
-        });
+        };
+
+        console.log(comments);
+        comments['hasIndicesComments'] = comments.indices.blood.length != 0 || comments.indices.pulse.length != 0 || comments.indices.oxygen.length != 0 || comments.indices.bodyheat.length != 0;
+        comments['hasFeelingsComments'] = comments.feelings.length != 0;
+        comments['hasMedicinesComments'] = Object.keys(comments.medicines).length != 0;
+
+        console.log({...patientDetails.toJSON(), ...comments});
+
+        res.send({...patientDetails.toJSON(), ...comments});
     } catch(err) {
         console.log(err);
         res.status(422).send({error: err.message});

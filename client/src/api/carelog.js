@@ -198,7 +198,7 @@ export const getEvents = () => {
 export const postEvent = (event) => {
     return new Promise(async (resolve, reject) => {
         try {
-            const response = await CareLogAPI.post('/user/events/', event,
+            const response = await CareLogAPI.post(`/user/events/${event.id ? event.id : ''}`, event,
             { headers: {
                 'Authorization': 'Bearer ' + await SecureStore.getItemAsync('token')
             }});
@@ -206,9 +206,27 @@ export const postEvent = (event) => {
         } catch(err) {
             console.log(err.response.data);
             if(err.response.data)
-                reject({error: true, message: err.response.data.error});
+                reject({error: err.response.data.error});
             else
-                reject({error: true, message: 'Check your network connection.'});
+                reject({error: 'Check your network connection.'});
+        }
+    });
+}
+
+export const deleteEvent = (eventId) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const response = await CareLogAPI.delete(`/user/events/${eventId}`,
+            { headers: {
+                'Authorization': 'Bearer ' + await SecureStore.getItemAsync('token')
+            }});
+            resolve(response.data);
+        } catch(err) {
+            console.log(err.response.data);
+            if(err.response.data)
+                reject({error: err.response.data.error});
+            else
+                reject({error: 'Check your network connection.'});
         }
     });
 }

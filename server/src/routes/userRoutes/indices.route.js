@@ -27,7 +27,7 @@ router.get('/', (req,res) => {
 });
 //get indice by type
 router.get('/:type', (req,res) => {
-    if(!req.params.type || !req.user.indices[req.params.type])
+    if(!req.params.type || req.params.type == '' || !req.user.indices || !req.user.indices[req.params.type])
         return res.status(422).send({error: 'indice not found.'});
     
     const result = req.user.indices[req.params.type].map((el) => el).reduce((acc, e) => {
@@ -48,7 +48,7 @@ router.get('/:type', (req,res) => {
 
 //get indice by type for statistic
 router.get('/statistic/:type', (req,res) => {
-    if(req.params.type === '' || !req.user.indices[req.params.type])
+    if(!req.params.type || req.params.type == '' || !req.user.indices || !req.user.indices[req.params.type])
         return res.status(422).send({error: 'indice not found.'});
 
     switch(req.params.type) {

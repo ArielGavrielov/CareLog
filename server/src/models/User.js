@@ -2,6 +2,9 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const moment = require('moment')
 
+const nowUTC = () => {
+    return moment.utc().format('Y-MM-DD HH:mm:ss');
+}
 const userSchema = new mongoose.Schema({
     email: {
         type: String,
@@ -25,6 +28,10 @@ const userSchema = new mongoose.Schema({
             return !Number.isNaN(Date.parse(value));
         }, 'is invalid.']
     },
+    createDate: {
+        type: String,
+        default: () => moment.utc().format('Y-MM-DD')
+    },
     password: {
         type: String,
         required: true,
@@ -39,7 +46,7 @@ const userSchema = new mongoose.Schema({
         blood: [mongoose.Schema({
             time: {
                 type: String,
-                default: moment.utc().format('Y-MM-DD HH:mm:ss')
+                default: () => nowUTC()
             },
             systolic: {
                 type: Number
@@ -51,7 +58,7 @@ const userSchema = new mongoose.Schema({
         pulse: [mongoose.Schema({
             time: {
                 type: String,
-                default: moment.utc().format('Y-MM-DD HH:mm:ss')
+                default: () => nowUTC()
             },
             pulse: {
                 type: Number
@@ -60,7 +67,7 @@ const userSchema = new mongoose.Schema({
         bodyheat: [mongoose.Schema({
             time: {
                 type: String,
-                default: moment.utc().format('Y-MM-DD HH:mm:ss')
+                default: () => nowUTC()
             },
             bodyheat: {
                 type: Number,
@@ -69,7 +76,7 @@ const userSchema = new mongoose.Schema({
         oxygen: [mongoose.Schema({
             time: {
                 type: String,
-                default: moment.utc().format('Y-MM-DD HH:mm:ss')
+                default: () => nowUTC()
             },
             oxygen: {
                 type: Number,
@@ -80,6 +87,10 @@ const userSchema = new mongoose.Schema({
         medicineRef: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'medicines'
+        },
+        startDate: {
+            type: String,
+            default: () => moment.utc().format('Y-MM-DD')
         },
         quantity: {
             type: Number,
@@ -106,11 +117,11 @@ const userSchema = new mongoose.Schema({
         date: {
             type: String,
             unique: true,
-            default: moment.utc().format('Y-MM-DD')
+            default: () => moment.utc().format('Y-MM-DD')
         },
         lastChange: {
             type: String,
-            default: moment.utc().format('HH:mm:ss')
+            default: () => moment.utc().format('HH:mm:ss')
         },
         feeling: {
             type: Number,
@@ -121,7 +132,20 @@ const userSchema = new mongoose.Schema({
         reason: {
             type: String
         }
-    }, { _id : false })]
+    }, { _id : false })],
+    doctors: [{
+        doctorRef: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'doctors'
+        },
+        dateAdded: {
+            type: String,
+            default: () => nowUTC()
+        },
+        lastVisit: {
+            type: String
+        }
+    }]
 });
 
 userSchema.pre('save', function(next) {

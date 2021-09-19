@@ -383,7 +383,6 @@ export const FeelingChart = (props) => {
                 data={statistic}
                 segments={5}
                 fromNumber={5}
-                fromZero
                 width={Dimensions.get('window').width}
                 height={220}
                 chartConfig={chartConfig}

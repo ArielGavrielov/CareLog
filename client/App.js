@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaView, Text, View, StyleSheet } from 'react-native';
+import { SafeAreaView, Text, View, StyleSheet, NativeModules } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { createDrawerNavigator } from '@react-navigation/drawer';
@@ -55,6 +55,8 @@ const App = () => {
   React.useEffect(() => {
     registerForPushNotifications()
   }, []);
+
+  console.log(state.token);
 
   const NoInternetModal = ({show, onRetry, isRetrying}) => (
     <Modal isVisible={isOffline} style={styles.modal} animationInTiming={600}>
@@ -228,7 +230,7 @@ const App = () => {
         }
         <NoInternetModal
             show={isOffline}
-            onRetry={() => restoreToken()}
+            onRetry={() => NativeModules.DevSettings.reload()}
             isRetrying={state.isLoading}
         />
       </NavigationContainer>

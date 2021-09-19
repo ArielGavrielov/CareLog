@@ -1,42 +1,60 @@
 import React, { Component } from 'react';
-import { View, Dimensions } from 'react-native';
+import { View, Dimensions, Alert } from 'react-native';
 import { Card, Button, Text, Divider } from 'react-native-elements'; 
 import {Agenda} from 'react-native-calendars';
 import {NavigationApps, Waze} from "react-native-navigation-apps";
 import ModalWithX from '../Components/ModalWithX';
-import { getEvents, postEvent } from '../api/carelog';
+import { getEvents, postEvent, deleteEvent } from '../api/carelog';
 import { useForm } from 'react-hook-form';
 import { InputControl, EventTimeInputControl } from '../Components/InputControl';
 import moment from 'moment';
+import { AsyncAlert } from '../Components/AsyncAlert';
 
-const PushEvent = ({isPushEventModal, setPushEventModal, onSubmit}) => {
+const PushEvent = ({refetchEvents}) => {
     const {control, handleSubmit, trigger, formState, reset, setValue} = useForm();
+    const [isModalVisible, setModalVisible] = React.useState(false);
+    const [isLoading, setLoading] = React.useState(false);
+    const [messages, setMessages] = React.useState({error: null, success: null});
+
+    const onSubmit = (values) => {
+        setLoading(true);
+        postEvent(values).then((success) => {
+            setMessages(success);
+            setTimeout(() => {
+                setModalVisible(false);
+                refetchEvents();
+            }, 1000);
+        }).catch((error) => {
+            setMessages(error);
+        }).finally(() => {
+            setLoading(false);
+        });
+    }
 
     React.useEffect(() => {
         return () => {
-            if(formState.isSubmitSuccessful) {
+            if(formState.isSubmitSuccessful)
                 reset();
-                console.log("reset2");
-            }
+            setMessages({success: null, error: null});
         }
-    }, [isPushEventModal]);
+    }, [isModalVisible]);
 
     return (
         <View>
             <View style={{bottom: 0, left: 0, right: 0}}>
                 <Button
                     title="Add Event"
-                    onPress={() => setPushEventModal(!isPushEventModal)}
+                    onPress={() => setModalVisible(!isModalVisible)}
                     icon={{name: "plus", type: 'feather', color: 'white'}}
                 />
             </View>
             <ModalWithX
-                isVisible={isPushEventModal}
+                isVisible={isModalVisible}
                 style={{flex:1}}
-                onBackdropPress={() => setPushEventModal(false)}
+                onBackdropPress={() => setModalVisible(false)}
                 deviceWidth={Dimensions.get('window').width}
                 deviceHeight={Dimensions.get('window').height}
-                onRequestClose={() => setPushEventModal(false)}
+                onRequestClose={() => setModalVisible(false)}
             >
                 <Text h1>Add Event</Text>
                 <InputControl
@@ -63,7 +81,11 @@ const PushEvent = ({isPushEventModal, setPushEventModal, onSubmit}) => {
                     rules={{required: 'You must specify time of event'}}
                     trigger={trigger}
                 />
+                {messages.error && <Text style={{color: 'red'}}>{messages.error}</Text>}
+                {messages.success && <Text style={{color: 'green'}}>{messages.success}</Text>}
                 <Button
+                    loading={isLoading}
+                    disabled={isLoading}
                     title='Add Event'
                     onPress={handleSubmit(onSubmit)}
                 />
@@ -72,8 +94,32 @@ const PushEvent = ({isPushEventModal, setPushEventModal, onSubmit}) => {
     );
 } 
 
-const MoreInfoModal = ({item}) => {
+const MoreInfoModal = ({item, refetchEvents}) => {
     const [isModalVisible, setModalVisible] = React.useState(false);
+    const [isLoading, setLoading] = React.useState(false);
+    const [messages, setMessages] = React.useState({error: null, success: null});
+
+    const deleteE = () => {
+        setLoading(true);
+        AsyncAlert('IMPORTANT',
+            `Are you sure you want to delete this event?`,
+            [
+                {text: 'YES', resolve: true },
+                {text: 'NO', resolve: false }
+            ]
+        ).then((isDelete) => {
+            if(isDelete) {
+                deleteEvent(item.id).then((success) => {
+                    setModalVisible(false);
+                    setTimeout(() => refetchEvents(), 500);
+                }).catch((error) => {
+                    Alert.alert('ERROR', error);
+                }).finally(() => {
+                    setLoading(false);
+                });
+            }
+        });
+    }
 
     return (
         <View>
@@ -105,13 +151,51 @@ const MoreInfoModal = ({item}) => {
                     viewMode='view'
                     address={item.address}
                 /></> : null}
+                <Button
+                    disabled={isLoading}
+                    loading={isLoading}
+                    title='Delete event'
+                    onPress={deleteE}
+                />
             </ModalWithX>
         </View>
     );
 }
 
-const EditModal = ({item}) => {
+const EditModal = ({item, refetchEvents}) => {
     const [isModalVisible, setModalVisible] = React.useState(false);
+    const [isLoading, setLoading] = React.useState(false);
+    const [messages, setMessages] = React.useState({error: null, success: null});
+    const {control, handleSubmit, trigger, formState, reset, setValue} = useForm();
+
+    const onSubmit = (values) => {
+        setLoading(true);
+        postEvent(values).then((success) => {
+            setMessages(success);
+            setTimeout(() => {
+                setModalVisible(false);
+                refetchEvents();
+            }, 1000);
+        }).catch((error) => {
+            setMessages(error);
+        }).finally(() => setLoading(false));
+    }
+
+    React.useEffect(() => {
+        if(!isModalVisible) {
+            reset();
+            setMessages({error: null, success: null});
+        } else {
+            if(item) {
+                const values = {...item, time: item.datetime};
+                delete values.datetime;
+
+                for(const [key, value] of Object.entries(values)) {
+                    setValue(key, value);
+                }
+            }
+        }
+    }, [isModalVisible]);
 
     return (
         <View>
@@ -128,6 +212,39 @@ const EditModal = ({item}) => {
                 deviceHeight={Dimensions.get('window').height}
                 onRequestClose={() => setModalVisible(false)}
             >
+                <Text h1>Edit Event</Text>
+                <InputControl
+                    name='Title'
+                    control={control}
+                    rules={{required: 'You must specify title of event'}}
+                    trigger={trigger}
+                />
+                <InputControl
+                    name='Body'
+                    multiline={true}
+                    numberOfLines={4}
+                    control={control}
+                    trigger={trigger}
+                />
+                <InputControl
+                    name='Address'
+                    control={control}
+                    trigger={trigger}
+                />
+                <EventTimeInputControl
+                    name='Time'
+                    control={control}
+                    rules={{required: 'You must specify time of event'}}
+                    trigger={trigger}
+                />
+                {messages.error && <Text style={{color: 'red'}}>{messages.error}</Text>}
+                {messages.success && <Text style={{color: 'green'}}>{messages.success}</Text>}
+                <Button
+                    disabled={isLoading}
+                    loading={isLoading}
+                    title='Add Event'
+                    onPress={handleSubmit(onSubmit)}
+                />
             </ModalWithX>
         </View>
     );
@@ -137,14 +254,6 @@ const EventsScreen = () => {
     const isScreenMounted = React.useRef();
     const [events, setEvents] = React.useState(null);
     const [isLoading, setIsLoading] = React.useState(true);
-    const [isPushEventModal, setPushEventModal] = React.useState(false);
-
-    const onSubmit = (props) => {
-        postEvent(props).then((res) => {
-            setPushEventModal(false);
-        }).catch((err) => console.log(err))
-        .finally(() => setIsLoading(true));
-    }
 
     React.useEffect(() => {
         isScreenMounted.current = true;
@@ -162,9 +271,10 @@ const EventsScreen = () => {
                     const timeString = dateMoment.format(TIMEFORMAT);
                     if(!eventsFormat[dateString]) eventsFormat[dateString] = [];
                     eventsFormat[dateString].push({
-                        title: event.title, 
-                        body: event.body, 
-                        time: timeString, 
+                        title: event.title,
+                        body: event.body,
+                        time: timeString,
+                        datetime: dateMoment.format(DATETIMEFORMAT),
                         address: event.address,
                         id: event._id
                     });
@@ -204,8 +314,8 @@ const EventsScreen = () => {
             </View> : item.body ? <Text style={{fontSize: 16, margin: 10}}>{item.body}</Text> : null}
             <Card.Divider color='black'/>
             <View style={{flexDirection: 'row', alignSelf: 'auto', justifyContent: 'space-around'}}>
-                <MoreInfoModal item={item}/>
-                <EditModal item={item}/>
+                <MoreInfoModal item={item} refetchEvents={() => setIsLoading(true)}/>
+                <EditModal item={item} refetchEvents={() => setIsLoading(true)}/>
             </View>
           </Card>
         );
@@ -218,11 +328,7 @@ const EventsScreen = () => {
                     items={events} 
                     renderItem={(item)=> renderItem(item)}
             />
-            <PushEvent 
-                isPushEventModal={isPushEventModal} 
-                setPushEventModal={setPushEventModal}
-                onSubmit={onSubmit}
-            />
+            <PushEvent refetchEvents={() => setIsLoading(true)}/>
         </>
 }
 

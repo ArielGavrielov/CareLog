@@ -1,22 +1,29 @@
 import React from 'react';
-import {Dropdown, DropdownButton, Spinner } from "react-bootstrap";
+import {Dropdown, DropdownButton, Spinner, Card, Container, Row, Col } from "react-bootstrap";
 import { withRouter } from "react-router";
 import * as Charts from 'react-chartjs-2';
 import { CareLogAPI } from '../../API/CareLog';
 import './sidebar.css';
 
-const rand = () => Math.round(Math.random() * 20 - 10);
+const splitArrayForRows = (array, every) => {
+    let splited = [];
+    while(array.length > 0)
+        splited.push(array.splice(0, every));
+    return splited;
+}
 
 const PatientDetails = (props) => {
-    const [patientData, setPatientData] = React.useState(props.location.patientData);
+    const [patientData, setPatientData] = React.useState();
+    const [medicinesProblems, setMedicinesProblems] = React.useState([]);
     const [error, setError] = React.useState(null);
-    const [sidebar, setSideBar] = React.useState(true);
-    const toggleSideBar = () => setSideBar(!sidebar);
 
     React.useEffect(() => {
         if(!patientData) {
             CareLogAPI.get(`/doctor/patient/${props.match.params.id}`).then(({data}) => {
                 setPatientData(data);
+                if(data['hasMedicinesComments'])
+                    setMedicinesProblems(splitArrayForRows(Object.keys(data.medicines), 4));
+
                 console.log(data);
             }).catch((err) => {
                 console.log(err);
@@ -24,6 +31,14 @@ const PatientDetails = (props) => {
             })
         }
     }, [props.match.params.id, patientData]);
+
+    console.log(medicinesProblems);
+    const indicesName = {
+        blood: 'Blood pressure',
+        pulse: 'Pulse rate',
+        oxygen: 'Oxygen situration',
+        bodyheat: 'Body heat'
+    }
 
     if(error) return <div>
         <h1>Error</h1>
@@ -48,67 +63,68 @@ const PatientDetails = (props) => {
             <a href="#about">4</a>
         </div>
         <div class='content'>
-            <p>patient {patientData.firstname}</p>
-            <Charts.Bar
-            options={{
-                scales: {
-                  yAxes: [
+            <h1>Patient {patientData['firstname']} {patientData['lastname']}</h1>
+            {(patientData['hasIndicesComments'] || patientData['hasFeelingsComments'] || patientData['hasMedicinesComments']) && <Container>
+                <h2>Last month comments</h2>
+                { patientData.indices && patientData['hasIndicesComments'] ? <Card style={{marginBottom: 10}}>
+                        <Card.Header>Exceptional indices</Card.Header>
+                        <Row style={{paddingTop: 10}}>
+                        {
+                        Object.keys(patientData.indices).map((indiceType) => (
+                            <Col sm>
+                                <Card style={{height: 200}}>
+                                    <Card.Header>{indicesName[indiceType]}</Card.Header>
+                                    <Card.Body style={{overflow: 'scroll'}}>
+                                        <ul>
+                                            {
+                                                patientData.indices[indiceType].map((comment, i) => <li key={`item_${i}`}><p style={{fontSize: 12, color: 'red'}}>{comment}</p></li>)
+                                            }
+                                        </ul>
+                                    </Card.Body>
+                                </Card>
+                            </Col>
+                        ))
+                    }
+                    </Row>
+                </Card> : null }
+                {medicinesProblems.length > 0 ? <Card style={{marginBottom: 10}}>
+                    <Card.Header>Medicines problems</Card.Header>
                     {
-                      ticks: {
-                        beginAtZero: true,
-                      },
-                    },
-                  ],
-                },
-              }}
-                data={{
-                    labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
-                    datasets: [
-                      {
-                        label: 'Scale',
-                        data: [rand()],
-                        backgroundColor: [
-                          'rgba(255, 99, 132, 0.2)',
-                          'rgba(54, 162, 235, 0.2)',
-                          'rgba(255, 206, 86, 0.2)',
-                          'rgba(75, 192, 192, 0.2)',
-                          'rgba(153, 102, 255, 0.2)',
-                          'rgba(255, 159, 64, 0.2)',
-                        ],
-                        borderColor: [
-                          'rgba(205, 99, 132, 1)',
-                          'rgba(54, 162, 235, 1)',
-                          'rgba(255, 206, 86, 1)',
-                          'rgba(75, 192, 192, 1)',
-                          'rgba(153, 102, 255, 1)',
-                          'rgba(255, 159, 64, 1)',
-                        ],
-                        borderWidth: 1,
-                      },
-                      {
-                        label: 'Scale',
-                        data: [rand(), rand(), rand(), rand(), rand(), rand()],
-                        backgroundColor: [
-                          'rgba(255, 99, 132, 0.2)',
-                          'rgba(54, 162, 235, 0.2)',
-                          'rgba(255, 206, 86, 0.2)',
-                          'rgba(75, 192, 192, 0.2)',
-                          'rgba(153, 102, 255, 0.2)',
-                          'rgba(255, 159, 64, 0.2)',
-                        ],
-                        borderColor: [
-                          'rgba(205, 99, 132, 1)',
-                          'rgba(54, 162, 235, 1)',
-                          'rgba(255, 206, 86, 1)',
-                          'rgba(75, 192, 192, 1)',
-                          'rgba(153, 102, 255, 1)',
-                          'rgba(255, 159, 64, 1)',
-                        ],
-                        borderWidth: 1,
-                      }
-                    ],
-                  }}
-            />
+                        medicinesProblems.map((rowMedicines) => (
+                            <Row style={{paddingTop: 10}}>
+                                {
+                                    rowMedicines.map((medicineName) => (
+                                        <Col sm>
+                                            <Card style={{height: 200}}>
+                                                <Card.Header>{medicineName}</Card.Header>
+                                                <Card.Body style={{overflow: 'scroll'}}>
+                                                    <ul>
+                                                        {
+                                                            patientData.medicines[medicineName].map((comment, i) => <li key={`item_${i}`}><p style={{fontSize: 12, color: 'red'}}>{comment}</p></li>)
+                                                        }
+                                                    </ul>
+                                                </Card.Body>
+                                            </Card>
+                                        </Col>
+                                    ))
+                                }
+                            </Row>
+                        ))
+                    }
+                </Card>: null}
+                {patientData.feelings && patientData['hasFeelingsComments'] ? <>
+                    <Card style={{height: 200}}>
+                        <Card.Header>Feeling bad</Card.Header>
+                        <Card.Body style={{overflow: 'scroll'}}>
+                            <ul>
+                                {patientData.feelings.map((comment, i) => 
+                                    <li key={`feel_${i}`}><p style={{fontSize: 12, color: 'red'}}>{comment}</p></li>
+                                )}
+                            </ul>
+                        </Card.Body>
+                    </Card>
+                </> : null }
+            </Container> }
         </div>
         </div>
     )
