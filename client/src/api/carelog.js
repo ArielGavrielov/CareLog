@@ -8,15 +8,19 @@ export const CareLogAPI = axios.create({
     timeout: 10000
 });
 
+CareLogAPI.interceptors.request.use(async (config) => {
+    let token = await SecureStore.getItemAsync('token');
+    config.headers.Authorization = token;
+
+    return config;
+});
+
 // Indices
 // post indice by type
 export const postIndices = (type, value) => {
     return new Promise(async (resolve, reject) => {
         try {
-            const response = await CareLogAPI.post('/user/indices/' + type, value,
-            { headers: {
-                    'Authorization': 'Bearer ' + await SecureStore.getItemAsync('token')
-            }});
+            const response = await CareLogAPI.post('/user/indices/' + type, value);
             resolve({error: false, message: response.data.message});
         } catch(err) {
             console.log(err);
@@ -32,10 +36,7 @@ export const postIndices = (type, value) => {
 export const getIndice = (type='') => {
     return new Promise(async (resolve, reject) => {
         try {
-            const response = await CareLogAPI.get('/user/indices/statistic/' + type,
-            { headers: {
-                    'Authorization': 'Bearer ' + await SecureStore.getItemAsync('token')
-            }});
+            const response = await CareLogAPI.get('/user/indices/statistic/' + type);
             resolve(response.data);
         } catch(err) {
             console.log(err)
@@ -52,10 +53,7 @@ export const getIndice = (type='') => {
 export const getMedicines = () => {
     return new Promise(async (resolve, reject) => {
         try {
-            const response = await CareLogAPI.get('/user/medicines/',
-            { headers: {
-                'Authorization': 'Bearer ' + await SecureStore.getItemAsync('token')
-            }});
+            const response = await CareLogAPI.get('/user/medicines/');
             resolve(response.data);
         } catch(err) {
             console.log(err)
@@ -71,10 +69,7 @@ export const getMedicines = () => {
 export const postMedicine = (props) => {
     return new Promise(async (resolve, reject) => {
         try {
-            const response = await CareLogAPI.post('/user/medicines/', props,
-            { headers: {
-                'Authorization': 'Bearer ' + await SecureStore.getItemAsync('token')
-            }});
+            const response = await CareLogAPI.post('/user/medicines/', props);
             resolve(response.data);
         } catch(err) {
             console.log(err)
@@ -90,10 +85,7 @@ export const postMedicine = (props) => {
 export const takeMedicine = (name) => {
     return new Promise(async (resolve, reject) => {
         try {
-            const response = await CareLogAPI.put('/user/medicines/take/'+name, null,
-            { headers: {
-                'Authorization': 'Bearer ' + await SecureStore.getItemAsync('token')
-            }});
+            const response = await CareLogAPI.put('/user/medicines/take/' + name, null);
             resolve(response.data);
         } catch(err) {
             console.log(err.response.data)
@@ -109,10 +101,7 @@ export const takeMedicine = (name) => {
 export const deleteMedicine = (name) => {
     return new Promise(async (resolve, reject) => {
         try {
-            const response = await CareLogAPI.delete('/user/medicines/'+name,
-            { headers: {
-                'Authorization': 'Bearer ' + await SecureStore.getItemAsync('token')
-            }});
+            const response = await CareLogAPI.delete('/user/medicines/' + name);
             resolve(response.data);
         } catch(err) {
             console.log(err.response.data)
@@ -129,10 +118,7 @@ export const deleteMedicine = (name) => {
 export const getFeeling = (date='') => {
     return new Promise(async (resolve, reject) => {
         try {
-            const response = await CareLogAPI.get('/user/feelings/'+date,
-            { headers: {
-                'Authorization': 'Bearer ' + await SecureStore.getItemAsync('token')
-            }});
+            const response = await CareLogAPI.get('/user/feelings/' + date);
             resolve(response.data);
         } catch(err) {
             console.log(err.response.data)
@@ -151,17 +137,11 @@ export const postFeeling = (feeling, reason=null) => {
             let response;
             if(!reason) {
                 console.log('no reason');
-                response = await CareLogAPI.post('/user/feelings/', {feeling: feeling},
-                { headers: {
-                    'Authorization': 'Bearer ' + await SecureStore.getItemAsync('token')
-                }});
+                response = await CareLogAPI.post('/user/feelings/', {feeling: feeling});
             }
             else {
                 console.log('reason');
-                response = await CareLogAPI.post('/user/feelings/', {feeling: feeling, reason: reason},
-                { headers: {
-                    'Authorization': 'Bearer ' + await SecureStore.getItemAsync('token')
-                }});
+                response = await CareLogAPI.post('/user/feelings/', {feeling, reason});
             }
             resolve(response.data);
         } catch(err) {
@@ -180,10 +160,7 @@ export const postFeeling = (feeling, reason=null) => {
 export const getEvents = () => {
     return new Promise(async (resolve, reject) => {
         try {
-            const response = await CareLogAPI.get('/user/events/',
-            { headers: {
-                'Authorization': 'Bearer ' + await SecureStore.getItemAsync('token')
-            }});
+            const response = await CareLogAPI.get('/user/events/');
             resolve(response.data);
         } catch(err) {
             console.log(err.response.data);
@@ -198,10 +175,7 @@ export const getEvents = () => {
 export const postEvent = (event) => {
     return new Promise(async (resolve, reject) => {
         try {
-            const response = await CareLogAPI.post(`/user/events/${event.id ? event.id : ''}`, event,
-            { headers: {
-                'Authorization': 'Bearer ' + await SecureStore.getItemAsync('token')
-            }});
+            const response = await CareLogAPI.post(`/user/events/${event.id ? event.id : ''}`, event);
             resolve(response.data);
         } catch(err) {
             console.log(err.response.data);
@@ -216,10 +190,7 @@ export const postEvent = (event) => {
 export const deleteEvent = (eventId) => {
     return new Promise(async (resolve, reject) => {
         try {
-            const response = await CareLogAPI.delete(`/user/events/${eventId}`,
-            { headers: {
-                'Authorization': 'Bearer ' + await SecureStore.getItemAsync('token')
-            }});
+            const response = await CareLogAPI.delete(`/user/events/${eventId}`);
             resolve(response.data);
         } catch(err) {
             console.log(err.response.data);
@@ -227,6 +198,53 @@ export const deleteEvent = (eventId) => {
                 reject({error: err.response.data.error});
             else
                 reject({error: 'Check your network connection.'});
+        }
+    });
+}
+
+// Meetings with doctors
+export const getDoctors = () => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            console.log(CareLogAPI);
+            const response = await CareLogAPI.get('/user/doctors/');
+            resolve(response.data);
+        } catch(err) {
+            console.log(err.response.data);
+            if(err.response.data)
+                reject({error: true, message: err.response.data.error});
+            else
+                reject({error: true, message: 'Check your network connection.'});
+        }
+    });
+}
+
+export const getFreetimeOfDoctor = ({doctorId, date}) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const response = await CareLogAPI.post(`/user/doctors/${doctorId}/freetime/`, {date});
+            resolve(response.data);
+        } catch(err) {
+            console.log(err.response.data);
+            if(err.response.data)
+                reject({error: true, message: err.response.data.error});
+            else
+                reject({error: true, message: 'Check your network connection.'});
+        }
+    });
+}
+
+export const postNewMeeting = (doctorId, body) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const response = await CareLogAPI.post(`/user/doctors/${doctorId}/new-meeting/`, body);
+            resolve(response.data);
+        } catch(err) {
+            console.log(err.response.data);
+            if(err.response.data)
+                reject({error: true, message: err.response.data.error});
+            else
+                reject({error: true, message: 'Check your network connection.'});
         }
     });
 }

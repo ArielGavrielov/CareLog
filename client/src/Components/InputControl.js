@@ -33,7 +33,10 @@ export const InputControl = ({
             leftIcon={leftIcon}
             onBlur={onBlur}
             onChangeText={(text) => {
-                onChange(text);
+                const lines = text.split("\n");
+                if(lines.length <= (numberOfLines || 1)) {
+                    onChange(text);
+                }
                 /*if(isTouched || invalid)*/ trigger(name);
             }}
             value={value ? value : defaultValue}
@@ -50,7 +53,9 @@ export const InputControl = ({
     )
 }
 
-export const DateInputControl = ({name, control, rules={}, render=null, leftIcon=null,style={}, trigger=()=>console.log("there is no trigger.")}) => {
+export const DateInputControl = ({name, control, rules={}, render=null,
+    leftIcon=null,style={}, trigger=()=>console.log("there is no trigger."),
+    refValue=null, maximumDate=new Date(), minimumDate=new Date(new Date().setFullYear(new Date().getFullYear() - 120))}) => {
     const {
         field: { onChange, value, onBlur },
         fieldState: { error }
@@ -64,6 +69,9 @@ export const DateInputControl = ({name, control, rules={}, render=null, leftIcon
         year = date.getFullYear();
         if(day < 10) day = '0'+day;
         if(mon < 10) mon = '0'+mon;
+
+        if(refValue) refValue(year+'-'+mon+'-'+day);
+
         return year+'-'+mon+'-'+day;
     };
     return render ? render : (
@@ -94,8 +102,8 @@ export const DateInputControl = ({name, control, rules={}, render=null, leftIcon
                 locale="he_il"
                 display={Platform.OS === 'ios' && Platform.Version >= 14 ? 'inline' : ''}
                 isVisible={isDatePickerVisible}
-                maximumDate={new Date()}
-                minimumDate={new Date(new Date().setFullYear(new Date().getFullYear() - 120))}
+                maximumDate={maximumDate}
+                minimumDate={minimumDate}
                 mode="date"
                 headerTextIOS="Enter birth date"
                 date={isNaN(Date.parse(value)) ? new Date() : new Date(value)}

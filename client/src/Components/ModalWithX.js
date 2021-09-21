@@ -1,6 +1,6 @@
 import React from 'react';
 import Modal from 'react-native-modal';
-import { View } from 'react-native';
+import { View, Text } from 'react-native';
 import { Button } from 'react-native-elements';
 
 const ModalWithX = (params) => {
@@ -14,7 +14,7 @@ const ModalWithX = (params) => {
                 icon={{name: 'x', type: 'feather', color: 'white', size: 14}}
                 iconPosition='left'
             />
-            {params.children}
+            {params.loading ? <Text>Loading...</Text> : params.children}
         </View>
     </Modal>)
 }

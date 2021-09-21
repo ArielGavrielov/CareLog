@@ -39,7 +39,6 @@ const App = () => {
 
   React.useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(({ isInternetReachable }) => {
-      console.log(isInternetReachable);
       if (typeof isInternetReachable !== 'boolean') return;
       setOfflineStatus(!isInternetReachable);
     });
@@ -55,8 +54,6 @@ const App = () => {
   React.useEffect(() => {
     registerForPushNotifications()
   }, []);
-
-  console.log(state.token);
 
   const NoInternetModal = ({show, onRetry, isRetrying}) => (
     <Modal isVisible={isOffline} style={styles.modal} animationInTiming={600}>

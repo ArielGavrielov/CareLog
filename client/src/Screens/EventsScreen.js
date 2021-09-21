@@ -4,12 +4,167 @@ import { Card, Button, Text, Divider } from 'react-native-elements';
 import {Agenda} from 'react-native-calendars';
 import {NavigationApps, Waze} from "react-native-navigation-apps";
 import ModalWithX from '../Components/ModalWithX';
-import { getEvents, postEvent, deleteEvent } from '../api/carelog';
+import { getEvents, postEvent, deleteEvent, getDoctors, getFreetimeOfDoctor, postNewMeeting } from '../api/carelog';
 import { useForm } from 'react-hook-form';
-import { InputControl, EventTimeInputControl } from '../Components/InputControl';
+import { InputControl, EventTimeInputControl, DateInputControl } from '../Components/InputControl';
 import moment from 'moment';
 import { AsyncAlert } from '../Components/AsyncAlert';
+import DropDownPicker from 'react-native-dropdown-picker';
 
+const Appointment = ({refetchEvents}) => {
+    const {control, handleSubmit, trigger, formState: {isSubmitting, isValid, errors}, reset, register, getValues, setError, clearErrors} = useForm();
+    const [isModalVisible, setModalVisible] = React.useState(false);
+    const [messages, setMessages] = React.useState({error: null, success: null});
+    const [state, setState] = React.useState({
+        doctors: {
+            isOpen: false,
+            items: null
+        },
+        freetime: {
+            isOpen: false,
+            items: null
+        }
+    });
+    const [doctorChoosen, setDoctorChoosen] = React.useState(null);
+    const [dateChoosen, setDateChoosen] = React.useState(null);
+    const [timeChoosen, setTimeChoosen] = React.useState(null);
+    const dateChoosenRef = React.useCallback((value) => setDateChoosen(value));
+
+    const resetState = () => {
+        reset();
+        setMessages({error: null, success: null});
+        setState({doctors: {isOpen: false, items: null}, freetime: {isOpen: false, items: null}});
+        setDoctorChoosen(null);
+        setDateChoosen(null);
+        setTimeChoosen(null);
+    }
+
+    const onSubmit = async (values) => {
+        let {doctorId, time, date, ...body} = values;
+        body.datetime = `${date} ${time}`;
+
+        await postNewMeeting(doctorId, body).then((value) => {
+            setMessages({success: value.message});
+            setTimeout(() => {
+                setModalVisible(false);
+                refetchEvents();
+            }, 1000);
+        }).catch((err) => setMessages({error: err.message}));
+    };
+
+    React.useEffect(() => {
+        if(isModalVisible)
+            getDoctors().then((value) => {
+                if(isModalVisible) {
+                    let items = value.map((doctor) => {return {label: `Dr. ${doctor.firstname} ${doctor.lastname}`, value: doctor._id}});
+                    setState({...state, doctors: {...state.doctors, items}});
+                    clearErrors('doctorId');
+                }
+            }).catch((err) => setError("doctorId", {type: "manual", message: err.message}));
+        return () => {
+            resetState();
+        }
+    }, [isModalVisible]);
+
+    React.useEffect(() => {
+        register('doctorId', {value: doctorChoosen, pattern: {value: /^(?=[a-f\d]{24}$)(\d+[a-f]|[a-f]+\d)/i, message: 'Invalid id.'}});
+        if(doctorChoosen) {
+            setDateChoosen(null);
+            setState({...state, freetime: {isOpen: false, items: null}});
+        }
+    }, [doctorChoosen]);
+
+    React.useEffect(() => {
+        register('date', {value: dateChoosen, required: 'Date is required.'});
+        if(dateChoosen) {
+            setTimeChoosen(null);
+            getFreetimeOfDoctor({doctorId: doctorChoosen, date: dateChoosen})
+            .then((value) => {
+                let items = value.map((time) => {return {label: moment.utc(time, 'HH:mm').local().format('HH:mm'), value: time}});
+                setState({...state, freetime: {...state.freetime, items}});
+                clearErrors('time');
+            }).catch((err) => setError('time', {type: 'manual', message: err.message}));
+        }
+    }, [dateChoosen]);
+
+    React.useEffect(() => {
+        register('time', {value: timeChoosen, required: 'Time is required.'});
+    }, [timeChoosen]);
+
+    return (
+        <View>
+            <Button
+                title="Appointment"
+                onPress={() => setModalVisible(true)}
+                icon={{name: "plus", type: 'feather', color: 'white'}}
+            />
+            <ModalWithX
+                isVisible={isModalVisible}
+                style={{flex:1}}
+                deviceWidth={Dimensions.get('window').width}
+                deviceHeight={Dimensions.get('window').height}
+                onRequestClose={() => setModalVisible(false)}
+                loading={!state.doctors.items}
+            >
+                <Text h1>Appointment</Text>
+                <View style={{marginBottom: 10, zIndex: 99}}>
+                    <DropDownPicker
+                        itemKey="value"
+                        open={state.doctors.isOpen}
+                        value={doctorChoosen}
+                        items={state.doctors.items}
+                        placeholder='Choose doctor'
+                        setItems={(items) => setState({...state, doctors: {...state.doctors, items}})}
+                        setOpen={(isOpen) => setState({...state, doctors: {...state.doctors, isOpen}})}
+                        setValue={setDoctorChoosen}
+                        maxHeight={100}
+                    />
+                    {errors.doctorId && <Text style={{color: 'red'}}>{errors.doctorId.message}</Text>}
+                </View>
+                {doctorChoosen && <DateInputControl
+                    name='Date'
+                    refValue={dateChoosenRef}
+                    minimumDate={new Date()}
+                    maximumDate={moment().add(6, 'months').toDate()}
+                    control={control}
+                    rules={{required: 'You must specify date.'}}
+                    trigger={trigger}
+                />}
+                <View style={{marginBottom: 10, zIndex: 99}}>
+                    {dateChoosen && state.freetime.items && <DropDownPicker
+                        itemKey="label"
+                        open={state.freetime.isOpen}
+                        value={timeChoosen}
+                        items={state.freetime.items}
+                        placeholder='Choose time'
+                        setItems={(items) => setState({...state, freetime: {...state.freetime, items}})}
+                        setOpen={(isOpen) => setState({...state, freetime: {...state.freetime, isOpen}})}
+                        setValue={setTimeChoosen}
+                        maxHeight={100}
+                        onClose={() => setState({...state, freetime: {...state.freetime, isOpen: false}})}
+                    />}
+                    {errors.time && <Text style={{color: 'red'}}>{errors.time.message}</Text>}
+                </View>
+                {timeChoosen && <InputControl
+                    name='Body'
+                    multiline={true}
+                    numberOfLines={4}
+                    maxLength={100}
+                    control={control}
+                    trigger={trigger}
+                />}
+                {messages.error && <Text style={{color: 'red'}}>{messages.error}</Text>}
+                {messages.success && <Text style={{color: 'green'}}>{messages.success}</Text>}
+                <Button
+                    loading={isSubmitting}
+                    disabled={isSubmitting || !isValid}
+                    title='Submit'
+                    onPress={handleSubmit(onSubmit)}
+                />
+            </ModalWithX>
+        </View>
+    )
+}
 const PushEvent = ({refetchEvents}) => {
     const {control, handleSubmit, trigger, formState, reset, setValue} = useForm();
     const [isModalVisible, setModalVisible] = React.useState(false);
@@ -41,13 +196,11 @@ const PushEvent = ({refetchEvents}) => {
 
     return (
         <View>
-            <View style={{bottom: 0, left: 0, right: 0}}>
-                <Button
-                    title="Add Event"
-                    onPress={() => setModalVisible(!isModalVisible)}
-                    icon={{name: "plus", type: 'feather', color: 'white'}}
-                />
-            </View>
+            <Button
+                title="Add Event"
+                onPress={() => setModalVisible(true)}
+                icon={{name: "plus", type: 'feather', color: 'white'}}
+            />
             <ModalWithX
                 isVisible={isModalVisible}
                 style={{flex:1}}
@@ -279,7 +432,6 @@ const EventsScreen = () => {
                         id: event._id
                     });
                 });
-                console.log(eventsFormat);
                 setEvents(eventsFormat);
             }).catch((err) => {
                 if(!isScreenMounted.current) return;
@@ -328,7 +480,12 @@ const EventsScreen = () => {
                     items={events} 
                     renderItem={(item)=> renderItem(item)}
             />
-            <PushEvent refetchEvents={() => setIsLoading(true)}/>
+            <View style={{bottom: 0, left: 0, right: 0}}>
+                <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
+                    <PushEvent refetchEvents={() => setIsLoading(true)}/>
+                    <Appointment refetchEvents={() => setIsLoading(true)}/>
+                </View>
+            </View>
         </>
 }
 

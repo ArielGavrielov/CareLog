@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../../models/User');
+const Doctor = require('../../models/Doctor');
 const Event = require('../../models/Event');
 const moment = require('moment');
 
@@ -73,6 +74,14 @@ router.post('/:id', async (req,res) => {
 });
 
 router.delete('/:id', async (req,res) => {
+    let event = await Event.findById(req.params.id);
+    if(event.doctorId && moment().isBefore(moment.utc(event.time, DATETIMEFORMAT), 'date')) {
+        let doctor = await Doctor.findById(event.doctorId);
+        let eventDatetime = moment.utc(event.time, DATETIMEFORMAT);
+        let removeMeeting = await Doctor.updateOne({_id: doctor._id, 'workDay.date': eventDatetime.format(DATEFORMAT)},
+        {$pull: {'workDay.$.meetings': {userId: req.user._id, time: eventDatetime.format(TIMEFORMAT)}}});
+        console.log(removeMeeting);
+    }
     Event.deleteOne({_id: req.params.id}, (err,data) => {
         if(err || data.n === 0) res.status(422).send({error: 'Event not found.'});
         else res.send(data); 
