@@ -8,6 +8,7 @@ import logo from '../logo-1500X500.png';
 import Home from "../components/Home/home.component";
 import Patients from '../components/Patients/patients.component';
 import PatientDetails from '../components/PatientDetails/PatientDetails.component';
+import Calender from '../components/Calender/Calender';
 
 const NotFound = () => {
     return <h1>Page not found</h1>
@@ -18,7 +19,8 @@ const AuthNavigation = () => {
     const routes = [
         {path: '/', component: Home, navLink: 'Home'},
         {path: '/patients', component: Patients, navLink: 'Patients'},
-        {path: '/patient/:id', component: PatientDetails}
+        {path: '/patient/:id', component: PatientDetails},
+        {path: '/calender', component: Calender, navLink: 'Calender'}
     ]
 
     return (

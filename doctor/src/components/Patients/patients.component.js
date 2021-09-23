@@ -72,7 +72,7 @@ const Patients = () => {
         isFetched: false
     });
     React.useEffect(() => {
-        CareLogAPI.get('/doctor/patients').then((response) => {
+        CareLogAPI.get('/patients').then((response) => {
             setState({patients: response.data, isFetched: true});
         }).catch((err) => {
             console.log(err)

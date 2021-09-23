@@ -9,7 +9,7 @@ const sendEmail = require("../../utils/sendMail");
 const meetings = require('./meetings.route');
 
 
-router.use('/meetings', meetings);
+router.use('/meetings', doctorRequireAuth, meetings);
 router.get('/', (req,res) => {
     res.send("API works!");
 })

@@ -194,7 +194,7 @@ export const TimesInputControl = ({name, control, rules={}, render=null, default
     )
 }
 
-export const EventTimeInputControl = ({name, control, rules={}, render=null, leftIcon=null,style={}, trigger=()=>console.log("there is no trigger.")}) => {
+export const EventTimeInputControl = ({name, control, rules={}, disabled=false, render=null, leftIcon=null,style={}, trigger=()=>console.log("there is no trigger.")}) => {
     const {
         field: { onChange, value, onBlur },
         fieldState: { error }
@@ -204,13 +204,14 @@ export const EventTimeInputControl = ({name, control, rules={}, render=null, lef
     return (
         <View style={{flexDirection: 'row'}}>
             <TouchableWithoutFeedback
-                onPress={() => setDatePickerVisibility(true)}
+                onPress={() => setDatePickerVisibility(!disabled && true)}
                 onBlur={onBlur}
             >
                 <View style={{flex: 1}}>
                     <Input
                     editable={false}
                     style={style}
+                    disabled={disabled}
                     label={(rules.required ? '* ' : '') + name.charAt(0).toUpperCase() + name.slice(1)}
                     inputContainerStyle={error && {borderBottomColor:'red'}}
                     errorMessage={error && error.message}
@@ -221,7 +222,7 @@ export const EventTimeInputControl = ({name, control, rules={}, render=null, lef
                     }}
                     value={value}
                     autoFocus={false}
-                    onTouchEnd={() => setDatePickerVisibility(true)}
+                    onTouchEnd={() => setDatePickerVisibility(!disabled && true)}
                     />
                 </View>
             </TouchableWithoutFeedback>
@@ -230,6 +231,7 @@ export const EventTimeInputControl = ({name, control, rules={}, render=null, lef
                 display={Platform.OS === 'ios' && Platform.Version >= 14 ? 'inline' : ''}
                 isVisible={isDatePickerVisible}
                 mode="datetime"
+                disabled={disabled}
                 headerTextIOS="Enter event time"
                 date={moment(value, 'Y-MM-DD HH:mm').isValid() ? moment(value, 'Y-MM-DD HH:mm').toDate() : moment().toDate()}
                 onConfirm={(date) => {

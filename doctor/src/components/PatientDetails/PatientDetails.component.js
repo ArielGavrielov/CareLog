@@ -19,7 +19,7 @@ const PatientDetails = (props) => {
 
     React.useEffect(() => {
         if(!patientData) {
-            CareLogAPI.get(`/doctor/patient/${props.match.params.id}`).then(({data}) => {
+            CareLogAPI.get(`/patient/${props.match.params.id}`).then(({data}) => {
                 setPatientData(data);
                 if(data['hasMedicinesComments'])
                     setMedicinesProblems(splitArrayForRows(Object.keys(data.medicines), 4));

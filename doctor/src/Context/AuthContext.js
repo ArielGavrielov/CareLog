@@ -25,10 +25,14 @@ const clearErrorMessage = dispatch => () => {
 
 // Automatic signin
 const restoreToken = dispatch => async () => {
-    let token;
     try {
         // get token from local storage
-        token = localStorage.getItem('token');
+        let token = localStorage.getItem('token');
+        // check if token expired.
+        if(Date.now() >= (JSON.parse(atob(token.split('.')[1]))).exp * 1000) {
+            localStorage.clear();
+            token = null;
+        }
         dispatch({type: 'restore_token', payload: token});
     } catch(e){
        console.log("cant to get token...");

@@ -34,15 +34,15 @@ const Doctor = new mongoose.Schema({
     workDay: [{
         date: {
             type: String,
-            required: true
+            unique: true
         },
-        meetings: [{
+        meetings: [mongoose.Schema({
             userId: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
             time: {
                 type: String,
-                required: true
+                unique: true
             }
-        }]
+        })]
     }],
     startWorkTime: {
         type: String,

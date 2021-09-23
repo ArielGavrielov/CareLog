@@ -252,6 +252,7 @@ const MoreInfoModal = ({item, refetchEvents}) => {
     const [isLoading, setLoading] = React.useState(false);
     const [messages, setMessages] = React.useState({error: null, success: null});
 
+    console.log(item);
     const deleteE = () => {
         setLoading(true);
         AsyncAlert('IMPORTANT',
@@ -271,6 +272,8 @@ const MoreInfoModal = ({item, refetchEvents}) => {
                     setLoading(false);
                 });
             }
+            else
+                setLoading(false);
         });
     }
 
@@ -293,8 +296,8 @@ const MoreInfoModal = ({item, refetchEvents}) => {
                 deviceHeight={Dimensions.get('window').height}
                 onRequestClose={() => setModalVisible(false)}
             >
-                <Text h3>{item.title}</Text>
-                <Text h4>{item.time}{item.address ? ` at ${item.address}` : null}</Text>
+                <Text h4>{item.title}</Text>
+                <Text style={{fontWeight: 'bold'}}>{item.time}{item.address ? ` at ${item.address}` : null}</Text>
                 <Divider orientation="vertical" />
                 {item.body ? <Text style={{fontSize: 16, margin: 10}}>{item.body}</Text> : null}
                 {item.address ? <><Divider orientation="vertical" />
@@ -307,7 +310,7 @@ const MoreInfoModal = ({item, refetchEvents}) => {
                 <Button
                     disabled={isLoading}
                     loading={isLoading}
-                    title='Delete event'
+                    title={item.doctorId ? 'Cancel meeting' : 'Delete event'}
                     onPress={deleteE}
                 />
             </ModalWithX>
@@ -368,6 +371,7 @@ const EditModal = ({item, refetchEvents}) => {
                 <Text h1>Edit Event</Text>
                 <InputControl
                     name='Title'
+                    disabled={item.doctorId}
                     control={control}
                     rules={{required: 'You must specify title of event'}}
                     trigger={trigger}
@@ -381,11 +385,13 @@ const EditModal = ({item, refetchEvents}) => {
                 />
                 <InputControl
                     name='Address'
+                    disabled={item.doctorId}
                     control={control}
                     trigger={trigger}
                 />
                 <EventTimeInputControl
                     name='Time'
+                    disabled={item.doctorId}
                     control={control}
                     rules={{required: 'You must specify time of event'}}
                     trigger={trigger}
@@ -395,7 +401,7 @@ const EditModal = ({item, refetchEvents}) => {
                 <Button
                     disabled={isLoading}
                     loading={isLoading}
-                    title='Add Event'
+                    title='Edit Event'
                     onPress={handleSubmit(onSubmit)}
                 />
             </ModalWithX>
@@ -429,7 +435,8 @@ const EventsScreen = () => {
                         time: timeString,
                         datetime: dateMoment.format(DATETIMEFORMAT),
                         address: event.address,
-                        id: event._id
+                        id: event._id,
+                        doctorId: event.doctorId
                     });
                 });
                 setEvents(eventsFormat);

@@ -4,59 +4,91 @@ const Doctor = require('../../models/Doctor');
 const moment = require('moment');
 
 const DATETIMEFORMAT = 'Y-MM-DD HH:mm';
+const TIMEFORMAT = 'HH:mm';
+const DATEFORMAT = 'Y-MM-DD';
 
-router.get('/', (req,res) => {
-    res.send(req.doctor.meetings);
+const getWeekStartDay = (date) => moment.utc(date, DATEFORMAT).startOf('week');
+const getWeekLastDay = (date) => moment.utc(date, DATEFORMAT).endOf('week');
+const getMonthStartDay = (date) => moment.utc(date, DATEFORMAT).startOf('month');
+const getMonthLastDay = (date) => moment.utc(date, DATEFORMAT).endOf('month');
+const dateIsBetween = (date, first, last) => moment(date).isSameOrAfter(first) && moment(date).isSameOrBefore(last);
+
+const getEventsOfDay = (workDay) => {
+    let events = [];
+
+    if(!workDay || !workDay.meetings || workDay.meetings.length === 0)
+        return events;
+
+    workDay.meetings.map((meeting) => {
+        events.push({
+            id: meeting._id,
+            title: `Patient ${meeting.userId.firstname} ${meeting.userId.lastname}`,
+            start: moment.utc(`${workDay.date} ${meeting.time}`, DATETIMEFORMAT).format(DATETIMEFORMAT),
+            end: moment.utc(`${workDay.date} ${meeting.time}`, DATETIMEFORMAT).add(15, 'minutes').format(DATETIMEFORMAT)
+        });
+    });
+
+    return events;
+}
+
+const getEventsOfDays = (workDays) => {
+    let events = [];
+    if(!workDays || workDays.length === 0)
+        return events;
+    
+        workDays.map((workDay) => {
+        events = [...events, ...getEventsOfDay(workDay)];
+    });
+
+    return events;
+}
+
+router.get('/worktime', (req,res) => {
+    let {startWorkTime, endWorkTime} = req.doctor;
+    res.send({startWorkTime, endWorkTime});
+});
+
+router.get('/month/:date', async (req,res) => {
+    try {
+        let monthWorkDays = (await (Doctor.findOne({_id: req.doctor._id})
+        .populate('workDay.meetings.userId', 'firstname lastname _id')))
+        .workDay.filter((day) => dateIsBetween(moment.utc(day.date), getMonthStartDay(req.params.date), getMonthLastDay(req.params.date)));
+        
+        res.send(getEventsOfDays(monthWorkDays));
+    } catch(err) {
+        res.status(422).send({error: err.message});
+    }
+});
+
+router.get('/week/:date', async (req,res) => {
+    try {
+        let workDays = (await (Doctor.findOne({_id: req.doctor._id})
+        .populate('workDay.meetings.userId', 'firstname lastname _id')))
+        .workDay.filter((day) => {
+            return dateIsBetween(moment.utc(day.date), getWeekStartDay(req.params.date), getWeekLastDay(req.params.date))
+        });
+        
+        res.send(getEventsOfDays(workDays));
+    } catch(err) {
+        res.status(422).send({error: err.message});
+    }
+});
+
+router.get('/day/:date', async (req,res) => {
+    try {
+        let workDay = (await (Doctor.findOne({_id: req.doctor._id})
+        .populate('workDay.meetings.userId', 'firstname lastname _id'))).workDay.filter((day) => day.date === req.params.date)[0];
+
+        res.send(getEventsOfDay(workDay));
+    } catch(err) {
+        res.status(422).send({error: err.message});
+    }
 });
 
 router.post('/', (req,res) => {
 /*
 * 
 */
-});
-
-router.get('/freetime', async (req,res) => {
-/*
-* Doctor work time is: 08:00-17:00.
-* every meeting takes 15 minutes.
-* 4 meetings in hour.
-* 13:00 - 14:00 the doctor is in a break.
-* 32 meetings per day.
-* req.body.date - checking date.
-*/
-    try {
-        if(!req.body.date)
-            throw {message: 'date property is required.'};
-
-        let dateInput = moment.utc(`${req.body.date} ${moment.utc().format('HH:mm')}`, DATETIMEFORMAT);
-        let startWork = moment.utc(`${req.body.date} 08:00`, DATETIMEFORMAT);
-        let endWork = moment.utc(`${req.body.date} 17:00`, DATETIMEFORMAT);
-        let now = moment.utc();
-        let startCheck;
-        let freetime = [];
-
-        if(now.isAfter(dateInput, 'date'))
-            throw {message: `The date ${req.body.date} already was.`}
-
-        else if(now.isSame(dateInput, 'date')) {
-            if(dateInput.isAfter(endWork, 'hour')) {
-                throw {message: 'Day work end.'}
-            }
-            else if(dateInput.isAfter(startWork, 'hour')) {
-                startCheck = moment.utc(`${req.body.date} ${dateInput.get('hour')}:30`, DATETIMEFORMAT);
-            }
-            else {
-                startCheck = startWork;
-            }
-        } else
-            startCheck = startWork;
-
-        let doctorMeetingsForDate = req.doctor.meetings.filter((meetings) => meetings.date === req.body.date);
-        res.send(startCheck);
-    } catch(err) {
-        res.status(422).send({error: err.message});
-    }
-
 });
 
 module.exports = router;

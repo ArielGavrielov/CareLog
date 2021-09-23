@@ -58,12 +58,29 @@ router.post('/:id', async (req,res) => {
         if(!title) throw {message: 'Title is require.'};
         if(!time || !utcTime.isValid()) throw {message: 'Time is require.'};
 
-        let event = await Event.findOneAndUpdate({_id: req.params.id, userId: req.user._id}, {$set: {title, body, address, time: utcTime.format(DATETIMEFORMAT)}}, {new: true});
+        let event = await Event.findOne({_id: req.params.id, userId: req.user._id});
 
         if(!event)
             throw {message: 'Event not found.'};
+
+        let isChanged = {
+            title: event.title.localeCompare(title) !== 0,
+            address: event.address.localeCompare(address) !== 0,
+            time: !moment.utc(event.time, DATETIMEFORMAT).isSame(utcTime),
+            body: event.body.localeCompare(body) !== 0
+        }
+
+        // if changed meeting params.
+        if(event.doctorId && (isChanged.title || isChanged.address || isChanged.time))
+            throw {message: 'You cant change meetings title/address/time.'}
+
+        // if nothing changed.
+        if(!isChanged.title && !isChanged.address && !isChanged.time && !isChanged.body)
+            throw {message: 'Nothing change.'};
         
-        if(event.nModified == 0)
+        let update = await Event.findOneAndUpdate({_id: req.params.id, userId: req.user._id}, {$set: {title, body, address, time: utcTime.format(DATETIMEFORMAT)}}, {new: true});
+        
+        if(update.nModified == 0)
             throw {message: 'Nothing change.'};
         
         res.send({success: 'Edit success.'});
