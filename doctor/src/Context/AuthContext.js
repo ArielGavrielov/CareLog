@@ -46,7 +46,7 @@ const signin = (dispatch) => async ({ email, password }) => {
         try {
             console.log("signin");
             // get responsed
-            const response = await CareLogAPI.post('/doctor/signin', { email, password });
+            const response = await CareLogAPI.post('/signin', { email, password });
             // save token at local storage
             console.log(response.data);
             localStorage.setItem('token', response.data.token);
