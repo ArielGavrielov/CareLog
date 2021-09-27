@@ -56,7 +56,8 @@ router.post('/link-patient', doctorRequireAuth, async (req,res) => {
     try {
         if(!req.body.email || !req.body.phone) throw {message: 'Form unfilled.'};
 
-        let user = await User.findOne({email: req.body.email, phone: req.body.phone});
+        let user = await User.findBy({email: req.body.email, phone: req.body.phone});
+        console.log(user);
         if(!user) throw {message: 'User not found.'};
 
         let isInDoctors = user.doctors.filter((e) => e.doctorRef.equals(req.doctor._id)).length > 0;

@@ -22,7 +22,7 @@ const AddPatientModal = () => {
     const handleSubmit = (event) => {
         event.preventDefault();
         if(!validateForm()) return;
-        CareLogAPI.post('/doctor/link-patient', formState)
+        CareLogAPI.post('/link-patient', formState)
         .then((res) => {
             setState({success: res.data.message});
             setTimeout(() => window.location.reload(), 1000);

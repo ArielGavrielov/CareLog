@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const mongooseFieldEncryption = require("mongoose-field-encryption").fieldEncryption;
 
-const Doctor = new mongoose.Schema({
+const doctorSchema = new mongoose.Schema({
     email: {
         type: String,
         unique: true,
@@ -59,7 +60,7 @@ const Doctor = new mongoose.Schema({
     patients: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}]
 });
 
-Doctor.pre('save', function(next) {
+doctorSchema.pre('save', function(next) {
     if(!this.isModified('password')) return next();
 
     bcrypt.genSalt(10, (err, salt) => {
@@ -74,7 +75,7 @@ Doctor.pre('save', function(next) {
     });
 });
 
-Doctor.methods.comparePassword = function comparePassword(candidatePassword) {
+doctorSchema.methods.comparePassword = function comparePassword(candidatePassword) {
     return new Promise((resolve, reject) => {
         bcrypt.compare(candidatePassword, this.password, (err, isSame) => {
             if(err || !isSame) return reject({message: 'Login failed'});
@@ -84,4 +85,11 @@ Doctor.methods.comparePassword = function comparePassword(candidatePassword) {
     });
 }
 
-module.exports = mongoose.model('doctors', Doctor);
+doctorSchema.plugin(mongooseFieldEncryption, {
+    fields: ['phone', 'email', 'address', 'firstname', 'lastname', 'workDay', 'startWorkTime', 'endWorkTime', 'breakTime', 'patients'],
+    secret: process.env.SECRET,
+    saltGenerator: (secret) => secret.slice(0, 16)
+});
+
+const Doctor = mongoose.model('doctors', doctorSchema);
+module.exports = Doctor;

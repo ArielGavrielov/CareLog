@@ -62,9 +62,22 @@ function getFullDay(doctor, datetime) {
     return day;
 }
 
+const populateDoctors = async (user) => {
+    let doctors = [];
+    await user.doctors.map(async (doctor) => {
+        doctors.push({
+            doctorRef: await Doctor.findById(doctor.doctorRef),
+            ...doctor
+        });
+    });
+    user.doctors = doctors;
+    return user;
+}
+
 router.get('/', async (req,res) => {
     try {
-        let user = await User.findById(req.user._id).populate('doctors.doctorRef', '_id firstname lastname');
+        let user = await populateDoctors(req.user);
+        //let user = await User.findById(req.user._id).populate('doctors.doctorRef', '_id firstname lastname');
         if(!user.doctors)
             return res.send([]);
 

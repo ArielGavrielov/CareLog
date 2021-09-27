@@ -3,8 +3,8 @@ const router = express.Router();
 const resetToken = require("../../models/ResetPassToken");
 const sendEmail = require("../../utils/sendMail");
 const jwt = require('jsonwebtoken');
-const User = require('../../models/User');
 const requireAuth = require('../../middlewares/requireAuth');
+const User = require('../../models/User');
 const indices = require('./indices.route');
 const medicines = require('./medicines.route');
 const feeling = require('./feeling.route');
@@ -18,47 +18,43 @@ router.use('/events', requireAuth, events);
 router.use('/doctors', requireAuth, doctors);
 
 router.get('/', requireAuth, (req, res) => {
-    User.findOne({_id: req.user._id}, (err, data) => {
-        if(err) return res.send({error: err});
-        const {password, _id, ...details} = data.toObject();
-        res.send(details);
-    })
+    const {password, _id, ...details} = req.user._doc;
+    res.send(details);
 });
 
 // handle signup for new user
 router.post('/signup', async (req, res) => {
-    const { email, firstname, lastname, birthdate, password, phone } = req.body;
-    if(!email || !password || !firstname || !lastname || !birthdate || !phone) return res.status(422).send({ code: 422, error: 'Form not filled.'});
-
     try {
+        const { email, firstname, lastname, birthdate, password, phone } = req.body;
+        if(!email || !password || !firstname || !lastname || !birthdate || !phone)
+            throw {message: 'Form not filled.'}
+
         const oldUser = await User.findOne({$or: [{email: email}, {phone: phone}]});
         if(oldUser)
             throw({message: "User already exist. Please login"});
         
         const user = new User({ email, firstname, lastname, birthdate, password, phone });
         await user.save();
-        const token = jwt.sign({ userId: user._id }, 'kvruAGAPYFCXD3qzNFdWCUdewFYH0ZnC');
+        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
         res.send({ token });
     } catch(err) {
-        console.log(err.message);
+        console.log(err);
         return res.status(422).send({code: 422, error: err.message});
     }
 });
 
 // handle sign in for user 
 router.post('/signin', async (req, res) => {
-    const { email, password } = req.body;
-    if(!email || !password) return res.status(422).send({ code: 422, error: 'Email/Password not filled.'});
-
-    const user = await User.findOne({email});
-    console.log("user", user);
-    if(!user) return res.status(422).send({ code: 422, error: 'Invalid email'});
     try {
-        await user.comparePassword(password);
-        const token = jwt.sign({ userId: user._id }, 'kvruAGAPYFCXD3qzNFdWCUdewFYH0ZnC');
-        res.send({ token });
+        const { email, password } = req.body;
+        if(!email || !password)
+            throw {message: 'Email/Password not filled.'};
+
+       const token = await User.login(email, password);
+       console.log(token);
+       res.send(token);
     } catch(err) {
-        return res.status(422).send({ code: 422, error: 'Invalid password' });
+        return res.status(422).send({ code: 422, error: err.message});
     }
 });
 

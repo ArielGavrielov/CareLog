@@ -28,19 +28,16 @@ const authReducer = (state, action) => {
 }
 
 // get user details
-const updateUserData = dispatch => async (token) => {
-    if(token) {
-        try {
-            const response = await CareLogAPI.get('/user/',
-            { headers: {
-                    'Authorization': 'Bearer ' + token
-            }});
+const updateUserData = dispatch => () => {
+    return new Promise(async (resolve, reject) => {
+        CareLogAPI.get('/user/').then((response) => {
             dispatch({ type: 'user_details', payload: response.data });
-        } catch(err) {
-            dispatch({ type: 'user_details', payload: null })
-        }
-    } else
-        dispatch({ type: 'user_details', payload: null })
+            resolve(true);
+        }).catch((err) => {
+            dispatch({ type: 'user_details', payload: null });
+            reject(false);
+        });
+    });
 }
 // clear error message
 const clearErrorMessage = dispatch => () => {
@@ -52,6 +49,7 @@ const restoreToken = dispatch => async () => {
     let token;
     try {
         token = await SecureStore.getItemAsync('token');
+        if(!token) throw token;
         /*const compatible = await LocalAuthentication.hasHardwareAsync();
 
         if(token && compatible) {
@@ -69,10 +67,10 @@ const restoreToken = dispatch => async () => {
             dispatch({type: 'restore_token', payload: token});
         }*/
         // need to remove it.
-        await updateUserData(dispatch)(token);
+        await updateUserData(dispatch)();
         dispatch({type: 'restore_token', payload: token});
     } catch(e){
-       console.log("cant to get token...");
+       SecureStore.deleteItemAsync('token');
        dispatch({type: 'restore_token', payload: null});
     }
 }
@@ -141,13 +139,14 @@ const signin = (dispatch) => async ({ email, password }) => {
     try {
         // get responsed
         const response = await CareLogAPI.post('/user/signin', { email, password });
+        console.log(response.data);
+        await SecureStore.setItemAsync('token', response.data.token);
         await updateUserData(dispatch)(response.data.token);
         // save token at AsyncStorage
-        await SecureStore.setItemAsync('token', response.data.token);
         dispatch({ type: 'signin', payload: response.data.token });
     } catch(err) {
         // add error
-        console.log(err.message);
+        console.log(err.response.data);
         dispatch({ type: 'add_error', payload: 'Something went wrong with signin.' });
     }
 };

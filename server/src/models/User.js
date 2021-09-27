@@ -1,11 +1,40 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
-const moment = require('moment')
+const moment = require('moment');
+const mongooseFieldEncryption = require("mongoose-field-encryption").fieldEncryption;
+const jwt = require('jsonwebtoken');
 
 const nowUTC = () => {
     return moment.utc().format('Y-MM-DD HH:mm:ss');
 }
-const userSchema = new mongoose.Schema({
+
+var feelingsSchema = new mongoose.Schema({
+    date: {
+        type: String,
+        unique: true,
+        default: () => moment.utc().format('Y-MM-DD')
+    },
+    lastChange: {
+        type: String,
+        default: () => moment.utc().format('HH:mm:ss')
+    },
+    feeling: {
+        type: Number,
+        min: 1,
+        max: 5,
+        required: true
+    },
+    reason: {
+        type: String
+    }
+});
+/*
+feelingsSchema.plugin(mongooseFieldEncryption, {
+    fields: ['feeling', 'reason', 'lastChange'],
+    secret: process.env.ENCKEY,
+});*/
+
+var userSchema = new mongoose.Schema({
     email: {
         type: String,
         unique: true,
@@ -34,8 +63,7 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true,
-        validate: /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,16}$/
+        required: true
     },
     phone: {
         type: String,
@@ -113,26 +141,7 @@ const userSchema = new mongoose.Schema({
             }],
         }]
     }, { _id : false })],
-    feelings: [ mongoose.Schema({
-        date: {
-            type: String,
-            unique: true,
-            default: () => moment.utc().format('Y-MM-DD')
-        },
-        lastChange: {
-            type: String,
-            default: () => moment.utc().format('HH:mm:ss')
-        },
-        feeling: {
-            type: Number,
-            min: 1,
-            max: 5,
-            required: true
-        },
-        reason: {
-            type: String
-        }
-    }, { _id : false })],
+    feelings: [feelingsSchema],
     doctors: [{
         doctorRef: {
             type: mongoose.Schema.Types.ObjectId,
@@ -146,10 +155,31 @@ const userSchema = new mongoose.Schema({
             type: String
         }
     }]
+}, {
+    collection: 'users'
 });
+
+userSchema.pre('validate', function(next) {
+    const user = this;
+    
+    if(!user.isModified('password')) return next();
+
+    if(!user.password.match(/^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,16}$/))
+        return next({message: 'Invalid password'});
+    next();
+});
+
+userSchema.post('validate', function(res, next) {
+    if(!res.phone.startsWith('972')) {
+        res.phone = res.phone.replace('0', '972');
+        console.log(res.phone);
+    }
+    next();
+})
 
 userSchema.pre('save', function(next) {
     const user = this;
+
     if(!user.isModified('password')) return next();
 
     bcrypt.genSalt(10, (err, salt) => {
@@ -164,15 +194,76 @@ userSchema.pre('save', function(next) {
     });
 });
 
+userSchema.statics.login = function login(decryptEmail, password) {
+    return new Promise(async (resolve, reject) => {
+        // create user object with decrypted email.
+        const userToSearch = new User({email: decryptEmail});
+        // encrypt email field.
+        userToSearch.encryptFieldsSync();
+        // search with encrypted email
+        const user = await User.findOne({email: userToSearch.email});
+        
+        if(!user) reject({message: 'User not found'});
+
+        try {
+            const isValidPassword = await user.comparePassword(password);
+            if(isValidPassword) {
+                const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
+                resolve({ token });
+            }
+        } catch(err) {
+            reject(err);
+        }
+    });
+}
+
+userSchema.statics.findBy = function findBy(obj) {
+    return new Promise(async (resolve, reject) => {
+        const schemaKeys = Object.keys(User.schema.tree).filter((key) => !key.startsWith('__enc'));
+        const searchKeys = Object.keys(obj);
+        searchKeys.map((key) => {
+            if(!schemaKeys.includes(key))
+                reject({message: `key ${key} not found.`});
+        });
+        // create user object with decrypted fields.
+        const userToSearch = new User(obj);
+        // encrypt fields.
+        userToSearch.encryptFieldsSync();
+
+        searchKeys.map((key) => {
+            obj[key] = userToSearch[key];
+        });
+        console.log(obj);
+        // search with encrypted fields
+        resolve(User.findOne(obj));
+    });
+}
+
+userSchema.statics.findByEmail = function findByEmail(decryptEmail) {
+    return new Promise(async (resolve, reject) => {
+        // create user object with decrypted email.
+        const userToSearch = new User({email: decryptEmail});
+        // encrypt email field.
+        userToSearch.encryptFieldsSync();
+        // search with encrypted email
+        resolve(User.findOne({email: userToSearch.email}));
+    });
+}
+
 userSchema.methods.comparePassword = function comparePassword(candidatePassword) {
     return new Promise((resolve, reject) => {
         bcrypt.compare(candidatePassword, this.password, (err, isSame) => {
-            if(err) return reject(err);
-            if(!isSame) return reject(false);
-
+            if(err || !isSame) return reject({message: 'Invalid password'});
             resolve(true);
         });
     });
 }
 
-module.exports = mongoose.model('User', userSchema);
+userSchema.plugin(mongooseFieldEncryption, {
+    fields: ['phone', 'email', 'birthdate', 'firstname', 'lastname', 'createDate', 'feelings', 'indices', 'medicines', 'doctors'],
+    secret: process.env.SECRET,
+    saltGenerator: (secret) => secret.slice(0, 16)
+});
+
+const User = mongoose.model('User', userSchema);
+module.exports = User;

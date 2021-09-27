@@ -24,6 +24,7 @@ function getDay(number) {
 // get user feeling 
 router.get('/', async (req,res) => {
     // sort feelings
+    console.log(req.user);
     req.user.feelings.sort((a,b) => moment(`${b.date} ${b.lastChange}`, 'Y-MM-DD HH:mm:ss').diff(moment(`${a.date} ${a.lastChange}`, 'Y-MM-DD HH:mm:ss')));
     // build response for statistics
     const result = req.user.feelings.map((el) => el).reduce((acc, e) => {
@@ -58,28 +59,41 @@ router.post('/', async (req,res) => {
         let isGood = req.body.feeling && req.body.feeling >= 1 && req.body.feeling <= 5;
 
         if(!isGood) throw {message: 'feeling value is required. >=1 && <= 5.'};
-        let found = null;
+        let found = null, foundIndex = -1;
         if(req.user.feelings)
-            found = req.user.feelings.find((feel) => moment(feel.date, 'Y-MM-DD').isSame(moment(moment.utc().format('Y-MM-DD'))));
+            found = req.user.feelings.find((feel, index) => {
+                let isFound = moment(feel.date, 'Y-MM-DD').isSame(moment(moment.utc().format('Y-MM-DD')));
+                if(isFound) foundIndex = index;
+                return isFound;
+            });
 
+        console.log(found);
         if(found) {
             if(req.body.feeling === found.feeling) throw {message: 'same feeling.'};
-
-            let update;
-            if(req.body.reason)
+            req.user.feelings[foundIndex] = req.body.reason ? {
+                feeling: req.body.feeling,
+                reason: req.body.reason
+            } : {feeling: req.body.feeling};
+            let update = await req.user.save();
+            console.log(update);
+            
+            /*let update;
+            if(req.body.reason) {
                 update = await User.updateOne({_id: req.user._id, "feelings.date": moment.utc().format('Y-MM-DD')},
-                {$set: {"feelings.$.lastChange": moment.utc().format('HH:mm:ss'), "feelings.$.feeling": req.body.feeling, "feelings.$.reason": req.body.reason}});
-            else
+                {$set: {"feelings.$.lastChange": moment.utc().format('HH:mm:ss'), 'feelings.$.feeling': req.body.feeling, "feelings.$.reason": req.body.reason, __enc_feelings: false}});
+            } else {
                 update = await User.updateOne({_id: req.user._id, "feelings.date": moment.utc().format('Y-MM-DD')},
-                {$set: {"feelings.$.lastChange": moment.utc().format('HH:mm:ss'), "feelings.$.feeling": req.body.feeling},
+                {$set: {"feelings.$.lastChange": moment.utc().format('HH:mm:ss'), "feelings.$.feeling": req.body.feeling, __enc_feelings: false},
                 $unset: {"feelings.$.reason": 1}});
+            }*/
 
-            if(update.nModified === 0) throw {message: 'nothing change.'};
+            if(!update) throw {message: 'nothing change.'};
             res.send({success: true, message: 'feeling updated.'});
         } else {
-            update = await User.updateOne({_id: req.user._id},
-                {$addToSet: {"feelings": req.body}});
-            if(update.nModified === 0) throw {message: 'nothing added.'};
+            req.user.feelings.push(req.body.reason ? {feeling: req.body.feeling, reason: req.body.reason} : {feeling: req.body.feeling});
+            update = await req.user.save();
+
+            if(!update) throw {message: 'nothing added.'};
             res.send({success: true, message: 'feeling added.'});
         }
     } catch(err) {
@@ -102,8 +116,8 @@ router.post('/fill-random-data', async (req,res) => {
         day.add(1, 'day');
     }
     //console.log(addToSet);
-    update = await User.updateOne({_id: req.user._id}, 
-        {$addToSet: {"feelings": {$each: addToSet}}});
+    req.user.feelings = addToSet;
+    update = await req.user.save();
     res.send(update);
 });
 
