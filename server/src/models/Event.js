@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 const moment = require('moment');
+const mongooseFieldEncryption = require("mongoose-field-encryption").fieldEncryption;
 
-const Event = new mongoose.Schema({
+const eventSchema = new mongoose.Schema({
     userId: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
     doctorId: {type: mongoose.Schema.Types.ObjectId, ref: 'doctors'},
     title: {
@@ -21,4 +22,12 @@ const Event = new mongoose.Schema({
     }
 });
 
-module.exports = mongoose.model('events', Event);
+eventSchema.plugin(mongooseFieldEncryption, {
+    fields: ['title', 'body', 'time', 'address'],
+    secret: process.env.SECRET,
+    saltGenerator: (secret) => secret.slice(0, 16)
+});
+
+const Event = mongoose.model('events', eventSchema);
+
+module.exports = Event;

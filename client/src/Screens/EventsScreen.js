@@ -12,7 +12,7 @@ import { AsyncAlert } from '../Components/AsyncAlert';
 import DropDownPicker from 'react-native-dropdown-picker';
 
 const Appointment = ({refetchEvents}) => {
-    const {control, handleSubmit, trigger, formState: {isSubmitting, isValid, errors}, reset, register, getValues, setError, clearErrors} = useForm();
+    const {control, handleSubmit, trigger, formState: {isSubmitting, isValid, errors, isDirty}, reset, register, getValues, setError, clearErrors} = useForm();
     const [isModalVisible, setModalVisible] = React.useState(false);
     const [messages, setMessages] = React.useState({error: null, success: null});
     const [state, setState] = React.useState({
@@ -155,12 +155,12 @@ const Appointment = ({refetchEvents}) => {
                 />}
                 {messages.error && <Text style={{color: 'red'}}>{messages.error}</Text>}
                 {messages.success && <Text style={{color: 'green'}}>{messages.success}</Text>}
-                <Button
+                {timeChoosen && <Button
                     loading={isSubmitting}
-                    disabled={isSubmitting || !isValid}
+                    disabled={isSubmitting || !timeChoosen}
                     title='Submit'
                     onPress={handleSubmit(onSubmit)}
-                />
+                />}
             </ModalWithX>
         </View>
     )

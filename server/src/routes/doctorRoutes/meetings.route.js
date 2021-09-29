@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const Doctor = require('../../models/Doctor');
 const moment = require('moment');
 
 const DATETIMEFORMAT = 'Y-MM-DD HH:mm';
@@ -28,6 +27,7 @@ const getEventsOfDay = (workDay) => {
         });
     });
 
+    console.log(events);
     return events;
 }
 
@@ -40,19 +40,20 @@ const getEventsOfDays = (workDays) => {
         events = [...events, ...getEventsOfDay(workDay)];
     });
 
+    console.log(events);
     return events;
 }
 
 router.get('/worktime', (req,res) => {
     let {startWorkTime, endWorkTime} = req.doctor;
+    console.log({startWorkTime, endWorkTime});
     res.send({startWorkTime, endWorkTime});
 });
 
 router.get('/month/:date', async (req,res) => {
     try {
-        let monthWorkDays = (await (Doctor.findOne({_id: req.doctor._id})
-        .populate('workDay.meetings.userId', 'firstname lastname _id')))
-        .workDay.filter((day) => dateIsBetween(moment.utc(day.date), getMonthStartDay(req.params.date), getMonthLastDay(req.params.date)));
+        let monthWorkDays = await req.doctor.execPopulate('workDay.meetings.userId');
+        monthWorkDays = monthWorkDays.workDay.filter((day) => dateIsBetween(moment.utc(day.date), getMonthStartDay(req.params.date), getMonthLastDay(req.params.date)));
         
         res.send(getEventsOfDays(monthWorkDays));
     } catch(err) {
@@ -62,11 +63,8 @@ router.get('/month/:date', async (req,res) => {
 
 router.get('/week/:date', async (req,res) => {
     try {
-        let workDays = (await (Doctor.findOne({_id: req.doctor._id})
-        .populate('workDay.meetings.userId', 'firstname lastname _id')))
-        .workDay.filter((day) => {
-            return dateIsBetween(moment.utc(day.date), getWeekStartDay(req.params.date), getWeekLastDay(req.params.date))
-        });
+        let weekWorkDays = await req.doctor.execPopulate('workDay.meetings.userId')
+        weekWorkDays = weekWorkDays.workDay.filter((day) => dateIsBetween(moment.utc(day.date), getWeekStartDay(req.params.date), getWeekLastDay(req.params.date)));
         
         res.send(getEventsOfDays(workDays));
     } catch(err) {
@@ -76,8 +74,8 @@ router.get('/week/:date', async (req,res) => {
 
 router.get('/day/:date', async (req,res) => {
     try {
-        let workDay = (await (Doctor.findOne({_id: req.doctor._id})
-        .populate('workDay.meetings.userId', 'firstname lastname _id'))).workDay.filter((day) => day.date === req.params.date)[0];
+        let doc = await req.doctor.execPopulate('workDay.meetings.userId')
+        doc = doc.workDay.find((day) => day.date === req.params.date);
 
         res.send(getEventsOfDay(workDay));
     } catch(err) {

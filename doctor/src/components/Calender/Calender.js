@@ -51,7 +51,6 @@ const Calender = () => {
     }, [state.selectedDate]);
 
     if(state.isLoading) return <h1>Loading...</h1>;
-    console.log(state.events);
     return (
         <div>
         <Calendar

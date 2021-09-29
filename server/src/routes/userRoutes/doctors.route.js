@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const Doctor = require('../../models/Doctor');
-const User = require('../../models/User');
 const Event = require('../../models/Event');
 const moment = require('moment');
 
@@ -24,9 +23,8 @@ function getFullDay(doctor, datetime) {
     let endBreak = moment.utc(`${dateFormat} ${doctor.breakTime[1]}`, DATETIMEFORMAT);
     let now = moment.utc();
 
-    console.log(now.isSame(dateInput, 'date'), dateInput.isSameOrAfter(endWork, 'hour'), dateInput, endWork);
     if(now.isAfter(dateInput, 'date') || (now.isSame(dateInput, 'date') && dateInput.isSameOrAfter(endWork, 'hour')) || (isNewEventRequest && now.isAfter(dateInput)))
-        throw {message: `The date ${dateFormat} already was.`}
+        throw {message: `${dateInput.local().format(DATETIMEFORMAT)}  already was.`}
     while(true) {
         if(startWorkIterator.isSameOrAfter(endWork))
             break;
@@ -62,27 +60,18 @@ function getFullDay(doctor, datetime) {
     return day;
 }
 
-const populateDoctors = async (user) => {
-    let doctors = [];
-    await user.doctors.map(async (doctor) => {
-        doctors.push({
-            doctorRef: await Doctor.findById(doctor.doctorRef),
-            ...doctor
-        });
-    });
-    user.doctors = doctors;
-    return user;
-}
-
 router.get('/', async (req,res) => {
     try {
-        let user = await populateDoctors(req.user);
-        //let user = await User.findById(req.user._id).populate('doctors.doctorRef', '_id firstname lastname');
+        let user = await req.user.execPopulate('doctors.doctorRef');
+
         if(!user.doctors)
             return res.send([]);
 
         let doctors = [];
-        user.doctors.map((doctor) => doctors.push(doctor.doctorRef));
+        user.doctors.map((doctor) => {
+            const {_id, firstname, lastname} = doctor.doctorRef;
+            doctors.push({_id, firstname, lastname});
+        });
         res.send(doctors);
     } catch(err) {
         res.status(422).send({error: err.message});
@@ -106,6 +95,7 @@ router.post('/:id/new-meeting', async(req,res) => {
         
         // check if the doctor is exists and linked to the user.
         const doctor = await Doctor.findOne({_id: req.params.id});
+
         if(!doctor || !doctor.patients.includes(req.user._id))
             throw {message: 'Doctor not found.'};
 
@@ -118,30 +108,44 @@ router.post('/:id/new-meeting', async(req,res) => {
         }
 
         // search for future meeting. 
-        let activeMeeting = await Event.findOne({userId: req.user._id, doctorId: doctor._id, time: {$gt: moment.utc().format('Y-MM-DD HH:mm')}});
+        let activeMeeting = await Event.find({userId: req.user._id, doctorId: doctor._id});
+        activeMeeting = activeMeeting.find((meeting) => moment.utc(meeting.time, 'Y-MM-DD HH:mm').isAfter(moment.utc()));
         if(activeMeeting)
             throw {message: `Found active future meeting with Dr. ${doctor.firstname} ${doctor.lastname} on ${moment.utc(activeMeeting.time, DATETIMEFORMAT).local().format(DATETIMEFORMAT)}, first cancel this meeting.`}
 
         // get doctor workday for input day.
-        const doctorWorkDay = doctor.workDay.filter((day) => day.date === dateFormat);
+        let doctorWorkDayIndex = -1;
+        const doctorWorkDay = doctor.workDay.find(({date},index) => {
+            let isFound = dateFormat == date;
+            if(isFound) doctorWorkDayIndex = index;
+            return isFound;
+        });
 
         // if found workday
-        if(doctorWorkDay && doctorWorkDay.length > 0) {
-            // check if another meeting found.
+        if(doctorWorkDay && doctorWorkDay.length > 0 && doctorWorkDayIndex !== -1) {
+            // check if another meeting found at same time.
             let timeMeeting = doctorWorkDay[0]['meetings'].find(({time}) => time == timeFormat);
             if(timeMeeting)
                 throw {message: `${momentDatetime.local().format(DATETIMEFORMAT)} already taken.`};    
         }
             
         // check if user has event at input time (15 minutes diffrence).
-        let userEvents = await Event.findOne({userId: req.user._id, time: {$gte: momentDatetime.clone().subtract(15,'minutes').format(DATETIMEFORMAT), $lte: momentDatetime.clone().add(15, 'minutes').format(DATETIMEFORMAT)}});
-        if(userEvents)
-            throw {message: 'there is already event at this time'};
+        let userEvents = await Event.find({userId: req.user._id})
+        let userCloseEvent = userEvents.find((event) => Math.abs(moment.utc(event.time, DATETIMEFORMAT).diff(momentDatetime, 'minutes')) <= 15);
+        if(userCloseEvent)
+            throw {message: `You already has an event at this time. (${userCloseEvent.title} at ${moment.utc(userCloseEvent.time).local().format(DATETIMEFORMAT)}`};
         
         // add event to user calender and doctor workday.
-        let addToUserEvents = await Event.create({userId: req.user._id, doctorId: req.params.id, title: `Meeting with Dr.${doctor.firstname} ${doctor.lastname}`, body, address: doctor.address, time: momentDatetime.format(DATETIMEFORMAT)});
-        let addToDoctorMeetings;
-        if(!doctorWorkDay || doctorWorkDay.length === 0) {
+        if(!doctorWorkDay || doctorWorkDay.length === 0 || doctorWorkDayIndex === -1) {
+            if(!doctor.workDay) doctor.workDay = [];
+            doctor.workDay.push({
+                date: dateFormat,
+                meetings: [{
+                    userId: req.user._id,
+                    time: timeFormat
+                }]
+            });
+            /*
             let workDay = {
                 date: dateFormat,
                 meetings: [{
@@ -150,14 +154,30 @@ router.post('/:id/new-meeting', async(req,res) => {
                 }]
             }
             addToDoctorMeetings = await Doctor.updateOne({_id: req.params.id}, {$addToSet: {'workDay': workDay}});
+            */
         }
-        else
-            addToDoctorMeetings = await Doctor.updateOne({_id: req.params.id, 'workDay.date': dateFormat}, {$addToSet: {'workDay.$.meetings': {userId: req.user._id, time: timeFormat}}});
+        else {
+            doctor.workDay[doctorWorkDayIndex].meetings.push({userId: req.user._id, time: timeFormat});
+            //addToDoctorMeetings = await Doctor.updateOne({_id: req.params.id, 'workDay.date': dateFormat}, {$addToSet: {'workDay.$.meetings': {userId: req.user._id, time: timeFormat}}});
+        }
 
-        if(!addToUserEvents || !addToDoctorMeetings || addToDoctorMeetings.nModified !== 1)
+        const {firstname, lastname, address} = doctor; // save doctor details before encryption.
+        let addToDoctorMeetings = await doctor.save();
+
+        let addToUserEvents = await Event.create({
+            userId: req.user._id,
+            doctorId: doctor._id,
+            title: `Meeting with Dr.${firstname} ${lastname}`,
+            body,
+            address: address,
+            time: momentDatetime.format(DATETIMEFORMAT)
+        });
+
+        console.log(addToDoctorMeetings, addToUserEvents);
+        if(!addToUserEvents || !addToDoctorMeetings)
             throw {message: 'Unknown error.'};
         
-        res.send({message: `An appointment was scheduled with Dr. ${doctor.firstname} ${doctor.lastname} on ${momentDatetime.local().format(DATETIMEFORMAT)}`});
+        res.send({message: `An appointment was scheduled with Dr. ${firstname} ${lastname} on ${momentDatetime.local().format(DATETIMEFORMAT)}`});
     } catch(err) {
         res.status(422).send({error: err.message});
     }
@@ -183,12 +203,11 @@ router.post('/:id/freetime', async (req,res) => {
 
         let freetime = getFullDay(doctor, date.format(DATEFORMAT));
 
-        let doctorWorkDay = doctor.workDay.filter((day) => day.date === date.format(DATEFORMAT));
-        if(!doctorWorkDay || doctorWorkDay.length === 0)
+        let doctorWorkDay = doctor.workDay.find((day) => day.date === date.format(DATEFORMAT));
+        if(!doctorWorkDay)
             return res.send(freetime);
-        
-        let meetings = doctorWorkDay[0]['meetings'];
-        meetings.map((meeting) => {
+
+        doctorWorkDay['meetings'].map((meeting) => {
             if(freetime.includes(meeting.time))
                 freetime.splice(freetime.indexOf(meeting.time), 1);
         });

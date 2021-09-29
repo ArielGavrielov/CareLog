@@ -8,32 +8,6 @@ const nowUTC = () => {
     return moment.utc().format('Y-MM-DD HH:mm:ss');
 }
 
-var feelingsSchema = new mongoose.Schema({
-    date: {
-        type: String,
-        unique: true,
-        default: () => moment.utc().format('Y-MM-DD')
-    },
-    lastChange: {
-        type: String,
-        default: () => moment.utc().format('HH:mm:ss')
-    },
-    feeling: {
-        type: Number,
-        min: 1,
-        max: 5,
-        required: true
-    },
-    reason: {
-        type: String
-    }
-});
-/*
-feelingsSchema.plugin(mongooseFieldEncryption, {
-    fields: ['feeling', 'reason', 'lastChange'],
-    secret: process.env.ENCKEY,
-});*/
-
 var userSchema = new mongoose.Schema({
     email: {
         type: String,
@@ -141,7 +115,25 @@ var userSchema = new mongoose.Schema({
             }],
         }]
     }, { _id : false })],
-    feelings: [feelingsSchema],
+    feelings: [{
+        date: {
+            type: String,
+            default: () => moment.utc().format('Y-MM-DD')
+        },
+        lastChange: {
+            type: String,
+            default: () => moment.utc().format('HH:mm:ss')
+        },
+        feeling: {
+            type: Number,
+            min: 1,
+            max: 5,
+            required: true
+        },
+        reason: {
+            type: String
+        }
+    }],
     doctors: [{
         doctorRef: {
             type: mongoose.Schema.Types.ObjectId,
@@ -172,8 +164,9 @@ userSchema.pre('validate', function(next) {
 userSchema.post('validate', function(res, next) {
     if(!res.phone.startsWith('972')) {
         res.phone = res.phone.replace('0', '972');
-        console.log(res.phone);
     }
+
+    res.email = res.email.toLowerCase();
     next();
 })
 
@@ -233,7 +226,6 @@ userSchema.statics.findBy = function findBy(obj) {
         searchKeys.map((key) => {
             obj[key] = userToSearch[key];
         });
-        console.log(obj);
         // search with encrypted fields
         resolve(User.findOne(obj));
     });

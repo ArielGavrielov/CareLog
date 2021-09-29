@@ -1,5 +1,4 @@
 const jwt = require('jsonwebtoken');
-const mongoose = require('mongoose');
 const User = require('../models/User');
 
 module.exports = (req, res, next) => {
@@ -11,7 +10,6 @@ module.exports = (req, res, next) => {
         if(err) return res.status(401).send({code: 401, error: 'invalid token'});
         const { userId } = payload;
         const user = await User.findOne({_id: userId});
-        console.log(user);
         if(!user) return res.status(401).send({ code: 401, error: "User not found."});
 
         req.user = user;

@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const mongooseFieldEncryption = require("mongoose-field-encryption").fieldEncryption;
 
 const doctorSchema = new mongoose.Schema({
@@ -24,8 +25,7 @@ const doctorSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true,
-        validate: /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,16}$/
+        required: true
     },
     phone: {
         type: String,
@@ -60,6 +60,16 @@ const doctorSchema = new mongoose.Schema({
     patients: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}]
 });
 
+doctorSchema.pre('validate', function(next) {
+    const doctor = this;
+    
+    if(!doctor.isModified('password')) return next();
+
+    if(!doctor.password.match(/^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,16}$/))
+        return next({message: 'Invalid password'});
+    next();
+});
+
 doctorSchema.pre('save', function(next) {
     if(!this.isModified('password')) return next();
 
@@ -74,6 +84,29 @@ doctorSchema.pre('save', function(next) {
         });
     });
 });
+
+doctorSchema.statics.login = function login(decryptEmail, password) {
+    return new Promise(async (resolve, reject) => {
+        // create user object with decrypted email.
+        const doctorToSearch = new Doctor({email: decryptEmail});
+        // encrypt email field.
+        doctorToSearch.encryptFieldsSync();
+        // search with encrypted email
+        const doctor = await Doctor.findOne({email: doctorToSearch.email});
+        
+        if(!doctor) reject({message: 'User not found'});
+
+        try {
+            const isValidPassword = await doctor.comparePassword(password);
+            if(isValidPassword) {
+                const token = jwt.sign({ doctorId: doctor._id }, process.env.JWT_SECRET, { expiresIn: '1 day' });
+                resolve({ token });
+            }
+        } catch(err) {
+            reject(err);
+        }
+    });
+}
 
 doctorSchema.methods.comparePassword = function comparePassword(candidatePassword) {
     return new Promise((resolve, reject) => {
