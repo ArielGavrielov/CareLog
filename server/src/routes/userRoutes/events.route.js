@@ -38,8 +38,12 @@ router.get('/', async (req,res) => {
 
 router.post('/', async (req,res) => {
     try {
-        req.body.time = moment(req.body.time, DATETIMEFORMAT).utc().format(DATETIMEFORMAT);
-        let event = await Event.create({userId: req.user._id, ...req.body});
+        let time = moment(req.body.time, DATETIMEFORMAT, true).utc();
+        if(!time.isValid())
+            throw {message: 'Invalid date'};
+        req.body.time = time.format(DATETIMEFORMAT);
+
+        await Event.create({userId: req.user._id, ...req.body});
         res.send({success: 'Added succuss.'});
     } catch(err) {
         res.status(422).send(err);
@@ -91,18 +95,40 @@ router.post('/:id', async (req,res) => {
 });
 
 router.delete('/:id', async (req,res) => {
-    let event = await Event.findById(req.params.id);
-    if(event.doctorId && moment().isBefore(moment.utc(event.time, DATETIMEFORMAT), 'date')) {
-        let doctor = await Doctor.findById(event.doctorId);
-        let eventDatetime = moment.utc(event.time, DATETIMEFORMAT);
-        let removeMeeting = await Doctor.updateOne({_id: doctor._id, 'workDay.date': eventDatetime.format(DATEFORMAT)},
-        {$pull: {'workDay.$.meetings': {userId: req.user._id, time: eventDatetime.format(TIMEFORMAT)}}});
-        console.log(removeMeeting);
+    try {
+        let event = await Event.findById(req.params.id);
+        if(!event)
+            throw {message: 'Event not found.'};
+        
+        if(event.doctorId && moment().utc().isBefore(moment.utc(event.time, DATETIMEFORMAT), 'hour')) {
+            let doctor = await Doctor.findById(event.doctorId);
+            let eventDatetime = moment.utc(event.time, DATETIMEFORMAT);
+            let workDayIndex = -1;
+            doctor.workDay.find((day, index) => {
+                let isFound = day.date === eventDatetime.format(DATEFORMAT);
+                if(isFound) workDayIndex = index;
+                return isFound;
+            });
+
+            let spliceIndex = -1;
+            doctor.workDay[workDayIndex].meetings.find((meeting, index) => {
+                let isFound = meeting.time === eventDatetime.format(TIMEFORMAT);
+                if(isFound) spliceIndex = index;
+                return isFound;
+            });
+
+            if(workDayIndex !== -1 || spliceIndex !== -1) {
+                doctor.workDay[workDayIndex].meetings.splice(spliceIndex, 1);
+                await doctor.save();
+            }
+        }
+        Event.deleteOne({_id: req.params.id}, (err,data) => {
+            if(err || data.n === 0) throw {message: 'Nothing deleted.'};
+            else res.send({message: 'Deleted success'}); 
+        });
+    } catch(err) {
+        res.status(422).send({error: err.message});
     }
-    Event.deleteOne({_id: req.params.id}, (err,data) => {
-        if(err || data.n === 0) res.status(422).send({error: 'Event not found.'});
-        else res.send(data); 
-    });
 });
 
 module.exports = router;
