@@ -49,6 +49,7 @@ const restoreToken = dispatch => async () => {
     let token;
     try {
         token = await SecureStore.getItemAsync('token');
+        console.log(token);
         if(!token) throw token;
         /*const compatible = await LocalAuthentication.hasHardwareAsync();
 
@@ -80,9 +81,10 @@ const signup = dispatch => async ({email, password, firstname, lastname, birthda
     try {
         // get responsed
         const response = await CareLogAPI.post('/user/signup', {email, password, firstname, lastname, birthdate, phone});
-        await updateUserData(dispatch)(response.data.token);
         // save token at AsyncStorage
         await SecureStore.setItemAsync('token', response.data.token);
+
+        await updateUserData(dispatch)();
         dispatch({ type: 'signup', payload: response.data.token });
     } catch(err) {
         // add error
@@ -141,7 +143,7 @@ const signin = (dispatch) => async ({ email, password }) => {
         const response = await CareLogAPI.post('/user/signin', { email, password });
         console.log(response.data);
         await SecureStore.setItemAsync('token', response.data.token);
-        await updateUserData(dispatch)(response.data.token);
+        await updateUserData(dispatch)();
         // save token at AsyncStorage
         dispatch({ type: 'signin', payload: response.data.token });
     } catch(err) {

@@ -5,7 +5,8 @@
   "main": "src/index.js",
   "scripts": {
     "dev": "TZ='IL' nodemon src/index.js",
-    "start": "TZ='IL' nodemon src/index.js"
+    "start": "TZ='IL' nodemon src/index.js",
+    "test": "snyk test"
   },
   "author": "Ariel",
   "license": "ISC",
@@ -20,9 +21,13 @@
     "moment": "^2.29.1",
     "mongoose": "^5.12.3",
     "mongoose-encryption": "^2.1.1",
+    "mongoose-field-encryption": "^4.0.2",
     "mongoose-id-validator": "^0.6.0",
     "nodemailer": "^6.6.3",
-    "nodemon": "^2.0.7",
+    "nodemon": "^2.0.12",
     "optional-require": "^1.1.7"
+  },
+  "devDependencies": {
+    "snyk": "^1.728.0"
   }
 }

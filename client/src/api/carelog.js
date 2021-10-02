@@ -4,7 +4,7 @@ import * as SecureStore from 'expo-secure-store';
 const DEBUG = true;
 
 export const CareLogAPI = axios.create({
-    baseURL: DEBUG ? 'http://localhost:3001/api/' : 'https://carelog.herokuapp.com/api/',
+    baseURL: DEBUG ? 'http://192.168.1.13:3001/api/' : 'https://carelog.herokuapp.com/api/',
     timeout: 10000
 });
 
@@ -238,6 +238,39 @@ export const postNewMeeting = (doctorId, body) => {
     return new Promise(async (resolve, reject) => {
         try {
             const response = await CareLogAPI.post(`/user/doctors/${doctorId}/new-meeting/`, body);
+            resolve(response.data);
+        } catch(err) {
+            console.log(err.response.data);
+            if(err.response.data)
+                reject({error: true, message: err.response.data.error});
+            else
+                reject({error: true, message: 'Check your network connection.'});
+        }
+    });
+}
+
+// Daily Progresses
+// Post steps and get progress color
+export const postSteps = (body) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const response = await CareLogAPI.post(`/user/daily/update-steps`, body);
+            resolve(response.data);
+        } catch(err) {
+            console.log(err.response.data);
+            if(err.response.data)
+                reject({error: true, message: err.response.data.error});
+            else
+                reject({error: true, message: 'Check your network connection.'});
+        }
+    });
+}
+
+// get indices progress
+export const getDailyProgresses = () => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const response = await CareLogAPI.get(`/user/daily/`);
             resolve(response.data);
         } catch(err) {
             console.log(err.response.data);

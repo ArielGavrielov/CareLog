@@ -68,10 +68,10 @@ router.post('/:id', async (req,res) => {
             throw {message: 'Event not found.'};
 
         let isChanged = {
-            title: event.title.localeCompare(title) !== 0,
-            address: event.address.localeCompare(address) !== 0,
-            time: !moment.utc(event.time, DATETIMEFORMAT).isSame(utcTime),
-            body: event.body.localeCompare(body) !== 0
+            title: event.title ? event.title.localeCompare(title) !== 0 : title ? true : false,
+            address: event.address ? event.address.localeCompare(address) !== 0 : address ? true : false,
+            time: !moment.utc(event.time, DATETIMEFORMAT, true).isSame(utcTime),
+            body: event.body ? event.body.localeCompare(body) !== 0 : body ? true : false
         }
 
         // if changed meeting params.

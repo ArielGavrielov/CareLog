@@ -7,7 +7,6 @@ const patients = require('./patients.route');
 const meetings = require('./meetings.route');
 const moment = require('moment');
 
-router.use('/', doctorRequireAuth, patients);
 router.use('/meetings', doctorRequireAuth, meetings);
 router.get('/', (req,res) => {
     res.send("API works!");
@@ -30,19 +29,17 @@ router.post('/signin', async (req, res) => {
 // create account for new doctor
 router.post('/create-doctor-account', async (req, res) => {
     try {
-        const { email, firstname, lastname, password, phone, address } = req.body;
-        if(!email || !password || !firstname || !lastname || !phone)
+        const { email, firstname, lastname, password, phone, address, startWorkTime, endWorkTime } = req.body;
+        if(!email || !password || !firstname || !lastname || !phone || !startWorkTime || !endWorkTime)
             throw({message: 'Form not filled.'});
 
-        const oldDoctor = await Doctor.findOne({$or: [{email: email}, {phone: phone}]});
-        if(oldDoctor)
-            throw({message: "Doctor already exist. Please login"});
-        
         const doctor = new Doctor({ email, firstname, lastname, password, phone, address });
         await doctor.save();
         const token = jwt.sign({ doctorId: doctor._id }, process.env.JWT_SECRET, { expiresIn: '1 day' });
         res.send({ token });
     } catch(err) {
+        if(err.message.includes('duplicate key error'))
+            return res.status(422).send({code: 422, error: 'Doctor already exist. Please login'});
         console.log(err.message);
         return res.status(422).send({code: 422, error: err.message});
     }
@@ -67,5 +64,7 @@ router.put('/update-worktime', doctorRequireAuth, async (req,res) => {
         return res.status(422).send({code: 422, error: err.message});
     }
 });
+
+router.use('/', doctorRequireAuth, patients);
 
 module.exports = router;

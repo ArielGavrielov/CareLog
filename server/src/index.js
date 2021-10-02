@@ -24,10 +24,10 @@ app.use(bodyParser.json());
 app.use('/api', authRoutes);
 app.use('/notifications', pushNotifications);
 
-app.use(express.static(doctorPath));
+/*app.use(express.static(doctorPath));
 app.get('*', (req, res) => {
     res.sendFile(path.join(doctorPath, 'index.html'));
- });
+ });*/
 
 const mongoUri = 'mongodb+srv://Carelog-db:im6C8vwvJUNzeA0J@cluster0.0sbxa.mongodb.net/CareLog?retryWrites=true&w=majority';
 mongoose.connect(mongoUri, {

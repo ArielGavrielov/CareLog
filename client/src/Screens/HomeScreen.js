@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Alert, Dimensions } from 'react-native';
-import { AirbnbRating, Text, Avatar, Divider, Card, ListItem, Button, Icon } from 'react-native-elements';
+import { AirbnbRating, Text, Card, Button } from 'react-native-elements';
 import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
 import { Indice } from '../Components/Indice';
+import DailyProgress from '../Components/DailyProgress';
 import ModalWithX from '../Components/ModalWithX';
-import { getFeeling, postFeeling } from '../api/carelog';
+import { getFeeling, postFeeling, postSteps } from '../api/carelog';
 import moment from 'moment';
 
-import List from '../Components/List';
-import ProgressBar from '../Components/ProgressBar'
-import { getStepsBetween } from '../Components/getSteps';
 import { useForm } from 'react-hook-form';
 import { InputControl } from '../Components/InputControl';
 import { AsyncAlert } from '../Components/AsyncAlert';
@@ -21,7 +19,6 @@ const BadFeelingModal = ({isModalVisible, setModalVisible, rating, setRating}) =
   const postWithReason = ({reason}) => {
     setLoading(true);
     postFeeling(rating, reason).then((data) => {
-      console.log(data);
       if(data.success) {
         setRating({lastChange: moment().format('HH:mm:ss'), value: rating});
         setLoading(false);
@@ -76,7 +73,7 @@ const HomeScreen = () => {
   const [rating, setRating] = useState(null);
   const [choosenRating, setChoosenRating] = React.useState(0);
   const [isModalVisible, setModalVisible] = React.useState(false);
-  const isScreenMounted = React.useRef();
+  const isScreenMounted = React.useRef(true);
 
   const indices = [
     {
@@ -181,7 +178,6 @@ const HomeScreen = () => {
       getFeeling(moment.utc().format('Y-MM-DD'))
         .then((res) => {
           if(!isScreenMounted.current) return;
-          console.log(res);
           setRating({lastChange: moment.utc(res.lastChange, 'HH:mm:ss').local().format('HH:mm:ss'), value: res.feeling});
         }).catch(({error}) => {
           if(!isScreenMounted.current) return;
@@ -258,6 +254,7 @@ const HomeScreen = () => {
           withoutCard
         />
       </Card>
+      <DailyProgress title='Daily progress'/>
         {/*<Card>
             <Card.Title>Upcomming Events</Card.Title>
             <Card.Divider color='#FFC0CB'/>

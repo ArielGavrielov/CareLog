@@ -146,6 +146,20 @@ var userSchema = new mongoose.Schema({
         lastVisit: {
             type: String
         }
+    }],
+    dailySteps: [{
+        date: {
+            type: String,
+            default: () => moment.utc().format('Y-MM-DD')
+        },
+        lastChange: {
+            type: String,
+            default: () => moment.utc().format('HH:mm:ss')
+        },
+        steps: {
+            type: Number,
+            require: true
+        }
     }]
 }, {
     collection: 'users'
@@ -197,7 +211,7 @@ userSchema.statics.login = function login(decryptEmail, password) {
         const user = await User.findOne({email: userToSearch.email});
         
         if(!user) reject({message: 'User not found'});
-
+        console.log(user);
         try {
             const isValidPassword = await user.comparePassword(password);
             if(isValidPassword) {
@@ -252,7 +266,7 @@ userSchema.methods.comparePassword = function comparePassword(candidatePassword)
 }
 
 userSchema.plugin(mongooseFieldEncryption, {
-    fields: ['phone', 'email', 'birthdate', 'firstname', 'lastname', 'createDate', 'feelings', 'indices', 'medicines', 'doctors'],
+    fields: ['phone', 'email', 'birthdate', 'firstname', 'lastname', 'createDate', 'feelings', 'indices', 'medicines', 'doctors', 'dailySteps'],
     secret: process.env.SECRET,
     saltGenerator: (secret) => secret.slice(0, 16)
 });

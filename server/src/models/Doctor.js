@@ -95,7 +95,7 @@ doctorSchema.statics.login = function login(decryptEmail, password) {
         const doctor = await Doctor.findOne({email: doctorToSearch.email});
         
         if(!doctor) reject({message: 'User not found'});
-
+        console.log(doctor);
         try {
             const isValidPassword = await doctor.comparePassword(password);
             if(isValidPassword) {

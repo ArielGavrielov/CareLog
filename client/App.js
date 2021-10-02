@@ -6,9 +6,11 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createStackNavigator } from '@react-navigation/stack';
 import NetInfo from '@react-native-community/netinfo';
+import { Pedometer } from 'expo-sensors';
 import { Button } from 'react-native-elements';
 import Modal from 'react-native-modal';
 
+import { postSteps } from './src/api/carelog';
 import HomeScreen from './src/Screens/HomeScreen';
 import LoginScreen from './src/Screens/LoginScreen';
 import AccountScreen from './src/Screens/AccountScreen';
@@ -52,9 +54,32 @@ const App = () => {
   }, []);
 
   React.useEffect(() => {
-    registerForPushNotifications()
+    registerForPushNotifications();
   }, []);
 
+  React.useEffect(() => {
+    const stepsFetch = async () => {
+      try {
+          let isAvailable = await Pedometer.isAvailableAsync();
+          if(!isReadyRef.current) return;
+          console.log(isAvailable);
+          if(isAvailable) {
+              const start = moment().utc().startOf('day').toDate();
+              const end = moment().utc().endOf('day').toDate();
+              console.log(start, end, moment(), moment.utc());
+
+              const stepsFetched = await Pedometer.getStepCountAsync(start, end);
+              if(!isReadyRef.current) return;
+              await postSteps({steps: stepsFetched.steps});
+          }
+      } catch(err) {
+          console.log(err);
+      }
+    }
+    if(state.token)
+      stepsFetch();
+  }, [state.token]);
+  
   const NoInternetModal = ({show, onRetry, isRetrying}) => (
     <Modal isVisible={isOffline} style={styles.modal} animationInTiming={600}>
       <View style={styles.modalContainer}>
@@ -238,7 +263,7 @@ export default () => {
   return (
     <AuthProvider>
       <NativeBaseProvider>
-          <StatusBar style="auto" />
+          <StatusBar style="white" />
           <App />
       </NativeBaseProvider>
     </AuthProvider>

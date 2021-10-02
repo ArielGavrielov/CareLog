@@ -230,6 +230,7 @@ const ForgotScreen = (props) => {
                 onSubmit={checkToken}
                 modal={modal}
                 setModal={setModal}
+                onResent={handleSubmit(onSubmit)}
             />
             <ChangePasswordModal
                 state={state} 
