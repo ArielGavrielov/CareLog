@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navbar, Nav, Container } from 'react-bootstrap';
-import { Switch, Route } from "react-router-dom";
+import { Switch, Route, Redirect } from "react-router-dom";
 import { Context as AuthContext } from '../Context/AuthContext';
 import logo from '../logo-1500X500.png';
 
@@ -17,7 +17,7 @@ const AuthNavigation = () => {
     const { signout } = React.useContext(AuthContext);
 
     const routes = [
-        {path: '/', component: Home, navLink: 'Home'},
+        //{path: '/', component: Home, navLink: 'Home'},
         {path: '/patients', component: Patients, navLink: 'Patients'},
         {path: '/patient/:id', component: PatientDetails},
         {path: '/calender', component: Calender, navLink: 'Calender'}
@@ -28,7 +28,7 @@ const AuthNavigation = () => {
             <Navbar bg='light' sticky='top' fixed='top'>
                 <Container>
                     <Navbar.Toggle aria-controls='responsive-navbar-nav' />
-                    <Navbar.Brand href="/">
+                    <Navbar.Brand href="/patients">
                         <img
                             src={logo}
                             width="100"
@@ -51,6 +51,7 @@ const AuthNavigation = () => {
                 {routes.map((route, index) => 
                     <Route key={route + index} exact path={route.path} component={route.component} />
                 )}
+                <Redirect exact from="/" to="patients" />
                 <Route component={NotFound} />
             </Switch>
         </div>

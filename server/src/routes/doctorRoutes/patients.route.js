@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const User = require('../../models/User');
 const moment = require('moment');
 const sendEmail = require("../../utils/sendMail");
@@ -166,6 +167,8 @@ router.post('/link-patient', async (req,res) => {
     try {
         if(!req.body.email || !req.body.phone) throw {message: 'Form unfilled.'};
 
+        req.body.email = req.body.email.toLowerCase();
+
         let user = await User.findBy({email: req.body.email, phone: req.body.phone});
         if(!user) throw {message: 'User not found.'};
 
@@ -175,29 +178,22 @@ router.post('/link-patient', async (req,res) => {
         if(isInPatients && isInDoctors) 
             throw {message: 'User already linked.'};
 
-        let addPatient = false, addDoctor = false;
+        const {firstname, lastname} = req.doctor;
         if(!isInPatients) {
             req.doctor.patients.push(user._id);
-            await req.doctor.save((err,data) => {
-                if(err) throw err;
-                addPatient = true;
-            });
+            await req.doctor.save();
             //addPatient = await Doctor.updateOne({_id: req.doctor._id}, {$addToSet: {"patients": user._id}});
         }
+        const userEmail = user.email;
         if(!isInDoctors) {
             user.doctors.push({doctorRef: req.doctor._id});
-            await user.save((err,data) => {
-                if(err) throw err;
-                addDoctor = true;
-            });
+            await user.save();
             //addDoctor = await User.updateOne({_id: user._id}, {$addToSet: {'doctors': {doctorRef: req.doctor._id}}})
         }
 
-        if(addPatient || addDoctor) {
-            res.send({message: 'Added successfully.'});
-            sendEmail(user.email, "CareLog - Doctor linking", `Dr. ${req.doctor.firstname} ${req.doctor.lastname} has linked your account to doctor system.`);
-        } else
-            throw {message: 'Unknown error.'};
+        res.send({message: 'Added successfully.'});
+        console.log(userEmail);
+        sendEmail(userEmail, "CareLog - Doctor linking", `Dr. ${firstname} ${lastname} has linked your account to doctor system.`);
     } catch(err) {
         console.log(err.message);
         res.status(422).send({code: 422, error: err.message});
@@ -234,6 +230,18 @@ router.get('/patient/:id', async (req,res) => {
         res.send({...patientDetails.toJSON(), ...comments});
     } catch(err) {
         console.log(err);
+        res.status(422).send({error: err.message});
+    }
+});
+
+router.delete('/patient/:id/unlink', async (req,res) => {
+    try {
+        if(!req.params.id || !mongoose.Types.ObjectId.isValid(req.params.id) || !req.doctor.patients.includes(req.params.id))
+            throw {message: 'Invalid id.'};
+        req.doctor.patients.splice(req.doctor.patients.indexOf(req.params.id), 1);
+        await req.doctor.save();
+        res.send({message: 'Un linked success.'});
+    } catch(err) {
         res.status(422).send({error: err.message});
     }
 });

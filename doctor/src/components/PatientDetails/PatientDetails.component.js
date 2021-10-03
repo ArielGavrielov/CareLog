@@ -17,6 +17,14 @@ const PatientDetails = (props) => {
     const [medicinesProblems, setMedicinesProblems] = React.useState([]);
     const [error, setError] = React.useState(null);
 
+    const unlink = async () => {
+        let isConfirmed = window.confirm('Are you sure?');
+        if(!isConfirmed) return;
+        CareLogAPI.delete(`/patient/${props.match.params.id}/unlink`).then(({data}) => {
+            window.location.href = '/patients';
+        }).catch((err) => console.log(err));
+    }
+
     React.useEffect(() => {
         if(!patientData) {
             CareLogAPI.get(`/patient/${props.match.params.id}`).then(({data}) => {
@@ -51,17 +59,14 @@ const PatientDetails = (props) => {
     </div>;
     return (
         <div>
-        <div class="sidebar">
-            <DropdownButton id="dropdown-basic-button" title="Dropdown button">
-                <Dropdown.Item href="#/action-1">Action</Dropdown.Item>
-                <Dropdown.Item href="#/action-2">Another action</Dropdown.Item>
-                <Dropdown.Item href="#/action-3">Something else</Dropdown.Item>
-            </DropdownButton>
-            <a href="#home">1</a>
-            <a href="#news">2</a>
-            <a href="#contact">3</a>
-            <a href="#about">4</a>
-        </div>
+            <div class="sidebar">
+                <DropdownButton id="dropdown-basic-button" title="Actions">
+                    <Dropdown.Item href="#/notification">Send notification</Dropdown.Item>
+                    <Dropdown.Item href="#/add-medicine">Add medicine</Dropdown.Item>
+                </DropdownButton>
+                <a href="#contact">Contact</a>
+                <a href="#" onClick={unlink}>Un link</a>
+            </div>
         <div class='content'>
             <h1>Patient {patientData['firstname']} {patientData['lastname']}</h1>
             {(patientData['hasIndicesComments'] || patientData['hasFeelingsComments'] || patientData['hasMedicinesComments']) && <Container>

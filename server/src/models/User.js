@@ -203,6 +203,7 @@ userSchema.pre('save', function(next) {
 
 userSchema.statics.login = function login(decryptEmail, password) {
     return new Promise(async (resolve, reject) => {
+        decryptEmail = decryptEmail.toLowerCase();
         // create user object with decrypted email.
         const userToSearch = new User({email: decryptEmail});
         // encrypt email field.
