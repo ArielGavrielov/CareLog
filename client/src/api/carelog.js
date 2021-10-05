@@ -1,7 +1,7 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
-const DEBUG = true;
+const DEBUG = false;
 
 export const CareLogAPI = axios.create({
     baseURL: DEBUG ? 'http://localhost:3001/api/' : 'https://carelog.herokuapp.com/api/',

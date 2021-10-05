@@ -1,14 +1,15 @@
 import React, { useContext } from 'react';
 import { StatusBar } from 'expo-status-bar';
+import Constants from 'expo-constants';
 import { SafeAreaView, Text, View, StyleSheet, NativeModules } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
-import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createStackNavigator } from '@react-navigation/stack';
 import NetInfo from '@react-native-community/netinfo';
 import { Pedometer } from 'expo-sensors';
 import { Button } from 'react-native-elements';
 import Modal from 'react-native-modal';
+import moment from 'moment';
 
 import { postSteps } from './src/api/carelog';
 import HomeScreen from './src/Screens/HomeScreen';
@@ -29,72 +30,83 @@ import EventsScreen from './src/Screens/EventsScreen';
 
 import registerForPushNotifications from './src/api/registerForPushNotifications';
 
-
-const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-const App = () => {
-  const [isOffline, setOfflineStatus] = React.useState(false);
-  const { state, restoreToken } = useContext(AuthContext);
-  const [headerText, setHeaderText] = React.useState('');
+const stepsFetch = async () => {
+  try {
+      let isAvailable = await Pedometer.isAvailableAsync();
+      if(isAvailable) {
+          const start = moment().utc().startOf('day').toDate();
+          const end = moment().utc().endOf('day').toDate();
+          console.log(start, end, moment(), moment.utc());
 
-  React.useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener(({ isInternetReachable }) => {
-      if (typeof isInternetReachable !== 'boolean') return;
-      setOfflineStatus(!isInternetReachable);
-    });
-    
-    restoreToken();
-
-    return () => {
-      isReadyRef.current = false;
-      unsubscribe();
-    };
-  }, []);
-
-  React.useEffect(() => {
-    registerForPushNotifications();
-  }, []);
-
-  React.useEffect(() => {
-    const stepsFetch = async () => {
-      try {
-          let isAvailable = await Pedometer.isAvailableAsync();
-          if(!isReadyRef.current) return;
-          console.log(isAvailable);
-          if(isAvailable) {
-              const start = moment().utc().startOf('day').toDate();
-              const end = moment().utc().endOf('day').toDate();
-              console.log(start, end, moment(), moment.utc());
-
-              const stepsFetched = await Pedometer.getStepCountAsync(start, end);
-              if(!isReadyRef.current) return;
-              await postSteps({steps: stepsFetched.steps});
-          }
-      } catch(err) {
-          console.log(err);
+          const stepsFetched = await Pedometer.getStepCountAsync(start, end);
+          await postSteps({steps: stepsFetched.steps});
+          console.log(stepsFetched);
       }
-    }
-    if(state.token)
-      stepsFetch();
-  }, [state.token]);
-  
-  const NoInternetModal = ({show, onRetry, isRetrying}) => (
-    <Modal isVisible={isOffline} style={styles.modal} animationInTiming={600}>
-      <View style={styles.modalContainer}>
-        <Text style={styles.modalTitle}>Connection Error</Text>
-        <Text style={styles.modalText}>
-          Oops! Looks like your device is not connected to the Internet.
-        </Text>
-        <Button title='Try Again' onPress={onRetry} disabled={isRetrying} />
-      </View>
-    </Modal>
-  );
-
-  if(state.isLoading) {
-    return <SplashScreen />
+  } catch(err) {
+      console.log(err);
   }
+}
+
+const UnAuthApp = ({state}) => {
+
+  return (
+    <NavigationContainer 
+      ref={ navigationRef }
+    >
+      <SafeAreaView style={{flex: 1}}>
+      <Stack.Navigator initialRouteName="Login">
+        <Stack.Screen 
+          name="Login" 
+          component={LoginScreen} 
+          options={{
+            headerShown: false,
+            animationTypeForReplace: state.isSignout ? 'pop' : 'push'
+          }}
+        />
+        <Stack.Screen
+          name="Register"
+          component={SignupScreen}
+          options={{
+            headerShown: false,
+            animationTypeForReplace: 'push'
+          }}
+        />
+        <Stack.Screen
+          name="Forgot"
+          component={ForgotScreen}
+          options={{
+            headerShown: false,
+            animationTypeForReplace: 'pop'
+          }}
+        />
+      </Stack.Navigator>
+      </SafeAreaView>
+    </NavigationContainer>
+);
+}
+
+const generateGreetings = () => {
+  var currentHour = moment().format("HH");
+
+  if (currentHour >= 3 && currentHour < 12) {
+      return "Good Morning";
+  } else if (currentHour >= 12 && currentHour < 18) {
+      return "Good Afternoon";
+  }   else if (currentHour >= 18 && currentHour < 21) {
+      return "Good Evening";
+  } else {
+      return "Good Night";
+  }
+
+}
+
+const AuthApp = ({state}) => {
+  React.useEffect(() => {
+    stepsFetch();
+  }, []);
 
   const tabNav = () => {
     return (
@@ -178,95 +190,86 @@ const App = () => {
         </Tab.Navigator>
     );
   };
+  return ( <>
+    <Header backgroundColor='white'
+      centerComponent={{ text: `${generateGreetings()} ${state.userDetails.firstname}`, style: { color: '#000' } }}
+      rightComponent={<Icon 
+        name='user'
+        type='feather'
+        onPress={() => {if(isReadyRef.current) navigate('Profile');}}
+      />}
+    />
+    <NavigationContainer 
+      ref={ navigationRef }
+    >
+      <Stack.Navigator screenOptions={{headerShown: false}}>
+        <Stack.Screen name="Home" component={tabNav} />
+        <Stack.Screen name="Profile" component={AccountScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  </>)
+}
+
+const App = () => {
+  const [isOffline, setOfflineStatus] = React.useState(false);
+  const { state, restoreToken } = useContext(AuthContext);
+
+  React.useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(({ isInternetReachable }) => {
+      if (typeof isInternetReachable !== 'boolean') return;
+      setOfflineStatus(!isInternetReachable);
+    });
+    
+    restoreToken();
+
+    return () => {
+      isReadyRef.current = false;
+      unsubscribe();
+    };
+  }, []);
+
+  React.useEffect(() => {
+    console.log(Constants.isDevice);
+    if(Constants.isDevice)
+      registerForPushNotifications();
+  }, []);
+
+  const NoInternetModal = ({show, onRetry, isRetrying}) => (
+    <Modal isVisible={isOffline} style={styles.modal} animationInTiming={600}>
+      <View style={styles.modalContainer}>
+        <Text style={styles.modalTitle}>Connection Error</Text>
+        <Text style={styles.modalText}>
+          Oops! Looks like your device is not connected to the Internet.
+        </Text>
+        <Button title='Try Again' onPress={onRetry} disabled={isRetrying} />
+      </View>
+    </Modal>
+  );
+
+  if(state.isLoading) {
+    return <SplashScreen />
+  }
 
   return (
-      <NavigationContainer 
-      onStateChange={(s) => {
-        let screenState = s.routes[s.index].state;
-        if(screenState) {
-          let screenIndex = screenState.index;
-          let screenName = screenState.routeNames[screenIndex];
-          if(state.userDetails !== null)
-            setHeaderText(screenName == 'Home' ? "Hello " + state.userDetails.firstname : screenName);
-          else
-            setHeaderText(screenName);
-        } else
-          setHeaderText(s.routeNames[s.index]);
-      }}
-      ref={ navigationRef }
-      onReady={() => {
-        if(state.userDetails !== null)
-          setHeaderText("Hello " + state.userDetails.firstname);
-        else
-          setHeaderText("Home");
-        isReadyRef.current = true;
-      }}
-      >
-        {state.token !== null ?
-        <>
-          <Header backgroundColor='white'
-          leftComponent={{ icon: 'menu', color: '#000', iconStyle: { color: '#fff' } }}
-          centerComponent={{ text: headerText, style: { color: '#000' } }}
-          rightComponent={<Icon 
-            name='user'
-            type='feather'
-            onPress={() => {if(isReadyRef.current) navigate('Profile');}}
-          />}
-          />
-          <Stack.Navigator screenOptions={{headerShown: false}}>
-            <Stack.Screen name="Home" component={tabNav} />
-            <Stack.Screen name="Profile" component={AccountScreen} />
-          </Stack.Navigator>
-        </>
-        :
-        <SafeAreaView style={{flex: 1}}>
-        <Stack.Navigator initialRouteName="Login">
-          <Stack.Screen 
-            name="Login" 
-            component={LoginScreen} 
-            options={{
-              headerShown: false,
-              animationTypeForReplace: state.isSignout ? 'pop' : 'push'
-            }}
-          />
-          <Stack.Screen
-            name="Register"
-            options={{ headerShown:false }}
-            component={SignupScreen}
-            options={{
-              headerShown: false,
-              animationTypeForReplace: 'push'
-            }}
-          />
-          <Stack.Screen
-            name="Forgot"
-            options={{ headerShown:false }}
-            component={ForgotScreen}
-            options={{
-              headerShown: false,
-              animationTypeForReplace: 'pop'
-            }}
-          />
-        </Stack.Navigator>
-        </SafeAreaView>
-        }
-        <NoInternetModal
-            show={isOffline}
-            onRetry={() => NativeModules.DevSettings.reload()}
-            isRetrying={state.isLoading}
-        />
-      </NavigationContainer>
+    <>
+      {state.token !== null ? <AuthApp state={state} /> : <UnAuthApp state={state} />}
+      <NoInternetModal
+        show={isOffline}
+        onRetry={() => NativeModules.DevSettings.reload()}
+        isRetrying={state.isLoading}
+      />
+    </>
   );
 }
 
 export default () => {
   return (
-    <AuthProvider>
       <NativeBaseProvider>
+        <AuthProvider>
           <StatusBar style="white" />
           <App />
+        </AuthProvider>
       </NativeBaseProvider>
-    </AuthProvider>
   );
 };
 

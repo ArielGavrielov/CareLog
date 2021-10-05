@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { Progress, Box, VStack, Text, Center } from 'native-base';
 import { Card } from 'react-native-elements';
 import { View } from 'react-native';
@@ -17,38 +18,24 @@ import moment from 'moment';
         />
       </Card> }
 */
+
 const DailyProgress = ({title}) => {
-    const isScreenMounted = React.useRef(true);
-    const [isFetched, setFetched] = React.useState({steps: false, indices: false});
+    const [isFetching, setFetching] = React.useState(false);
     const [progresses, setProgresses] = React.useState([]);
 
-    const indicesFetch = async () => {
-        try {
-            let config = await getIndicesProgress();
-            if(!isScreenMounted.current) return;
-            
-            return {
-                title: 'Indices',
-                config: config
-            };
-        } catch(err) {
-
-        }
-    }
-
-    React.useEffect(() => {
-        const Async = async () => {
-            if(!isScreenMounted.current) return;
-            let dailyProgresses = await getDailyProgresses();
-            if(!isScreenMounted.current) return;
-            setProgresses(dailyProgresses);
-        }
-
-        Async();
-        return () => {
-            isScreenMounted.current = false;
-        }
-    }, [isScreenMounted.current]);
+    useFocusEffect(
+        React.useCallback(() => {
+            const subscribe = async () => {
+                if(!isFetching) {
+                    setFetching(true);
+                    let dailyProgresses = await getDailyProgresses();
+                    setFetching(false);
+                    setProgresses(dailyProgresses);
+                }
+            }
+            subscribe();
+        }, [])
+    );
 
     return <Card>
         <Card.Title>{title}</Card.Title>
@@ -58,7 +45,6 @@ const DailyProgress = ({title}) => {
                     {
                         progresses.map((progress, i) => (
                             <View key={i}>
-                                {console.log(progress)}
                                 <Card.Divider color = '#FFC0CB'/>
                                 <Center>
                                     <Text bold>{progress.title}</Text>

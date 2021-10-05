@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { View, StyleSheet, Alert, Dimensions } from 'react-native';
 import { AirbnbRating, Text, Card, Button } from 'react-native-elements';
 import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
@@ -68,7 +69,7 @@ const BadFeelingModal = ({isModalVisible, setModalVisible, rating, setRating}) =
   )
 }
 
-const HomeScreen = () => {
+const HomeScreen = ({}) => {
   const [selected, setSelected] = useState(0);
   const [rating, setRating] = useState(null);
   const [choosenRating, setChoosenRating] = React.useState(0);
@@ -77,119 +78,117 @@ const HomeScreen = () => {
 
   const indices = [
     {
-        route: 'blood',
-        title: 'Blood pressure',
-        inputs: [
-            {
-                name: 'Systolic',
-                rules: {
-                    min: {
-                    value: 100,
-                    message: 'Minimum value is 100.'
-                    },
-                    max: {
-                    value: 200,
-                    message: 'Maximum value is 200.'
-                    },
-                    required: "Systolic is required."
-                },
+      route: 'blood',
+      title: 'Blood pressure',
+      inputs: [
+        {
+          name: 'Systolic',
+          rules: {
+            min: {
+              value: 100,
+              message: 'Minimum value is 100.'
             },
-            {
-                name: 'Diastolic',
-                rules: {
-                    min: {
-                    value: 70,
-                    message: 'Minimum value is 70.'
-                    },
-                    max: {
-                    value: 140,
-                    message: 'Maximum value is 140.'
-                    },
-                    required: "Diastolic is required."
-                }
-            }
-        ]
+            max: {
+              value: 200,
+              message: 'Maximum value is 200.'
+            },
+            required: "Systolic is required."
+          },
+        },
+        {
+          name: 'Diastolic',
+          rules: {
+            min: {
+              value: 70,
+              message: 'Minimum value is 70.'
+            },
+            max: {
+              value: 140,
+              message: 'Maximum value is 140.'
+            },
+            required: "Diastolic is required."
+          }
+        }
+      ]
     },
     {
-        route: 'pulse',
-        title: 'Pulse',
-        inputs: [
-            {
-                name: 'Pulse',
-                rules: {
-                    min: {
-                    value: 50,
-                    message: 'Minimum value is 50.'
-                    },
-                    max: {
-                    value: 200,
-                    message: 'Maximum value is 200.'
-                    },
-                    required: "Pulse is required."
-                }
-            }
-        ]
+      route: 'pulse',
+      title: 'Pulse',
+      inputs: [
+        {
+          name: 'Pulse',
+          rules: {
+            min: {
+              value: 50,
+              message: 'Minimum value is 50.'
+            },
+            max: {
+              value: 200,
+              message: 'Maximum value is 200.'
+            },
+            required: "Pulse is required."
+          }
+        }
+      ]
     },
     {
-        route: 'bodyheat',
-        title: 'Body heat',
-        inputs: [
-            {
-                name: 'Body heat',
-                rules: {
-                    min: {
-                    value: 31,
-                    message: 'Minimum value is 31.'
-                    },
-                    max: {
-                    value: 43,
-                    message: 'Maximum value is 43.'
-                    },
-                    required: "Body Heat is required."
-                }
-            }
-        ]
+      route: 'bodyheat',
+      title: 'Body heat',
+      inputs: [
+        {
+          name: 'Body heat',
+          rules: {
+              min: {
+                value: 31,
+                message: 'Minimum value is 31.'
+              },
+              max: {
+                value: 43,
+                message: 'Maximum value is 43.'
+              },
+              required: "Body Heat is required."
+          }
+        }
+      ]
     },
     {
-        route: 'oxygen',
-        title: 'Oxygen Saturation',
-        inputs: [
-            {
-                name: 'Oxygen saturation',
-                rules: {
-                    min: {
-                    value: 60,
-                    message: 'Minimum value is 60.'
-                    },
-                    max: {
-                    value: 100,
-                    message: 'Maximum value is 100.'
-                    },
-                    required: "Oxygen Saturation is required."
-                }
-            }
-        ]
-    }];
+      route: 'oxygen',
+      title: 'Oxygen Saturation',
+      inputs: [
+        {
+          name: 'Oxygen saturation',
+          rules: {
+              min: {
+                value: 60,
+                message: 'Minimum value is 60.'
+              },
+              max: {
+                value: 100,
+                message: 'Maximum value is 100.'
+              },
+              required: "Oxygen Saturation is required."
+          }
+        }
+      ]
+    }
+  ];
 
-  React.useEffect(() => {
-    isScreenMounted.current = true;
-    if(!rating) {
-      if(!isScreenMounted.current) return;
-      getFeeling(moment.utc().format('Y-MM-DD'))
-        .then((res) => {
-          if(!isScreenMounted.current) return;
-          setRating({lastChange: moment.utc(res.lastChange, 'HH:mm:ss').local().format('HH:mm:ss'), value: res.feeling});
-        }).catch(({error}) => {
-          if(!isScreenMounted.current) return;
-          setRating({lastChange: 'No change today yet.', value: 3});
-          if(!error)
-            Alert.alert('ERROR', 'Please try again later.', [{text: 'ok'}]);
-        });
+  const subscribe = async () => {
+    if(rating) return;
+    try {
+      const feeling = await getFeeling(moment.utc().format('Y-MM-DD'));
+      setRating({lastChange: moment.utc(feeling.lastChange, 'HH:mm:ss').local().format('HH:mm:ss'), value: feeling.feeling});
+    } catch(err) {
+      setRating({lastChange: 'No change today yet.', value: 3});
     }
-    return () => {
-      isScreenMounted.current = false;
-    }
-  }, []);
+  }
+
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log("home mount");
+      subscribe();
+    }, [])
+  );
 
   return (
     <ScrollView nestedScrollEnabled = {true}>

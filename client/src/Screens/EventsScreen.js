@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { View, Dimensions, Alert } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Card, Button, Text, Divider } from 'react-native-elements'; 
 import {Agenda} from 'react-native-calendars';
 import {NavigationApps, Waze} from "react-native-navigation-apps";
@@ -252,7 +253,6 @@ const MoreInfoModal = ({item, refetchEvents}) => {
     const [isLoading, setLoading] = React.useState(false);
     const [messages, setMessages] = React.useState({error: null, success: null});
 
-    console.log(item);
     const deleteE = () => {
         setLoading(true);
         AsyncAlert('IMPORTANT',
@@ -410,49 +410,46 @@ const EditModal = ({item, refetchEvents}) => {
 }
 
 const EventsScreen = () => {
-    const isScreenMounted = React.useRef();
     const [events, setEvents] = React.useState(null);
-    const [isLoading, setIsLoading] = React.useState(true);
 
-    React.useEffect(() => {
-        isScreenMounted.current = true;
-        if(isScreenMounted.current && isLoading) {
-            getEvents().then((events) => {
-                if(!isScreenMounted.current || !isLoading) return;
-
-                const eventsFormat = {}; // format for react calendar
-                const TIMEFORMAT = 'HH:mm'
-                const DATEFORMAT = 'Y-MM-DD'
-                const DATETIMEFORMAT = 'Y-MM-DD HH:mm';
-                events.map((event) => {
-                    const dateMoment = moment.utc(event.time, DATETIMEFORMAT).local();
-                    const dateString = dateMoment.format(DATEFORMAT);
-                    const timeString = dateMoment.format(TIMEFORMAT);
-                    if(!eventsFormat[dateString]) eventsFormat[dateString] = [];
-                    eventsFormat[dateString].push({
-                        title: event.title,
-                        body: event.body,
-                        time: timeString,
-                        datetime: dateMoment.format(DATETIMEFORMAT),
-                        address: event.address,
-                        id: event._id,
-                        doctorId: event.doctorId
-                    });
+    const subscribe = async () => {
+        try {
+            const events = await getEvents();
+            const eventsFormat = {}; // format for react calendar
+            const TIMEFORMAT = 'HH:mm'
+            const DATEFORMAT = 'Y-MM-DD'
+            const DATETIMEFORMAT = 'Y-MM-DD HH:mm';
+            events.map((event) => {
+                const dateMoment = moment.utc(event.time, DATETIMEFORMAT).local();
+                const dateString = dateMoment.format(DATEFORMAT);
+                const timeString = dateMoment.format(TIMEFORMAT);
+                if(!eventsFormat[dateString]) eventsFormat[dateString] = [];
+                eventsFormat[dateString].push({
+                    title: event.title,
+                    body: event.body,
+                    time: timeString,
+                    datetime: dateMoment.format(DATETIMEFORMAT),
+                    address: event.address,
+                    id: event._id,
+                    doctorId: event.doctorId
                 });
-                setEvents(eventsFormat);
-            }).catch((err) => {
-                if(!isScreenMounted.current) return;
-                setEvents({});
-            })
-            .finally(() => {
-                if(!isScreenMounted.current) return;
-                setIsLoading(false);
             });
+            setEvents(eventsFormat);
+        } catch(err) {
+            console.log(err.message);
         }
-        return () => {
-            isScreenMounted.current = false;
-        }
-    }, [isLoading]);
+    }
+
+    useFocusEffect(
+        React.useCallback(() => {
+            console.log("events mount");
+            subscribe();
+
+            return () => {
+                setEvents(null);
+            }
+        }, [])
+    );
 
     if(!events) return <View style={{position: "absolute", left: 0, right: 0, bottom: 0, top: 0, alignItems: "center"}}>
             <Text>Loading...</Text>
@@ -473,8 +470,8 @@ const EventsScreen = () => {
             </View> : item.body ? <Text style={{fontSize: 16, margin: 10}}>{item.body}</Text> : null}
             <Card.Divider color='black'/>
             <View style={{flexDirection: 'row', alignSelf: 'auto', justifyContent: 'space-around'}}>
-                <MoreInfoModal item={item} refetchEvents={() => setIsLoading(true)}/>
-                <EditModal item={item} refetchEvents={() => setIsLoading(true)}/>
+                <MoreInfoModal item={item} refetchEvents={() => subscribe()}/>
+                <EditModal item={item} refetchEvents={() => subscribe()}/>
             </View>
           </Card>
         );
@@ -482,15 +479,16 @@ const EventsScreen = () => {
 
     return <>
             <Agenda
-                    showClosingKnob 
-                    renderEmptyData={() => <Text>No Data</Text>}
-                    items={events} 
-                    renderItem={(item)=> renderItem(item)}
+                showClosingKnob 
+                renderEmptyData={() => <Text>No Data</Text>}
+                items={events} 
+                renderItem={(item) => renderItem(item)}
+                
             />
             <View style={{bottom: 0, left: 0, right: 0}}>
                 <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
-                    <PushEvent refetchEvents={() => setIsLoading(true)}/>
-                    <Appointment refetchEvents={() => setIsLoading(true)}/>
+                    <PushEvent refetchEvents={() => subscribe()}/>
+                    <Appointment refetchEvents={() => subscribe()}/>
                 </View>
             </View>
         </>

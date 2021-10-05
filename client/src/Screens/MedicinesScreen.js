@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Dimensions, FlatList, StyleSheet } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { Button, Text, Card, Icon, Divider } from 'react-native-elements';
 import { InputControl, TimesInputControl } from '../Components/InputControl';
@@ -10,7 +11,7 @@ import ModalWithX from '../Components/ModalWithX';
 import { AsyncAlert } from '../Components/AsyncAlert';
 
 const AddMedication = ({onAdded = () => console.log("need onAdded property."), isModalVisible, setModalVisible, editValues=null}) => {
-    const {control, handleSubmit, trigger, formState, reset, setValue} = useForm();
+    const {control, handleSubmit, trigger, formState: {isSubmitting}, reset, setValue} = useForm();
     const [error, setError] = React.useState(null);
 
     React.useEffect(() => {
@@ -97,7 +98,6 @@ const MedicationMoreInfo = ({data, children, isInfoVisible, setInfoVisible}) => 
 
     React.useEffect(() => {
         if(isInfoVisible) {
-            console.log(data.taken);
             let takenData = data.taken.map((value,index) => {
                 value.time.sort((a,b) => moment(a, 'HH:mm:ss').diff(moment(b, 'HH:mm:ss')));
                 return {label: value.date, value: value}
@@ -111,7 +111,6 @@ const MedicationMoreInfo = ({data, children, isInfoVisible, setInfoVisible}) => 
                 setTakens();
                 setDateChooseOpen(false);
                 setDateChoosen(null);
-                console.log("unmounted");
             }
         }
     }, [isInfoVisible]);
@@ -184,12 +183,10 @@ const MedicationMoreInfo = ({data, children, isInfoVisible, setInfoVisible}) => 
 const MedicinesScreen = () => {
     const [state, setState] = React.useState({
         medications: null,
-        isLoading: [],
-        screenLoading: true,
+        isLoading: null,
         editValues: null,
         itemInfo: null
     });
-    const isScreenMounted = React.useRef(true);
     const isAlertShowing = React.useRef(false);
     const [isModalVisible, setModalVisible] = React.useState(false);
     const [isInfoVisible, setInfoVisible] = React.useState(false);
@@ -202,11 +199,10 @@ const MedicinesScreen = () => {
 
         takeMedicine(name).then((value) => {
             AsyncAlert("Success", "Updated successfully", [{text: 'OK'}], {}, isAlertShowing);
-            setState({...state, screenLoading: true});
         }).catch((err) => AsyncAlert("ERROR", err.message, [{text: 'OK'}], {}, isAlertShowing))
         .finally(() => {
             loadingArr[index] = false;
-            setState({...state, isLoading: loadingArr});
+            subscribe();
         });
     }
 
@@ -222,40 +218,49 @@ const MedicinesScreen = () => {
         );
         if(alertRes) {
             deleteMedicine(name).then((value) => {
-                setState({...state, screenLoading: true});
                 AsyncAlert('Success', 'Removed successfully', [{text: 'OK', resolve: true}], {}, isAlertShowing)
-                .finally(() => {setInfoVisible(false); });
+                .finally(() => {
+                    subscribe();
+                    setInfoVisible(false);
+                });
             }).catch((err) => AsyncAlert("ERROR", err.message, [{text: 'OK'}], {}, isAlertShowing));
         }
     }
 
-    React.useEffect(() => {
-        isScreenMounted.current = true;
-        const getMedics = () => {
-            if(!isScreenMounted.current) return;
-            let res = getMedicines();
-            res.then((value) => {
-                if(isScreenMounted.current)
-                    setState({...state, medications: value, isLoading: Array(res.length).fill(false), screenLoading: false});
-                console.log("here", isScreenMounted.current);
-            }).catch((err) => console.log(err));
+    const subscribe = async () => {
+        try {
+            const medicines = await getMedicines();
+            setState({...state, medications: medicines, isLoading: Array(medicines.length).fill(false)});
+        } catch(err) {
+            console.log(err.message);
         }
-        if(state.screenLoading || !state.medications)
-            getMedics();
+    }
 
-        return () => {
-            if(!isModalVisible && !isAlertShowing.current && !isInfoVisible)
-                isScreenMounted.current = false;
-            console.log(isScreenMounted.current);
-        }
-    }, [state.screenLoading]);
+    useFocusEffect(
+        React.useCallback(() => {
+            console.log("medicines mount");
+            subscribe();
+
+            return () => {
+                setState({
+                    medications: null,
+                    isLoading: null,
+                    editValues: null,
+                    itemInfo: null
+                });
+                setModalVisible(false);
+                setInfoVisible(false);
+                isAlertShowing.current = false;
+            }
+        }, [])
+    );
 
     React.useEffect(() => {
         if(!isModalVisible && state.editValues)
             setState({...state, editValues: null});
     }, [isModalVisible]);
 
-    if(state.screenLoading && !state.medications) return <View style={{position: "absolute", left: 0, right: 0, bottom: 0, top: 0, alignItems: "center"}}>
+    if(!state.medications) return <View style={{position: "absolute", left: 0, right: 0, bottom: 0, top: 0, alignItems: "center"}}>
         <Text>Loading...</Text>
     </View>
 
@@ -321,14 +326,13 @@ const MedicinesScreen = () => {
                 onAdded={(props) => {
                     postMedicine(props).then((value) => {
                         AsyncAlert('Success', (state.editValues ? 'Edited' : 'Added') +' successfully', [{text: 'OK', onPress: () => setModalVisible(false)}], {}, isAlertShowing);
-                        setState({...state, screenLoading: true})
+                        subscribe();
                     }).catch((err) => AsyncAlert('ERROR', err.message, [{text: 'OK'}], {}, isAlertShowing));
                 }}
                 editValues={state.editValues}
             />
             <MedicationMoreInfo 
                 data={state.itemInfo} 
-                //taken={state.itemInfo.taken}
                 isInfoVisible={isInfoVisible}
                 setInfoVisible={setInfoVisible}
             >

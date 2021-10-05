@@ -39,7 +39,7 @@ export const IndiceChart = (props) => {
                     dayValues.forEach(value => {
                         sum += value;
                     });
-                    data['datasets'][0]['data'].push(sum/dayValues.length);
+                    data['datasets'][0]['data'].push((sum/dayValues.length).toFixed(2));
                 } else {
                     let sumSystolic = 0;
                     let sumDiastolic = 0;
@@ -91,12 +91,10 @@ export const IndiceChart = (props) => {
 
     useFocusEffect(
         React.useCallback(() => {
-            const subscribe = async () => {
+            const subscribe = () => {
                 setIsLoading(true);
                 if(!dataValidation.current) {
                     dataValidation.current = true;
-                    //let d = await getIndice(props.type);
-                    //setData(props.data);
                     setIndexes({...indexes, year: {...indexes.year, arr: Object.keys(props.data).reverse()}});
                 }
             };
@@ -241,8 +239,6 @@ export const FeelingChart = (props) => {
         let data = {};
 
         if(!Array.isArray(indexes.year.arr) || !Array.isArray(indexes.week.arr) || Object.keys(props.data).length == 0) return;
-
-        console.log(props.data);
 
         data['labels'] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         data['labels'].forEach(day => {
