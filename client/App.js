@@ -108,6 +108,12 @@ const AuthApp = ({state}) => {
     stepsFetch();
   }, []);
 
+  React.useEffect(() => {
+    console.log(Constants.isDevice);
+    if(Constants.isDevice)
+      registerForPushNotifications();
+  }, []);
+
   const tabNav = () => {
     return (
       <Tab.Navigator
@@ -226,12 +232,6 @@ const App = () => {
       isReadyRef.current = false;
       unsubscribe();
     };
-  }, []);
-
-  React.useEffect(() => {
-    console.log(Constants.isDevice);
-    if(Constants.isDevice)
-      registerForPushNotifications();
   }, []);
 
   const NoInternetModal = ({show, onRetry, isRetrying}) => (

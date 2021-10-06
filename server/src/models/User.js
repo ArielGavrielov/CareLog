@@ -160,7 +160,8 @@ var userSchema = new mongoose.Schema({
             type: Number,
             require: true
         }
-    }]
+    }],
+    notificationToken: String
 }, {
     collection: 'users'
 });
@@ -267,7 +268,7 @@ userSchema.methods.comparePassword = function comparePassword(candidatePassword)
 }
 
 userSchema.plugin(mongooseFieldEncryption, {
-    fields: ['phone', 'email', 'birthdate', 'firstname', 'lastname', 'createDate', 'feelings', 'indices', 'medicines', 'doctors', 'dailySteps'],
+    fields: ['phone', 'email', 'birthdate', 'firstname', 'lastname', 'createDate', 'feelings', 'indices', 'medicines', 'doctors', 'dailySteps', 'notificationToken'],
     secret: process.env.SECRET,
     saltGenerator: (secret) => secret.slice(0, 16)
 });

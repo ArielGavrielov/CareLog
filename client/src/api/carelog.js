@@ -1,10 +1,10 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
-const DEBUG = false;
+const DEBUG = true;
 
 export const CareLogAPI = axios.create({
-    baseURL: DEBUG ? 'http://localhost:3001/api/' : 'https://carelog.herokuapp.com/api/',
+    baseURL: DEBUG ? 'http://192.168.1.13:3001/api/' : 'https://carelog.herokuapp.com/api/',
     timeout: 10000
 });
 

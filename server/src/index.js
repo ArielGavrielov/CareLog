@@ -5,7 +5,6 @@ const dotenv = require('dotenv').config({path: path.join(__dirname, '..', '.env'
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const authRoutes = require('./routes/authRoutes');
-const pushNotifications = require('./utils/pushNotification');
 const PORT = process.env.PORT || 3001;
 
 if(dotenv.error)
@@ -22,7 +21,6 @@ app.use(cors());
 app.use(bodyParser.json());
 
 app.use('/api', authRoutes);
-app.use('/notifications', pushNotifications);
 
 /*app.use(express.static(doctorPath));
 app.get('*', (req, res) => {

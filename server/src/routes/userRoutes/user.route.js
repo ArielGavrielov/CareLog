@@ -11,6 +11,7 @@ const feeling = require('./feeling.route');
 const events = require('./events.route');
 const doctors = require('./doctors.route');
 const daily = require('./daily.route');
+const pushNotifications = require('../../utils/pushNotification');
 
 router.use('/indices', requireAuth, indices);
 router.use('/medicines', requireAuth, medicines);
@@ -18,6 +19,7 @@ router.use('/feelings', requireAuth, feeling);
 router.use('/events', requireAuth, events);
 router.use('/doctors', requireAuth, doctors);
 router.use('/daily', requireAuth, daily);
+router.use('/notifications', requireAuth, pushNotifications);
 
 router.get('/', requireAuth, (req, res) => {
     const {password, _id, ...details} = req.user._doc;
