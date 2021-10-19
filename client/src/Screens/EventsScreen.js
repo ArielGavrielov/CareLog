@@ -3,7 +3,7 @@ import { View, Dimensions, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Card, Button, Text, Divider } from 'react-native-elements'; 
 import {Agenda} from 'react-native-calendars';
-import {NavigationApps, Waze} from "react-native-navigation-apps";
+import {NavigationApps} from "react-native-navigation-apps";
 import ModalWithX from '../Components/ModalWithX';
 import { getEvents, postEvent, deleteEvent, getDoctors, getFreetimeOfDoctor, postNewMeeting } from '../api/carelog';
 import { useForm } from 'react-hook-form';

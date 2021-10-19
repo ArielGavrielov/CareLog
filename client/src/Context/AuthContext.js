@@ -1,6 +1,8 @@
 import createDataContext from './createDataContext';
-import { CareLogAPI } from '../api/carelog';
+import { CareLogAPI, postSteps } from '../api/carelog';
 import * as SecureStore from 'expo-secure-store';
+import Constants from 'expo-constants';
+//import registerForPushNotifications from '../api/registerForPushNotifications';
 import * as LocalAuthentication from 'expo-local-authentication'
 import { Alert } from 'react-native';
 
@@ -30,6 +32,10 @@ const authReducer = (state, action) => {
 // get user details
 const updateUserData = dispatch => () => {
     return new Promise(async (resolve, reject) => {
+        if(Constants.isDevice) {
+            //await postSteps();
+            //registerForPushNotifications();
+        }
         CareLogAPI.get('/user/').then((response) => {
             dispatch({ type: 'user_details', payload: response.data });
             resolve(true);
@@ -37,6 +43,8 @@ const updateUserData = dispatch => () => {
             dispatch({ type: 'user_details', payload: null });
             reject(false);
         });
+        //dispatch({ type: 'user_details', payload: {firstname: 'Israel', lastname: 'Israeli'} });
+        //resolve(true);
     });
 }
 // clear error message
@@ -46,30 +54,31 @@ const clearErrorMessage = dispatch => () => {
 
 // Automatic signin
 const restoreToken = dispatch => async () => {
-    let token;
     try {
-        token = await SecureStore.getItemAsync('token');
+        let token = await SecureStore.getItemAsync('token');
         console.log(token);
         if(!token) throw token;
-        /*const compatible = await LocalAuthentication.hasHardwareAsync();
-
-        if(token && compatible) {
-            const biometricAuth = await LocalAuthentication.authenticateAsync({
-                promptMessage: 'Login with Biometrics',
-                disableDeviceFallback: true,
-                cancelLabel : 'Cancel'
-            });
+        const compatible = await LocalAuthentication.hasHardwareAsync();
+        const enrolled = await LocalAuthentication.isEnrolledAsync();
+        if(token && compatible && enrolled) {
+            const biometricAuth = await LocalAuthentication.authenticateAsync({promptMessage: 'Login to CareLog account with biometric'});
+            console.log(biometricAuth);
             if(biometricAuth.success) {
                 await updateUserData(dispatch)(token);
                 dispatch({type: 'restore_token', payload: token});
-            } else dispatch({type: 'restore_token', payload: null});
+            } else {
+                if(biometricAuth.error != 'system_cancel') {
+                    SecureStore.deleteItemAsync('token');
+                }
+                dispatch({type: 'restore_token', payload: null});
+            }
         } else {
             await updateUserData(dispatch)(token);
             dispatch({type: 'restore_token', payload: token});
-        }*/
+        }
         // need to remove it.
-        await updateUserData(dispatch)();
-        dispatch({type: 'restore_token', payload: token});
+        //await updateUserData(dispatch)();
+        //dispatch({type: 'restore_token', payload: token});
     } catch(e){
        SecureStore.deleteItemAsync('token');
        dispatch({type: 'restore_token', payload: null});
@@ -111,7 +120,6 @@ const checkToken = dispatch => async (id, token) => {
         // get responsed
         const response = await CareLogAPI.get(`/user/reset-password/${id}/${token}`);
         dispatch({ type: 'reset_password', payload: response.data });
-        console.log(response.data);
     } catch(err) {
         // add error
         console.log(err.message);
@@ -124,7 +132,6 @@ const changePassword = dispatch => async (id, token, password) => {
         // get responsed
         const response = await CareLogAPI.post(`/user/reset-password/${id}/${token}`, {password});
         dispatch({ type: 'reset_password', payload: response.data });
-        console.log(response.data);
     } catch(err) {
         // add error
         console.log(err.response.data.error);
@@ -141,7 +148,6 @@ const signin = (dispatch) => async ({ email, password }) => {
     try {
         // get responsed
         const response = await CareLogAPI.post('/user/signin', { email, password });
-        console.log(response.data);
         await SecureStore.setItemAsync('token', response.data.token);
         await updateUserData(dispatch)();
         // save token at AsyncStorage

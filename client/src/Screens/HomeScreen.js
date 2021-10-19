@@ -6,7 +6,7 @@ import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
 import { Indice } from '../Components/Indice';
 import DailyProgress from '../Components/DailyProgress';
 import ModalWithX from '../Components/ModalWithX';
-import { getFeeling, postFeeling, postSteps } from '../api/carelog';
+import { getFeeling, postFeeling } from '../api/carelog';
 import moment from 'moment';
 
 import { useForm } from 'react-hook-form';
@@ -173,20 +173,25 @@ const HomeScreen = ({}) => {
     }
   ];
 
-  const subscribe = async () => {
-    if(rating) return;
-    try {
-      const feeling = await getFeeling(moment.utc().format('Y-MM-DD'));
-      setRating({lastChange: moment.utc(feeling.lastChange, 'HH:mm:ss').local().format('HH:mm:ss'), value: feeling.feeling});
-    } catch(err) {
-      setRating({lastChange: 'No change today yet.', value: 3});
-    }
-  }
-
   useFocusEffect(
     React.useCallback(() => {
       console.log("home mount");
+      let mounted = true;
+      const subscribe = async () => {
+        if(!mounted || rating) return;
+        try {
+          const feeling = await getFeeling(moment.utc().format('Y-MM-DD'));
+          if(!mounted) return;
+          setRating({lastChange: moment.utc(feeling.lastChange, 'HH:mm:ss').local().format('HH:mm:ss'), value: feeling.feeling});
+        } catch(err) {
+          setRating({lastChange: 'No change today yet.', value: 3});
+        } finally {
+          mounted = null;
+        }
+      }
       subscribe();
+
+      return () => mounted = false;
     }, [])
   );
 

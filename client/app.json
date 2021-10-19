@@ -18,15 +18,18 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.arielariel1010.CareLog",
-      "userInterfaceStyle": "automatic"
+      "bundleIdentifier": "com.ariel.CareLog",
+      "userInterfaceStyle": "automatic",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "CareLog needs to use Face ID / Touch ID to authenticate you"
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
-      "package": "com.arielariel1010.CareLog"
+      "package": "com.ariel.CareLog"
     },
     "web": {
       "favicon": "./assets/favicon.png"

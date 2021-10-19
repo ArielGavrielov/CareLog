@@ -4,7 +4,6 @@ import { Progress, Box, VStack, Text, Center } from 'native-base';
 import { Card } from 'react-native-elements';
 import { View } from 'react-native';
 import { postSteps, getDailyProgresses } from '../api/carelog';
-import moment from 'moment';
 
 /*
 { stepsCount !== null && <Card>
@@ -25,15 +24,26 @@ const DailyProgress = ({title}) => {
 
     useFocusEffect(
         React.useCallback(() => {
+            let mounted = true;
             const subscribe = async () => {
-                if(!isFetching) {
+                if(!isFetching && mounted) {
                     setFetching(true);
+                    await postSteps();
+                    console.log(mounted);
+                    if(!mounted) return;
+                    console.log("here");
                     let dailyProgresses = await getDailyProgresses();
+                    if(!mounted) return;
                     setFetching(false);
                     setProgresses(dailyProgresses);
+                    mounted = null;
                 }
             }
             subscribe();
+
+            return () => {
+                mounted = false;
+            }
         }, [])
     );
 

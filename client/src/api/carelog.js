@@ -1,17 +1,18 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import { Pedometer } from 'expo-sensors';
+import moment from 'moment';
 
-const DEBUG = true;
+const DEBUG = false;
 
 export const CareLogAPI = axios.create({
-    baseURL: DEBUG && __DEV__ ? 'http://192.168.1.13:3001/api/' : 'https://carelog.herokuapp.com/api/',
+    baseURL: DEBUG && __DEV__ ? 'http://192.168.1;.10:3001/api/' : 'https://carelog.herokuapp.com/api/',
     timeout: 10000
 });
 
 CareLogAPI.interceptors.request.use(async (config) => {
     let token = await SecureStore.getItemAsync('token');
     config.headers.Authorization = token;
-
     return config;
 });
 
@@ -250,11 +251,41 @@ export const postNewMeeting = (doctorId, body) => {
 }
 
 // Daily Progresses
-// Post steps and get progress color
-export const postSteps = (body) => {
+// fetch steps
+const stepsFetch = async () => {
+    try {
+        let isAvailable = await Pedometer.isAvailableAsync();
+        console.log('isAvailable', isAvailable);
+        if(!isAvailable) return null;
+
+        let permissionStatus = await Pedometer.getPermissionsAsync();
+        console.log(permissionStatus);
+        switch(permissionStatus) {
+            case Pedometer.PermissionStatus.UNDETERMINED: 
+                let request = await Pedometer.requestPermissionsAsync();
+                if(!request.granted) return null;
+                break;
+            case Pedometer.PermissionStatus.DENIED: return null;
+        }
+        const start = moment().utc().startOf('day').toDate();
+        const end = moment().utc().endOf('day').toDate();
+        console.log(start,end);
+        const stepsFetched = await Pedometer.getStepCountAsync(start, end);
+        console.log("stepsFetched", stepsFetched);
+        return {steps: stepsFetched.steps};
+    } catch(err) {
+        console.log(err);
+    }
+  }
+// post steps from user device
+export const postSteps = () => {
     return new Promise(async (resolve, reject) => {
         try {
-            const response = await CareLogAPI.post(`/user/daily/update-steps`, body);
+            console.log("post steps");
+            let steps = await stepsFetch();
+            if(!steps) return resolve(null);
+            const response = await CareLogAPI.post(`/user/daily/update-steps`, steps);
+            console.log(DEBUG, __DEV__, response.data);
             resolve(response.data);
         } catch(err) {
             console.log(err.response.data);
@@ -266,7 +297,7 @@ export const postSteps = (body) => {
     });
 }
 
-// get indices progress
+// get all progresses data
 export const getDailyProgresses = () => {
     return new Promise(async (resolve, reject) => {
         try {

@@ -1,17 +1,14 @@
 import React, { useContext } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import Constants from 'expo-constants';
 import { SafeAreaView, Text, View, StyleSheet, NativeModules } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { createStackNavigator } from '@react-navigation/stack';
 import NetInfo from '@react-native-community/netinfo';
-import { Pedometer } from 'expo-sensors';
 import { Button } from 'react-native-elements';
 import Modal from 'react-native-modal';
 import moment from 'moment';
 
-import { postSteps } from './src/api/carelog';
 import HomeScreen from './src/Screens/HomeScreen';
 import LoginScreen from './src/Screens/LoginScreen';
 import AccountScreen from './src/Screens/AccountScreen';
@@ -28,27 +25,8 @@ import ForgotScreen from './src/Screens/ForgotScreen';
 import MedicinesScreen from './src/Screens/MedicinesScreen';
 import EventsScreen from './src/Screens/EventsScreen';
 
-import registerForPushNotifications from './src/api/registerForPushNotifications';
-
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
-
-const stepsFetch = async () => {
-  try {
-      let isAvailable = await Pedometer.isAvailableAsync();
-      if(isAvailable) {
-          const start = moment().utc().startOf('day').toDate();
-          const end = moment().utc().endOf('day').toDate();
-          console.log(start, end, moment(), moment.utc());
-
-          const stepsFetched = await Pedometer.getStepCountAsync(start, end);
-          await postSteps({steps: stepsFetched.steps});
-          console.log(stepsFetched);
-      }
-  } catch(err) {
-      console.log(err);
-  }
-}
 
 const UnAuthApp = ({state}) => {
 
@@ -104,19 +82,10 @@ const generateGreetings = () => {
 }
 
 const AuthApp = ({state}) => {
-  React.useEffect(() => {
-    stepsFetch();
-  }, []);
-
-  React.useEffect(() => {
-    console.log(Constants.isDevice);
-    if(Constants.isDevice)
-      registerForPushNotifications();
-  }, []);
-
-  const tabNav = () => {
+  const TabNav = () => {
     return (
       <Tab.Navigator
+        screenOptions={{headerShown: false}}
         initialRouteName="Home">
           <Tab.Screen 
             name="Events"
@@ -206,10 +175,11 @@ const AuthApp = ({state}) => {
       />}
     />
     <NavigationContainer 
+      onReady={() => isReadyRef.current = true}
       ref={ navigationRef }
     >
       <Stack.Navigator screenOptions={{headerShown: false}}>
-        <Stack.Screen name="Home" component={tabNav} />
+        <Stack.Screen name="TapNav" component={TabNav} />
         <Stack.Screen name="Profile" component={AccountScreen} />
       </Stack.Navigator>
     </NavigationContainer>
@@ -274,7 +244,6 @@ export default () => {
 };
 
 const styles = StyleSheet.create({
-  // ...
   modal: {
     justifyContent: 'flex-end',
     margin: 0,

@@ -60,7 +60,7 @@ const Calender = () => {
                 eventTimeRangeFormat: range => `${moment(range.start).format('HH:mm')} – ${moment(range.end).format('HH:mm')}`,
             }}
             defaultView={Views.DAY}
-            views={[Views.MONTH, Views.WEEK, Views.DAY]}
+            views={[Views.WEEK, Views.DAY]}
             step={7.5}
             min={state.min}
             max={state.max}

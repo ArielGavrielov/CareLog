@@ -23,7 +23,6 @@ function getDay(number) {
 // get user feeling 
 router.get('/', async (req,res) => {
     // sort feelings
-    console.log(req.user);
     req.user.feelings.sort((a,b) => moment(`${b.date} ${b.lastChange}`, 'Y-MM-DD HH:mm:ss').diff(moment(`${a.date} ${a.lastChange}`, 'Y-MM-DD HH:mm:ss')));
     // build response for statistics
     const result = req.user.feelings.map((el) => el).reduce((acc, e) => {
@@ -66,7 +65,6 @@ router.post('/', async (req,res) => {
                 return isFound;
             });
 
-        console.log(found);
         if(found) {
             if(req.body.feeling === found.feeling) throw {message: 'same feeling.'};
             req.user.feelings[foundIndex] = req.body.reason ? {
@@ -74,7 +72,6 @@ router.post('/', async (req,res) => {
                 reason: req.body.reason
             } : {feeling: req.body.feeling};
             let update = await req.user.save();
-            console.log(update);
             
             /*let update;
             if(req.body.reason) {
@@ -114,7 +111,6 @@ router.post('/fill-random-data', async (req,res) => {
         }
         day.add(1, 'day');
     }
-    //console.log(addToSet);
     req.user.feelings = addToSet;
     update = await req.user.save();
     res.send(update);
